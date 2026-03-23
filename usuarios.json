@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "nome": "Administrador",
+    "usuario": "admin",
+    "senha": "1234",
+    "nivel": "admin"
+  },
+  {
+    "id": 2,
+    "nome": "ALEXSANDRO CRACCO",
+    "usuario": "alex.cracco",
+    "senha": "788142",
+    "nivel": "admin"
+  },
+  {
+    "id": 3,
+    "nome": "ALEX LAVERDE DA SILVA",
+    "usuario": "alex.laverde",
+    "senha": "1234",
+    "nivel": "lider"
+  }
+]

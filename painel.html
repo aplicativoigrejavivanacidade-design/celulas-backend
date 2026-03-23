@@ -1,0 +1,350 @@
+<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>+Células | Painel</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .logo-sub {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 28px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+      display: block;
+    }
+
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.18);
+    }
+
+    .content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .hero {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #4b5563;
+    }
+
+    .resumo {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #4b5563;
+    }
+
+    .numero {
+      font-size: 34px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .secao {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .secao h2 {
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-size: 24px;
+    }
+
+    .lista {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #fafafa;
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .vazio {
+      color: #6b7280;
+      padding: 16px;
+      border: 2px dashed #d1d5db;
+      border-radius: 14px;
+      text-align: center;
+      background: #fcfcfc;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: relative;
+        width: 100%;
+        bottom: auto;
+      }
+
+      .content {
+        margin-left: 0;
+      }
+
+      .resumo {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<script>
+  if (localStorage.getItem('logado') !== 'sim') {
+    window.location.href = 'login.html';
+  }
+
+  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
+  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
+
+  function sair() {
+    localStorage.removeItem('logado');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('nomeUsuario');
+    localStorage.removeItem('nivelUsuario');
+    window.location.href = 'login.html';
+  }
+
+  const campoUsuario = document.getElementById('usuarioLogado');
+  if (campoUsuario) {
+    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
+  }
+
+  function verificarPermissao(pagina) {
+    const permissoes = {
+      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
+      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
+      lider: ['painel', 'membros', 'presenca']
+    };
+
+    const permitidas = permissoes[nivelUsuario] || [];
+
+    if (!permitidas.includes(pagina)) {
+      alert('Você não tem permissão para acessar esta área.');
+      window.location.href = 'painel.html';
+    }
+  }
+
+  function aplicarPermissoesMenu() {
+    const menuUsuarios = document.getElementById('menuUsuarios');
+    const menuRelatorios = document.getElementById('menuRelatorios');
+
+    if (nivelUsuario !== 'admin' && menuUsuarios) {
+      menuUsuarios.style.display = 'none';
+    }
+
+    if (nivelUsuario === 'lider' && menuRelatorios) {
+      menuRelatorios.style.display = 'none';
+    }
+  }
+
+  aplicarPermissoesMenu();
+</script>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">+Células</div>
+      <div class="logo-sub">Gestão de células</div>
+
+      <nav class="menu">
+        <a href="painel.html">Painel</a>
+        <a href="cadastro.html">Membros</a>
+        <a href="presenca.html">Presença</a>
+        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
+        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
+<script>
+  verificarPermissao('painel');
+</script>
+      </nav>
+<div style="margin-top: 20px;">
+  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
+    Sair
+  </button>
+</div>
+    </aside>
+
+    <main class="content">
+      <div class="hero">
+        <h1>Painel principal</h1>
+        <p>Visão geral do sistema +Células</p>
+      </div>
+
+      <div class="resumo">
+        <div class="card">
+          <h3>Total de membros</h3>
+          <div class="numero" id="totalMembros">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Presentes hoje</h3>
+          <div class="numero" id="presentesHoje">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Ausentes hoje</h3>
+          <div class="numero" id="ausentesHoje">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Registros de presença</h3>
+          <div class="numero" id="totalPresencas">0</div>
+        </div>
+      </div>
+
+      <div class="secao">
+        <h2>Últimos membros cadastrados</h2>
+        <div class="lista" id="ultimosMembros"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const apiMembros = 'http://192.168.18.161:3000/membros';
+    const apiPresencas = 'http://192.168.18.161:3000/presencas';
+
+    function dataHoje() {
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    async function carregarPainel() {
+      const [resMembros, resPresencas] = await Promise.all([
+        fetch(apiMembros),
+        fetch(apiPresencas)
+      ]);
+
+      const membros = await resMembros.json();
+      const presencas = await resPresencas.json();
+
+      document.getElementById('totalMembros').textContent = membros.length;
+      document.getElementById('totalPresencas').textContent = presencas.length;
+
+      const hoje = dataHoje();
+      const presencasHoje = presencas.filter(item => item.data === hoje);
+      const presentesHoje = presencasHoje.filter(item => item.status === 'presente').length;
+      const ausentesHoje = presencasHoje.filter(item => item.status === 'ausente').length;
+
+      document.getElementById('presentesHoje').textContent = presentesHoje;
+      document.getElementById('ausentesHoje').textContent = ausentesHoje;
+
+      const ultimos = [...membros].slice(-5).reverse();
+      const lista = document.getElementById('ultimosMembros');
+
+      if (ultimos.length === 0) {
+        lista.innerHTML = '<div class="vazio">Nenhum membro cadastrado ainda.</div>';
+        return;
+      }
+
+      lista.innerHTML = ultimos.map(membro => `
+        <div class="item">
+          <strong>${membro.nome}</strong>
+          <span>Telefone: ${membro.telefone || '-'}</span><br>
+          <span>Célula: ${membro.celula || '-'}</span><br>
+          <span>Status: ${membro.status || '-'}</span>
+        </div>
+      `).join('');
+    }
+
+    carregarPainel();
+  </script>
+</body>
+<script>
+  if (localStorage.getItem('logado') !== 'sim') {
+    window.location.href = 'login.html';
+  }
+
+  function sair() {
+    localStorage.removeItem('logado');
+    localStorage.removeItem('usuario');
+    window.location.href = 'login.html';
+  }
+</script>
+</html>

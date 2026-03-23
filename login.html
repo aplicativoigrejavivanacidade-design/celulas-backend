@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>+Células | Login</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1d4ed8, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+
+    .logo {
+      font-size: 34px;
+      font-weight: bold;
+      color: #1d4ed8;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .sub {
+      text-align: center;
+      color: #4b5563;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      margin-top: 14px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .mensagem {
+      margin-top: 14px;
+      min-height: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .dica {
+      margin-top: 20px;
+      padding: 14px;
+      background: #eff6ff;
+      border-radius: 12px;
+      font-size: 14px;
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">+Células</div>
+    <div class="sub">Acesse o sistema com seu usuário</div>
+
+    <label for="usuario">Usuário</label>
+    <input type="text" id="usuario" placeholder="Digite seu usuário" />
+
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" placeholder="Digite sua senha" />
+
+    <button onclick="entrar()">Entrar</button>
+
+    <div class="mensagem" id="mensagem"></div>
+
+    <div class="dica">
+      <strong>Acesso inicial:</strong><br>
+      Usuário: <strong>admin</strong><br>
+      Senha: <strong>1234</strong>
+    </div>
+  </div>
+
+  <script>
+    async function entrar() {
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const mensagem = document.getElementById('mensagem');
+
+      mensagem.textContent = '';
+
+      const resposta = await fetch('http://192.168.18.161:3000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, senha })
+      });
+
+      const dados = await resposta.json();
+
+      if (resposta.ok) {
+        localStorage.setItem('logado', 'sim');
+        localStorage.setItem('usuario', dados.usuario.usuario);
+        localStorage.setItem('nomeUsuario', dados.usuario.nome);
+        localStorage.setItem('nivelUsuario', dados.usuario.nivel);
+        window.location.href = 'painel.html';
+      } else {
+        mensagem.textContent = dados.erro || 'Erro ao entrar.';
+        mensagem.style.color = '#dc2626';
+      }
+    }
+  </script>
+</body>
+</html>

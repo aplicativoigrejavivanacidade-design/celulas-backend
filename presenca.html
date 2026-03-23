@@ -1,0 +1,523 @@
+<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>+Células | Presença</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .logo-sub {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 28px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+      display: block;
+    }
+
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.18);
+    }
+
+    .content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .header {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #4b5563;
+    }
+
+    .topo {
+      display: grid;
+      grid-template-columns: 240px 1fr 180px;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .btn-success {
+      background: #16a34a;
+      color: white;
+    }
+
+    .resumo {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .badge-total {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .badge-presente {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-ausente {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .lista {
+      display: grid;
+      gap: 12px;
+    }
+
+    .membro {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .membro h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .membro p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-status {
+      width: auto;
+      min-width: 110px;
+      padding: 10px 14px;
+    }
+
+    .ativo-presente {
+      background: #16a34a;
+      color: white;
+    }
+
+    .ativo-ausente {
+      background: #dc2626;
+      color: white;
+    }
+
+    .status-atual {
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .mensagem {
+      margin-top: 16px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .vazio {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #6b7280;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        bottom: auto;
+      }
+
+      .layout {
+        flex-direction: column;
+      }
+
+      .content {
+        margin-left: 0;
+      }
+
+      .topo {
+        grid-template-columns: 1fr;
+      }
+
+      .membro {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .acoes {
+        width: 100%;
+      }
+
+      .btn-status {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<script>
+  if (localStorage.getItem('logado') !== 'sim') {
+    window.location.href = 'login.html';
+  }
+
+  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
+  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
+
+  function sair() {
+    localStorage.removeItem('logado');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('nomeUsuario');
+    localStorage.removeItem('nivelUsuario');
+    window.location.href = 'login.html';
+  }
+
+  const campoUsuario = document.getElementById('usuarioLogado');
+  if (campoUsuario) {
+    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
+  }
+
+  function verificarPermissao(pagina) {
+    const permissoes = {
+      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
+      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
+      lider: ['painel', 'membros', 'presenca']
+    };
+
+    const permitidas = permissoes[nivelUsuario] || [];
+
+    if (!permitidas.includes(pagina)) {
+      alert('Você não tem permissão para acessar esta área.');
+      window.location.href = 'painel.html';
+    }
+  }
+
+  function aplicarPermissoesMenu() {
+    const menuUsuarios = document.getElementById('menuUsuarios');
+    const menuRelatorios = document.getElementById('menuRelatorios');
+
+    if (nivelUsuario !== 'admin' && menuUsuarios) {
+      menuUsuarios.style.display = 'none';
+    }
+
+    if (nivelUsuario === 'lider' && menuRelatorios) {
+      menuRelatorios.style.display = 'none';
+    }
+  }
+
+  aplicarPermissoesMenu();
+</script>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">+Células</div>
+      <div class="logo-sub">Gestão de células</div>
+
+      <nav class="menu">
+        <a href="painel.html">Painel</a>
+        <a href="cadastro.html">Membros</a>
+        <a href="presenca.html">Presença</a>
+        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
+        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
+<script>
+  verificarPermissao('painel');
+</script>
+      </nav>
+<div style="margin-top: 20px;">
+  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
+    Sair
+  </button>
+</div>
+    </aside>
+
+    <main class="content">
+      <div class="header">
+        <h1>Controle de presença</h1>
+        <p>Marque presença e ausência dos membros por data</p>
+      </div>
+
+      <div class="topo">
+        <div class="card">
+          <label for="dataReuniao">Data da reunião</label>
+          <input type="date" id="dataReuniao" />
+        </div>
+
+        <div class="card">
+          <label>Resumo da chamada</label>
+          <div class="resumo">
+            <span class="badge badge-total" id="totalMembros">0 membros</span>
+            <span class="badge badge-presente" id="totalPresentes">0 presentes</span>
+            <span class="badge badge-ausente" id="totalAusentes">0 ausentes</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>&nbsp;</label>
+          <button class="btn-success" onclick="salvarPresencas()">Salvar presença</button>
+        </div>
+      </div>
+
+      <div class="mensagem" id="mensagem"></div>
+      <div class="lista" id="listaMembros"></div>
+    </main>
+  </div>
+
+  <script>
+    const apiMembros = 'http://192.168.18.161:3000/membros';
+    const apiPresencas = 'http://192.168.18.161:3000/presencas';
+
+    let membros = [];
+    let presencas = {};
+
+    function definirDataHoje() {
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      document.getElementById('dataReuniao').value = `${ano}-${mes}-${dia}`;
+    }
+
+    async function carregarMembros() {
+      const resposta = await fetch(apiMembros);
+      membros = await resposta.json();
+
+      if (!Array.isArray(membros) || membros.length === 0) {
+        document.getElementById('listaMembros').innerHTML =
+          '<div class="vazio">Nenhum membro cadastrado. Cadastre membros primeiro.</div>';
+        atualizarResumo();
+        return;
+      }
+
+      renderizarMembros();
+      atualizarResumo();
+      await carregarPresencasDaData();
+    }
+
+    function renderizarMembros() {
+      const lista = document.getElementById('listaMembros');
+
+      lista.innerHTML = membros.map((membro) => {
+        const status = presencas[membro.id] || 'ausente';
+
+        return `
+          <div class="membro">
+            <div>
+              <h3>${membro.nome}</h3>
+              <p><strong>Célula:</strong> ${membro.celula || '-'}</p>
+              <p><strong>Telefone:</strong> ${membro.telefone || '-'}</p>
+              <div class="status-atual">Status atual: ${status}</div>
+            </div>
+
+            <div class="acoes">
+              <button
+                class="btn-status ${status === 'presente' ? 'ativo-presente' : ''}"
+                onclick="marcarStatus(${membro.id}, 'presente')"
+              >
+                Presente
+              </button>
+
+              <button
+                class="btn-status ${status === 'ausente' ? 'ativo-ausente' : ''}"
+                onclick="marcarStatus(${membro.id}, 'ausente')"
+              >
+                Ausente
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function marcarStatus(membroId, status) {
+      presencas[membroId] = status;
+      renderizarMembros();
+      atualizarResumo();
+    }
+
+    function atualizarResumo() {
+      const total = membros.length;
+      const presentes = Object.values(presencas).filter((status) => status === 'presente').length;
+      const ausentes = total - presentes;
+
+      document.getElementById('totalMembros').textContent = `${total} membro(s)`;
+      document.getElementById('totalPresentes').textContent = `${presentes} presente(s)`;
+      document.getElementById('totalAusentes').textContent = `${ausentes} ausente(s)`;
+    }
+
+    async function carregarPresencasDaData() {
+      const data = document.getElementById('dataReuniao').value;
+      if (!data) return;
+
+      const resposta = await fetch(`${apiPresencas}/${data}`);
+      const registros = await resposta.json();
+
+      presencas = {};
+
+      membros.forEach((membro) => {
+        presencas[membro.id] = 'ausente';
+      });
+
+      registros.forEach((registro) => {
+        presencas[registro.membroId] = registro.status;
+      });
+
+      renderizarMembros();
+      atualizarResumo();
+    }
+
+    async function salvarPresencas() {
+      const data = document.getElementById('dataReuniao').value;
+      const mensagem = document.getElementById('mensagem');
+
+      if (!data) {
+        mensagem.textContent = 'Selecione a data da reunião.';
+        mensagem.style.color = '#dc2626';
+        return;
+      }
+
+      const registros = membros.map((membro) => ({
+        membroId: membro.id,
+        status: presencas[membro.id] || 'ausente'
+      }));
+
+      const resposta = await fetch(apiPresencas, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, registros })
+      });
+
+      if (resposta.ok) {
+        mensagem.textContent = 'Presença salva com sucesso.';
+        mensagem.style.color = '#16a34a';
+      } else {
+        mensagem.textContent = 'Erro ao salvar presença.';
+        mensagem.style.color = '#dc2626';
+      }
+    }
+
+    document.getElementById('dataReuniao').addEventListener('change', carregarPresencasDaData);
+
+    definirDataHoje();
+    carregarMembros();
+  </script>
+</body>
+<script>
+  if (localStorage.getItem('logado') !== 'sim') {
+    window.location.href = 'login.html';
+  }
+
+  function sair() {
+    localStorage.removeItem('logado');
+    localStorage.removeItem('usuario');
+    window.location.href = 'login.html';
+  }
+</script>
+</html>
