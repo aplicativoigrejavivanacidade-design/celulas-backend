@@ -357,7 +357,7 @@
     verificarPermissao('usuarios');
     aplicarPermissoesMenu();
 
-    const apiUrl = 'http://192.168.18.161:3000/usuarios';
+    const apiUrl = 'https://celulas-backend.onrender.com:3000/usuarios';
 
     async function carregarUsuarios() {
       const resposta = await fetch(apiUrl);
