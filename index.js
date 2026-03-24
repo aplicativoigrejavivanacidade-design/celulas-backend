@@ -45,6 +45,33 @@ function proximoId(lista) {
   return lista.length > 0 ? Math.max(...lista.map(item => item.id || 0)) + 1 : 1;
 }
 
+function textoMaiusculo(valor) {
+  if (valor === undefined || valor === null) return '';
+  return String(valor).trim().toUpperCase();
+}
+
+function normalizarMembro(dados = {}, membroAtual = null) {
+  return {
+    id: membroAtual ? membroAtual.id : undefined,
+    nome: textoMaiusculo(dados.nome || (membroAtual && membroAtual.nome)),
+    telefone: textoMaiusculo(dados.telefone || (membroAtual && membroAtual.telefone)),
+    celula: textoMaiusculo(dados.celula || (membroAtual && membroAtual.celula)),
+    nascimento: dados.nascimento !== undefined
+      ? dados.nascimento
+      : (membroAtual ? membroAtual.nascimento || '' : ''),
+    status: textoMaiusculo(dados.status || (membroAtual && membroAtual.status) || 'ATIVO'),
+    observacoes: textoMaiusculo(dados.observacoes || (membroAtual && membroAtual.observacoes)),
+
+    cep: textoMaiusculo(dados.cep || (membroAtual && membroAtual.cep)),
+    rua: textoMaiusculo(dados.rua || (membroAtual && membroAtual.rua)),
+    numero: textoMaiusculo(dados.numero || (membroAtual && membroAtual.numero)),
+    complemento: textoMaiusculo(dados.complemento || (membroAtual && membroAtual.complemento)),
+    bairro: textoMaiusculo(dados.bairro || (membroAtual && membroAtual.bairro)),
+    cidade: textoMaiusculo(dados.cidade || (membroAtual && membroAtual.cidade)),
+    estado: textoMaiusculo(dados.estado || (membroAtual && membroAtual.estado))
+  };
+}
+
 function garantirAdminPadrao() {
   const usuarios = lerJson(arquivoUsuarios, []);
   const existeAdmin = usuarios.some((u) => u.usuario === 'admin');
@@ -187,8 +214,12 @@ app.get('/membros', (req, res) => {
 
 app.post('/membros', (req, res) => {
   const membros = lerJson(arquivoMembros, []);
-  const novo = req.body;
 
+  if (!req.body.nome || String(req.body.nome).trim() === '') {
+    return res.status(400).json({ erro: 'Nome do membro é obrigatório' });
+  }
+
+  const novo = normalizarMembro(req.body);
   novo.id = proximoId(membros);
 
   membros.push(novo);
@@ -199,7 +230,6 @@ app.post('/membros', (req, res) => {
 app.put('/membros/:id', (req, res) => {
   const membros = lerJson(arquivoMembros, []);
   const id = Number(req.params.id);
-  const dadosAtualizados = req.body;
 
   const indice = membros.findIndex((membro) => membro.id === id);
 
@@ -207,11 +237,15 @@ app.put('/membros/:id', (req, res) => {
     return res.status(404).json({ erro: 'Membro não encontrado' });
   }
 
-  membros[indice] = {
-    ...membros[indice],
-    ...dadosAtualizados,
-    id
-  };
+  const atual = membros[indice];
+  const atualizado = normalizarMembro(req.body, atual);
+  atualizado.id = id;
+
+  if (!atualizado.nome || atualizado.nome.trim() === '') {
+    return res.status(400).json({ erro: 'Nome do membro é obrigatório' });
+  }
+
+  membros[indice] = atualizado;
 
   salvarJson(arquivoMembros, membros);
   res.json(membros[indice]);
@@ -220,6 +254,11 @@ app.put('/membros/:id', (req, res) => {
 app.delete('/membros/:id', (req, res) => {
   const membros = lerJson(arquivoMembros, []);
   const id = Number(req.params.id);
+
+  const existe = membros.some((membro) => membro.id === id);
+  if (!existe) {
+    return res.status(404).json({ erro: 'Membro não encontrado' });
+  }
 
   const filtrados = membros.filter((membro) => membro.id !== id);
   salvarJson(arquivoMembros, filtrados);
