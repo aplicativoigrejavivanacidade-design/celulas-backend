@@ -12,150 +12,107 @@ const pool = new Pool({
 });
 
 /* ================================
-   🔐 CRIAR ADMIN AUTOMÁTICO
+   ADMIN
 ================================ */
 async function criarAdmin() {
-  try {
-    const result = await pool.query("SELECT * FROM usuarios WHERE usuario = 'admin'");
-
-    if (result.rows.length === 0) {
-      await pool.query(
-        "INSERT INTO usuarios (nome, usuario, senha, nivel) VALUES ($1,$2,$3,$4)",
-        ["Administrador", "admin", "1234", "admin"]
-      );
-      console.log("Admin criado");
-    }
-  } catch (err) {
-    console.error(err.message);
+  const result = await pool.query("SELECT * FROM usuarios WHERE usuario = 'admin'");
+  if (result.rows.length === 0) {
+    await pool.query(
+      "INSERT INTO usuarios (nome, usuario, senha, nivel) VALUES ($1,$2,$3,$4)",
+      ["Administrador", "admin", "1234", "admin"]
+    );
   }
 }
 criarAdmin();
 
 /* ================================
-   🔐 LOGIN
+   LOGIN
 ================================ */
 app.post("/login", async (req, res) => {
-  try {
-    const { usuario, senha } = req.body;
+  const { usuario, senha } = req.body;
+  const result = await pool.query(
+    "SELECT * FROM usuarios WHERE usuario=$1 AND senha=$2",
+    [usuario, senha]
+  );
 
-    const result = await pool.query(
-      "SELECT * FROM usuarios WHERE usuario = $1 AND senha = $2",
-      [usuario, senha]
+  if (result.rows.length > 0) {
+    res.json({ usuario: result.rows[0] });
+  } else {
+    res.status(401).json({ erro: "Login inválido" });
+  }
+});
+
+/* ================================
+   MEMBROS
+================================ */
+app.get("/membros", async (req, res) => {
+  const result = await pool.query("SELECT * FROM membros ORDER BY id DESC");
+  res.json(result.rows);
+});
+
+app.post("/membros", async (req, res) => {
+  const dados = req.body;
+
+  await pool.query(`
+    INSERT INTO membros (
+      nome, telefone, celula, nascimento, status,
+      cep, rua, numero, complemento, bairro,
+      cidade, estado, observacoes
+    ) VALUES (
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+    )
+  `, Object.values(dados));
+
+  res.json({ ok: true });
+});
+
+/* ================================
+   PRESENÇA
+================================ */
+
+// BUSCAR POR DATA
+app.get("/presencas/:data", async (req, res) => {
+  const { data } = req.params;
+
+  const result = await pool.query(
+    "SELECT membro_id as \"membroId\", status FROM presencas WHERE data=$1",
+    [data]
+  );
+
+  res.json(result.rows);
+});
+
+// SALVAR/ATUALIZAR EM LOTE
+app.post("/presencas", async (req, res) => {
+  const { data, registros } = req.body;
+
+  for (const item of registros) {
+    const { membroId, status } = item;
+
+    const existe = await pool.query(
+      "SELECT * FROM presencas WHERE membro_id=$1 AND data=$2",
+      [membroId, data]
     );
 
-    if (result.rows.length > 0) {
-      res.json({ usuario: result.rows[0] });
+    if (existe.rows.length > 0) {
+      await pool.query(
+        "UPDATE presencas SET status=$1 WHERE membro_id=$2 AND data=$3",
+        [status, membroId, data]
+      );
     } else {
-      res.status(401).json({ erro: "Usuário ou senha inválidos" });
+      await pool.query(
+        "INSERT INTO presencas (membro_id, data, status) VALUES ($1,$2,$3)",
+        [membroId, data, status]
+      );
     }
-
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
   }
+
+  res.json({ ok: true });
 });
 
 /* ================================
-   👤 USUÁRIOS
-================================ */
-app.get("/usuarios", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM usuarios");
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-/* ================================
-   👥 MEMBROS
-================================ */
-
-// LISTAR
-app.get("/membros", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM membros ORDER BY id DESC");
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-// CRIAR
-app.post("/membros", async (req, res) => {
-  try {
-    const {
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes
-    } = req.body;
-
-    await pool.query(`
-      INSERT INTO membros (
-        nome, telefone, celula, nascimento, status,
-        cep, rua, numero, complemento, bairro,
-        cidade, estado, observacoes
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
-      )
-    `, [
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes
-    ]);
-
-    res.json({ ok: true });
-
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-// EDITAR
-app.put("/membros/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes
-    } = req.body;
-
-    await pool.query(`
-      UPDATE membros SET
-        nome=$1, telefone=$2, celula=$3, nascimento=$4, status=$5,
-        cep=$6, rua=$7, numero=$8, complemento=$9, bairro=$10,
-        cidade=$11, estado=$12, observacoes=$13
-      WHERE id=$14
-    `, [
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes, id
-    ]);
-
-    res.json({ ok: true });
-
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-// EXCLUIR
-app.delete("/membros/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query("DELETE FROM membros WHERE id=$1", [id]);
-
-    res.json({ ok: true });
-
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-/* ================================
-   🚀 START
+   START
 ================================ */
 app.listen(3000, () => {
-  console.log("Servidor rodando na porta 3000");
+  console.log("Servidor rodando");
 });
