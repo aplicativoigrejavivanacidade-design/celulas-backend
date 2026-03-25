@@ -11,7 +11,7 @@ app.use(express.json());
 ================================ */
 
 const pool = new Pool({
-  connectionString: "postgresql://postgres.ltrkuqikzkulppwaivis:SUA_SENHA_AQUI@aws-1-sa-east-1.pooler.supabase.com:5432/postgres",
+  connectionString: "postgresql://postgres.ltrkuqikzkulppwaivis:Aplicativoviva01*@aws-1-sa-east-1.pooler.supabase.com:5432/postgres",
   ssl: { rejectUnauthorized: false }
 });
 
