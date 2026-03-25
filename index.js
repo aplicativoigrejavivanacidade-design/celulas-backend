@@ -17,13 +17,13 @@ async function criarAdmin() {
 
     if (result.rows.length === 0) {
       await pool.query(
-        "INSERT INTO usuarios (nome, usuario, senha, nivel) VALUES ($1,$2,$3,$4)",
+        "INSERT INTO usuarios (nome, usuario, senha, nivel) VALUES ($1, $2, $3, $4)",
         ["Administrador", "admin", "1234", "admin"]
       );
       console.log("Admin criado");
     }
   } catch (err) {
-    console.error(err.message);
+    console.error("Erro ao criar admin:", err.message);
   }
 }
 
@@ -43,7 +43,6 @@ app.post("/login", async (req, res) => {
     } else {
       res.status(401).json({ erro: "Usuário ou senha inválidos" });
     }
-
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -51,8 +50,23 @@ app.post("/login", async (req, res) => {
 
 app.get("/usuarios", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM usuarios");
+    const result = await pool.query("SELECT * FROM usuarios ORDER BY id ASC");
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.post("/usuarios", async (req, res) => {
+  try {
+    const { nome, usuario, senha, nivel } = req.body;
+
+    await pool.query(
+      "INSERT INTO usuarios (nome, usuario, senha, nivel) VALUES ($1, $2, $3, $4)",
+      [nome, usuario, senha, nivel]
+    );
+
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -60,13 +74,35 @@ app.get("/usuarios", async (req, res) => {
 
 app.get("/membros", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM membros");
+    const result = await pool.query("SELECT * FROM membros ORDER BY id DESC");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
 
+app.post("/membros", async (req, res) => {
+  try {
+    const {
+      nome, telefone, celula, nascimento, status,
+      cep, rua, numero, complemento, bairro,
+      cidade, estado, observacoes
+    } = req.body;
+
+    await pool.query(
+      `INSERT INTO membros
+      (nome, telefone, celula, nascimento, status, cep, rua, numero, complemento, bairro, cidade, estado, observacoes)
+      VALUES
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [nome, telefone, celula, nascimento, status, cep, rua, numero, complemento, bairro, cidade, estado, observacoes]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 app.listen(3000, () => {
-  console.log("Servidor rodando");
+  console.log("Servidor rodando na porta 3000");
 });
