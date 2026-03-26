@@ -164,6 +164,15 @@ app.post("/celulas", async (req, res) => {
       membrosSelecionados
     } = req.body;
 
+    const existe = await pool.query(
+      "SELECT * FROM celulas WHERE nome=$1",
+      [nomeCelula]
+    );
+
+    if (existe.rows.length > 0) {
+      return res.status(400).json({ erro: "Célula já existe" });
+    }
+
     const result = await pool.query(`
       INSERT INTO celulas (
         nome, dia_semana, hora, anfitriao,
