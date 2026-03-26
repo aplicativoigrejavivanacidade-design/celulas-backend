@@ -12,6 +12,24 @@ const pool = new Pool({
 });
 
 /* ================================
+   NORMALIZAÇÃO
+================================ */
+function normalizarTexto(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ç/gi, "c")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function montarNomeCelulaExibicao(valor) {
+  const base = normalizarTexto(valor).replace(/^CELULA\s*/i, "").trim();
+  return base ? `CÉLULA ${base}` : "";
+}
+
+/* ================================
    ADMIN
 ================================ */
 async function criarAdmin() {
@@ -82,9 +100,19 @@ app.post("/membros", async (req, res) => {
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
       )
     `, [
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes
+      normalizarTexto(nome),
+      telefone,
+      celula ? montarNomeCelulaExibicao(celula) : "",
+      nascimento,
+      normalizarTexto(status),
+      cep,
+      normalizarTexto(rua),
+      normalizarTexto(numero),
+      normalizarTexto(complemento),
+      normalizarTexto(bairro),
+      normalizarTexto(cidade),
+      normalizarTexto(estado),
+      normalizarTexto(observacoes)
     ]);
 
     res.json({ ok: true });
@@ -110,9 +138,20 @@ app.put("/membros/:id", async (req, res) => {
         cidade=$11, estado=$12, observacoes=$13
       WHERE id=$14
     `, [
-      nome, telefone, celula, nascimento, status,
-      cep, rua, numero, complemento, bairro,
-      cidade, estado, observacoes, id
+      normalizarTexto(nome),
+      telefone,
+      celula ? montarNomeCelulaExibicao(celula) : "",
+      nascimento,
+      normalizarTexto(status),
+      cep,
+      normalizarTexto(rua),
+      normalizarTexto(numero),
+      normalizarTexto(complemento),
+      normalizarTexto(bairro),
+      normalizarTexto(cidade),
+      normalizarTexto(estado),
+      normalizarTexto(observacoes),
+      id
     ]);
 
     res.json({ ok: true });
@@ -146,6 +185,22 @@ app.get("/celulas", async (req, res) => {
   }
 });
 
+app.get("/celulas/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query("SELECT * FROM celulas WHERE id=$1", [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: "Célula não encontrada" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (erro) {
+    console.error("Erro ao buscar célula:", erro.message);
+    res.status(500).json({ erro: "Erro ao buscar célula" });
+  }
+});
+
 app.post("/celulas", async (req, res) => {
   try {
     const {
@@ -164,9 +219,12 @@ app.post("/celulas", async (req, res) => {
       membrosSelecionados
     } = req.body;
 
+    const nomeExibicao = montarNomeCelulaExibicao(nomeCelula);
+    const nomeNormalizado = normalizarTexto(nomeExibicao);
+
     const existe = await pool.query(
-      "SELECT * FROM celulas WHERE nome=$1",
-      [nomeCelula]
+      "SELECT * FROM celulas WHERE nome_normalizado=$1",
+      [nomeNormalizado]
     );
 
     if (existe.rows.length > 0) {
@@ -175,13 +233,48 @@ app.post("/celulas", async (req, res) => {
 
     const result = await pool.query(`
       INSERT INTO celulas (
-        nome, dia_semana, hora, anfitriao,
+        nome, nome_normalizado, dia_semana, hora, anfitriao,
         cep, rua, numero, complemento,
         bairro, cidade, estado, geolocalizacao
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING id
     `, [
+      nomeExibicao,
+      nomeNormalizado,
+      normalizarTexto(diaSemana),
+      horaReuniao,
+      anfitriao,
+      cep,
+      normalizarTexto(rua),
+      normalizarTexto(numero),
+      normalizarTexto(complemento),
+      normalizarTexto(bairro),
+      normalizarTexto(cidade),
+      normalizarTexto(estado),
+      geolocalizacao
+    ]);
+
+    if (Array.isArray(membrosSelecionados)) {
+      for (const membroId of membrosSelecionados) {
+        await pool.query(
+          "UPDATE membros SET celula=$1 WHERE id=$2",
+          [nomeExibicao, membroId]
+        );
+      }
+    }
+
+    res.json({ ok: true, celulaId: result.rows[0].id });
+  } catch (erro) {
+    console.error("Erro ao salvar célula:", erro.message);
+    res.status(500).json({ erro: "Erro ao salvar célula" });
+  }
+});
+
+app.put("/celulas/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
       nomeCelula,
       diaSemana,
       horaReuniao,
@@ -193,22 +286,77 @@ app.post("/celulas", async (req, res) => {
       bairro,
       cidade,
       estado,
-      geolocalizacao
+      geolocalizacao,
+      membrosSelecionados
+    } = req.body;
+
+    const nomeExibicao = montarNomeCelulaExibicao(nomeCelula);
+    const nomeNormalizado = normalizarTexto(nomeExibicao);
+
+    const existe = await pool.query(
+      "SELECT * FROM celulas WHERE nome_normalizado=$1 AND id<>$2",
+      [nomeNormalizado, id]
+    );
+
+    if (existe.rows.length > 0) {
+      return res.status(400).json({ erro: "Já existe outra célula com esse nome" });
+    }
+
+    const antiga = await pool.query("SELECT * FROM celulas WHERE id=$1", [id]);
+    if (antiga.rows.length === 0) {
+      return res.status(404).json({ erro: "Célula não encontrada" });
+    }
+
+    const nomeAntigo = antiga.rows[0].nome;
+
+    await pool.query(`
+      UPDATE celulas SET
+        nome=$1,
+        nome_normalizado=$2,
+        dia_semana=$3,
+        hora=$4,
+        anfitriao=$5,
+        cep=$6,
+        rua=$7,
+        numero=$8,
+        complemento=$9,
+        bairro=$10,
+        cidade=$11,
+        estado=$12,
+        geolocalizacao=$13
+      WHERE id=$14
+    `, [
+      nomeExibicao,
+      nomeNormalizado,
+      normalizarTexto(diaSemana),
+      horaReuniao,
+      anfitriao,
+      cep,
+      normalizarTexto(rua),
+      normalizarTexto(numero),
+      normalizarTexto(complemento),
+      normalizarTexto(bairro),
+      normalizarTexto(cidade),
+      normalizarTexto(estado),
+      geolocalizacao,
+      id
     ]);
+
+    await pool.query("UPDATE membros SET celula='' WHERE celula=$1", [nomeAntigo]);
 
     if (Array.isArray(membrosSelecionados)) {
       for (const membroId of membrosSelecionados) {
         await pool.query(
           "UPDATE membros SET celula=$1 WHERE id=$2",
-          [nomeCelula, membroId]
+          [nomeExibicao, membroId]
         );
       }
     }
 
-    res.json({ ok: true, celulaId: result.rows[0].id });
+    res.json({ ok: true });
   } catch (erro) {
-    console.error("Erro ao salvar célula:", erro.message);
-    res.status(500).json({ erro: "Erro ao salvar célula" });
+    console.error("Erro ao atualizar célula:", erro.message);
+    res.status(500).json({ erro: "Erro ao atualizar célula" });
   }
 });
 
