@@ -5,146 +5,300 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>+Células | Login</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #0f766e;
+      --text: #111827;
+      --muted: #6b7280;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --bg: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+      --shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+      --radius: 26px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #1d4ed8, #16a34a);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
+      color: var(--text);
     }
 
-    .card {
+    .card-login {
       width: 100%;
-      max-width: 420px;
-      background: white;
-      border-radius: 24px;
-      padding: 30px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      max-width: 520px;
+      background: #ffffff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 34px 28px 26px;
     }
 
     .logo {
-      font-size: 34px;
-      font-weight: bold;
-      color: #1d4ed8;
-      margin-bottom: 8px;
+      margin: 0;
       text-align: center;
+      font-size: 56px;
+      line-height: 1;
+      color: var(--blue);
+      font-weight: 800;
+      letter-spacing: -1px;
     }
 
     .sub {
       text-align: center;
-      color: #4b5563;
-      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: 17px;
+      margin: 12px 0 28px;
     }
 
     label {
       display: block;
-      margin-bottom: 6px;
-      margin-top: 14px;
-      font-weight: bold;
-      font-size: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #111827;
     }
 
     input {
       width: 100%;
-      padding: 13px 14px;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
-      font-size: 15px;
+      height: 66px;
+      border: 1px solid #d1d9e6;
+      border-radius: 18px;
+      padding: 0 18px;
+      font-size: 18px;
+      outline: none;
+      transition: 0.2s;
+      margin-bottom: 22px;
+      background: #fff;
     }
 
     input:focus {
-      outline: none;
-      border-color: #2563eb;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .acoes {
+      margin-top: 6px;
     }
 
     button {
       width: 100%;
-      margin-top: 22px;
-      padding: 14px;
+      height: 66px;
       border: none;
-      border-radius: 12px;
-      background: #2563eb;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     button:hover {
-      background: #1d4ed8;
+      transform: translateY(-1px);
+      filter: brightness(1.03);
     }
 
-    .mensagem {
-      margin-top: 14px;
-      min-height: 20px;
+    button:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .msg {
+      min-height: 28px;
       text-align: center;
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 18px;
     }
 
-    .dica {
-      margin-top: 20px;
-      padding: 14px;
-      background: #eff6ff;
-      border-radius: 12px;
-      font-size: 14px;
-      color: #1e3a8a;
+    .msg.erro {
+      color: var(--danger);
+    }
+
+    .msg.sucesso {
+      color: var(--success);
+    }
+
+    .box-ajuda {
+      margin-top: 22px;
+      background: #eef4ff;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #111827;
+    }
+
+    .rodape {
+      margin-top: 14px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .card-login {
+        padding: 26px 20px 22px;
+        border-radius: 22px;
+      }
+
+      .logo {
+        font-size: 48px;
+      }
+
+      .sub {
+        font-size: 16px;
+      }
+
+      input,
+      button {
+        height: 60px;
+        font-size: 17px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">+Células</div>
+  <div class="card-login">
+    <h1 class="logo">+Células</h1>
     <div class="sub">Acesse o sistema com seu usuário</div>
 
     <label for="usuario">Usuário</label>
-    <input type="text" id="usuario" placeholder="Digite seu usuário" />
+    <input id="usuario" type="text" placeholder="Digite seu usuário" value="admin" autocomplete="username" />
 
     <label for="senha">Senha</label>
-    <input type="password" id="senha" placeholder="Digite sua senha" />
+    <input id="senha" type="password" placeholder="Digite sua senha" value="1234" autocomplete="current-password" />
 
-    <button onclick="entrar()">Entrar</button>
+    <div class="acoes">
+      <button id="btnEntrar" type="button">Entrar</button>
+    </div>
 
-    <div class="mensagem" id="mensagem"></div>
+    <div id="msg" class="msg"></div>
 
-    <div class="dica">
-      <strong>Acesso inicial:</strong><br>
-      Usuário: <strong>admin</strong><br>
+    <div class="box-ajuda">
+      <strong>Acesso inicial:</strong><br />
+      Usuário: <strong>admin</strong><br />
       Senha: <strong>1234</strong>
     </div>
+
+    <div class="rodape">+Células • Gestão de células</div>
   </div>
 
   <script>
-    async function entrar() {
-      const usuario = document.getElementById('usuario').value.trim();
-      const senha = document.getElementById('senha').value.trim();
-      const mensagem = document.getElementById('mensagem');
+    const API_BASE = "https://celulas-backend.onrender.com";
 
-      mensagem.textContent = '';
+    const campoUsuario = document.getElementById("usuario");
+    const campoSenha = document.getElementById("senha");
+    const btnEntrar = document.getElementById("btnEntrar");
+    const msg = document.getElementById("msg");
 
-      const resposta = await fetch('https://celulas-backend.onrender.com:3000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, senha })
-      });
+    function mostrarMensagem(texto, tipo = "") {
+      msg.textContent = texto;
+      msg.className = "msg" + (tipo ? " " + tipo : "");
+    }
 
-      const dados = await resposta.json();
+    function limparSessaoAntiga() {
+      localStorage.removeItem("logado");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("nomeUsuario");
+      localStorage.removeItem("nivelUsuario");
+      localStorage.removeItem("usuarioId");
+    }
 
-      if (resposta.ok) {
-        localStorage.setItem('logado', 'sim');
-        localStorage.setItem('usuario', dados.usuario.usuario);
-        localStorage.setItem('nomeUsuario', dados.usuario.nome);
-        localStorage.setItem('nivelUsuario', dados.usuario.nivel);
-        window.location.href = 'painel.html';
-      } else {
-        mensagem.textContent = dados.erro || 'Erro ao entrar.';
-        mensagem.style.color = '#dc2626';
+    function salvarSessao(dados) {
+      const usuario = dados?.usuario || {};
+
+      localStorage.setItem("logado", "sim");
+      localStorage.setItem("usuario", usuario.usuario || campoUsuario.value.trim());
+      localStorage.setItem("nomeUsuario", usuario.nome || usuario.usuario || campoUsuario.value.trim() || "Administrador");
+      localStorage.setItem("nivelUsuario", String(usuario.nivel || "ADMIN").toLowerCase());
+      localStorage.setItem("usuarioId", usuario.id || "");
+    }
+
+    async function fazerLogin() {
+      const usuario = campoUsuario.value.trim();
+      const senha = campoSenha.value.trim();
+
+      if (!usuario || !senha) {
+        mostrarMensagem("Informe usuário e senha.", "erro");
+        return;
+      }
+
+      btnEntrar.disabled = true;
+      btnEntrar.textContent = "Entrando...";
+      mostrarMensagem("Validando acesso...");
+
+      try {
+        limparSessaoAntiga();
+
+        const resposta = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ usuario, senha })
+        });
+
+        let dados = {};
+        try {
+          dados = await resposta.json();
+        } catch {
+          dados = {};
+        }
+
+        if (!resposta.ok) {
+          throw new Error(dados.erro || dados.mensagem || "Falha no login.");
+        }
+
+        if (dados.sucesso === false) {
+          throw new Error(dados.erro || "Usuário ou senha inválidos.");
+        }
+
+        salvarSessao(dados);
+        mostrarMensagem("Login realizado com sucesso.", "sucesso");
+
+        setTimeout(() => {
+          window.location.href = "/painel.html";
+        }, 500);
+      } catch (erro) {
+        console.error("Erro no login:", erro);
+        mostrarMensagem(erro.message || "Usuário ou senha inválidos.", "erro");
+      } finally {
+        btnEntrar.disabled = false;
+        btnEntrar.textContent = "Entrar";
       }
     }
+
+    btnEntrar.addEventListener("click", fazerLogin);
+
+    campoSenha.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        fazerLogin();
+      }
+    });
+
+    campoUsuario.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        fazerLogin();
+      }
+    });
+
+    window.addEventListener("load", () => {
+      limparSessaoAntiga();
+      campoUsuario.focus();
+      campoUsuario.select();
+    });
   </script>
 </body>
 </html>
