@@ -88,7 +88,8 @@ async function garantirTabelas() {
       bairro TEXT,
       cidade TEXT,
       estado TEXT,
-      geolocalizacao TEXT
+      geolocalizacao TEXT,
+      ativo BOOLEAN DEFAULT TRUE
     )
   `);
 
@@ -109,6 +110,17 @@ async function garantirTabelas() {
   await pool.query(`
     ALTER TABLE celulas
     ADD COLUMN IF NOT EXISTS lider_celula TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE celulas
+    ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE
+  `);
+
+  await pool.query(`
+    UPDATE celulas
+    SET ativo = TRUE
+    WHERE ativo IS NULL
   `);
 }
 
@@ -131,6 +143,117 @@ async function criarAdmin() {
 }
 
 /* ================================
+   APOIOS DE VALIDAÇÃO
+================================ */
+async function obterCelulaPorId(id) {
+  const result = await pool.query("SELECT * FROM celulas WHERE id = $1", [id]);
+  return result.rows[0] || null;
+}
+
+async function obterMembroPorId(id) {
+  const result = await pool.query("SELECT * FROM membros WHERE id = $1", [id]);
+  return result.rows[0] || null;
+}
+
+async function validarExclusaoMembro(membroId) {
+  const membro = await obterMembroPorId(membroId);
+
+  if (!membro) {
+    return { ok: false, status: 404, erro: "Membro não encontrado." };
+  }
+
+  if (String(membro.celula || "").trim()) {
+    return {
+      ok: false,
+      status: 400,
+      erro: `Este membro está vinculado à ${membro.celula}. Remova o vínculo na tela de Células antes de excluir.`
+    };
+  }
+
+  const lider = await pool.query(
+    "SELECT nome FROM celulas WHERE lider_celula = $1 LIMIT 1",
+    [String(membroId)]
+  );
+
+  if (lider.rows.length > 0) {
+    return {
+      ok: false,
+      status: 400,
+      erro: `Este membro está vinculado como líder da ${lider.rows[0].nome}. Remova o vínculo antes de excluir.`
+    };
+  }
+
+  const anfitriao = await pool.query(
+    "SELECT nome FROM celulas WHERE anfitriao = $1 LIMIT 1",
+    [String(membroId)]
+  );
+
+  if (anfitriao.rows.length > 0) {
+    return {
+      ok: false,
+      status: 400,
+      erro: `Este membro está vinculado como anfitrião da ${anfitriao.rows[0].nome}. Remova o vínculo antes de excluir.`
+    };
+  }
+
+  const presencas = await pool.query(
+    "SELECT COUNT(*)::int AS total FROM presencas WHERE membro_id = $1",
+    [membroId]
+  );
+
+  if ((presencas.rows[0]?.total || 0) > 0) {
+    return {
+      ok: false,
+      status: 400,
+      erro: "Este membro possui registros de presença. Remova primeiro os vínculos de presença antes de excluir."
+    };
+  }
+
+  return { ok: true, membro };
+}
+
+async function validarExclusaoCelula(celulaId) {
+  const celula = await obterCelulaPorId(celulaId);
+
+  if (!celula) {
+    return { ok: false, status: 404, erro: "Célula não encontrada." };
+  }
+
+  const membrosVinculados = await pool.query(
+    "SELECT COUNT(*)::int AS total FROM membros WHERE celula = $1",
+    [celula.nome]
+  );
+
+  if ((membrosVinculados.rows[0]?.total || 0) > 0) {
+    return {
+      ok: false,
+      status: 400,
+      erro: `A ${celula.nome} possui membros vinculados. Remova os vínculos na tela de Células antes de excluir.`
+    };
+  }
+
+  const presencasComCelula = await pool.query(
+    `
+    SELECT COUNT(*)::int AS total
+    FROM presencas p
+    INNER JOIN membros m ON m.id = p.membro_id
+    WHERE m.celula = $1
+    `,
+    [celula.nome]
+  );
+
+  if ((presencasComCelula.rows[0]?.total || 0) > 0) {
+    return {
+      ok: false,
+      status: 400,
+      erro: `A ${celula.nome} possui histórico de presenças/relatórios. Não é possível excluir. Use a opção de inativar célula.`
+    };
+  }
+
+  return { ok: true, celula };
+}
+
+/* ================================
    ROTAS BÁSICAS
 ================================ */
 app.get("/", (req, res) => {
@@ -140,7 +263,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V14",
+    sistema: "+Células Backend V15",
     status: "ONLINE"
   });
 });
@@ -500,7 +623,15 @@ app.put("/membros/:id", async (req, res) => {
 app.delete("/membros/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
+    const validacao = await validarExclusaoMembro(id);
+
+    if (!validacao.ok) {
+      return res.status(validacao.status).json({ erro: validacao.erro });
+    }
+
     await pool.query("DELETE FROM membros WHERE id = $1", [id]);
+
     res.json({ ok: true });
   } catch (erro) {
     console.error("Erro ao excluir membro:", erro.message);
@@ -571,9 +702,9 @@ app.post("/celulas", async (req, res) => {
     const result = await pool.query(`
       INSERT INTO celulas (
         nome, nome_normalizado, dia_semana, hora, anfitriao, lider_celula,
-        cep, rua, numero, complemento, bairro, cidade, estado, geolocalizacao
+        cep, rua, numero, complemento, bairro, cidade, estado, geolocalizacao, ativo
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING id
     `, [
       nomeExibicao,
@@ -589,7 +720,8 @@ app.post("/celulas", async (req, res) => {
       normalizarTexto(bairro),
       normalizarTexto(cidade),
       normalizarTexto(estado),
-      String(geolocalizacao || "").trim()
+      String(geolocalizacao || "").trim(),
+      true
     ]);
 
     if (Array.isArray(membrosSelecionados) && membrosSelecionados.length > 0) {
@@ -713,19 +845,58 @@ app.put("/celulas/:id", async (req, res) => {
   }
 });
 
+app.post("/celulas/:id/inativar", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const celula = await obterCelulaPorId(id);
+    if (!celula) {
+      return res.status(404).json({ erro: "Célula não encontrada" });
+    }
+
+    await pool.query("UPDATE celulas SET ativo = FALSE WHERE id = $1", [id]);
+
+    return res.json({
+      ok: true,
+      mensagem: `${celula.nome} foi inativada com sucesso.`
+    });
+  } catch (erro) {
+    console.error("Erro ao inativar célula:", erro.message);
+    return res.status(500).json({ erro: "Erro ao inativar célula" });
+  }
+});
+
+app.post("/celulas/:id/ativar", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const celula = await obterCelulaPorId(id);
+    if (!celula) {
+      return res.status(404).json({ erro: "Célula não encontrada" });
+    }
+
+    await pool.query("UPDATE celulas SET ativo = TRUE WHERE id = $1", [id]);
+
+    return res.json({
+      ok: true,
+      mensagem: `${celula.nome} foi ativada com sucesso.`
+    });
+  } catch (erro) {
+    console.error("Erro ao ativar célula:", erro.message);
+    return res.status(500).json({ erro: "Erro ao ativar célula" });
+  }
+});
+
 app.delete("/celulas/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const atual = await pool.query("SELECT * FROM celulas WHERE id = $1", [id]);
+    const validacao = await validarExclusaoCelula(id);
 
-    if (atual.rows.length === 0) {
-      return res.status(404).json({ erro: "Célula não encontrada" });
+    if (!validacao.ok) {
+      return res.status(validacao.status).json({ erro: validacao.erro });
     }
 
-    const nomeCelula = atual.rows[0].nome;
-
-    await pool.query("UPDATE membros SET celula = '' WHERE celula = $1", [nomeCelula]);
     await pool.query("DELETE FROM celulas WHERE id = $1", [id]);
 
     res.json({ ok: true });
@@ -833,7 +1004,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V14 rodando na porta ${PORT}`);
+      console.log(`+Células Backend V15 rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
