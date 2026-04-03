@@ -80,6 +80,7 @@ async function garantirTabelas() {
       dia_semana TEXT,
       hora TEXT,
       anfitriao TEXT,
+      lider_celula TEXT,
       cep TEXT,
       rua TEXT,
       numero TEXT,
@@ -103,6 +104,11 @@ async function garantirTabelas() {
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_celulas_nome_normalizado
     ON celulas (nome_normalizado)
+  `);
+
+  await pool.query(`
+    ALTER TABLE celulas
+    ADD COLUMN IF NOT EXISTS lider_celula TEXT
   `);
 }
 
@@ -134,7 +140,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V12",
+    sistema: "+Células Backend V13",
     status: "ONLINE"
   });
 });
@@ -167,6 +173,70 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro no login."
+    });
+  }
+});
+
+/* ================================
+   GEOCODIFICAÇÃO
+================================ */
+app.post("/geolocalizacao", async (req, res) => {
+  try {
+    const {
+      cep,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      estado
+    } = req.body || {};
+
+    const partes = [
+      String(numero || "").trim(),
+      String(rua || "").trim(),
+      String(bairro || "").trim(),
+      String(cidade || "").trim(),
+      String(estado || "").trim(),
+      String(cep || "").trim()
+    ].filter(Boolean);
+
+    if (partes.length < 4) {
+      return res.status(400).json({
+        ok: false,
+        erro: "Endereço insuficiente para geolocalização."
+      });
+    }
+
+    const query = encodeURIComponent(partes.join(", "));
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`;
+
+    const resposta = await fetch(url, {
+      headers: {
+        "User-Agent": "mais-celulas/1.0"
+      }
+    });
+
+    const dados = await resposta.json();
+
+    if (Array.isArray(dados) && dados.length > 0) {
+      const lat = Number(dados[0].lat).toFixed(6);
+      const lon = Number(dados[0].lon).toFixed(6);
+
+      return res.json({
+        ok: true,
+        geolocalizacao: `${lat}, ${lon}`
+      });
+    }
+
+    return res.status(404).json({
+      ok: false,
+      erro: "Não foi possível gerar a geolocalização."
+    });
+  } catch (erro) {
+    console.error("Erro ao gerar geolocalização:", erro.message);
+    return res.status(500).json({
+      ok: false,
+      erro: "Erro ao gerar geolocalização."
     });
   }
 });
@@ -310,7 +380,7 @@ app.get("/membros/:id", async (req, res) => {
 app.post("/membros", async (req, res) => {
   try {
     const {
-      nome, telefone, celula, nascimento, status,
+      nome, telefone, nascimento, status,
       cep, rua, numero, complemento, bairro,
       cidade, estado, observacoes
     } = req.body;
@@ -326,7 +396,7 @@ app.post("/membros", async (req, res) => {
     `, [
       normalizarTexto(nome),
       String(telefone || "").trim(),
-      celula ? montarNomeCelulaExibicao(celula) : "",
+      "",
       String(nascimento || "").trim(),
       normalizarTexto(status),
       String(cep || "").trim(),
@@ -350,10 +420,18 @@ app.put("/membros/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      nome, telefone, celula, nascimento, status,
+      nome, telefone, nascimento, status,
       cep, rua, numero, complemento, bairro,
       cidade, estado, observacoes
     } = req.body;
+
+    const atual = await pool.query("SELECT * FROM membros WHERE id = $1", [id]);
+
+    if (atual.rows.length === 0) {
+      return res.status(404).json({ erro: "Membro não encontrado" });
+    }
+
+    const celulaAtual = atual.rows[0].celula || "";
 
     await pool.query(`
       UPDATE membros SET
@@ -374,7 +452,7 @@ app.put("/membros/:id", async (req, res) => {
     `, [
       normalizarTexto(nome),
       String(telefone || "").trim(),
-      celula ? montarNomeCelulaExibicao(celula) : "",
+      celulaAtual,
       String(nascimento || "").trim(),
       normalizarTexto(status),
       String(cep || "").trim(),
@@ -442,6 +520,7 @@ app.post("/celulas", async (req, res) => {
       diaSemana,
       horaReuniao,
       anfitriao,
+      liderCelula,
       cep,
       rua,
       numero,
@@ -467,10 +546,10 @@ app.post("/celulas", async (req, res) => {
 
     const result = await pool.query(`
       INSERT INTO celulas (
-        nome, nome_normalizado, dia_semana, hora, anfitriao,
+        nome, nome_normalizado, dia_semana, hora, anfitriao, lider_celula,
         cep, rua, numero, complemento, bairro, cidade, estado, geolocalizacao
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING id
     `, [
       nomeExibicao,
@@ -478,6 +557,7 @@ app.post("/celulas", async (req, res) => {
       normalizarTexto(diaSemana),
       String(horaReuniao || "").trim(),
       String(anfitriao || "").trim(),
+      String(liderCelula || "").trim(),
       String(cep || "").trim(),
       normalizarTexto(rua),
       normalizarTexto(numero),
@@ -491,7 +571,12 @@ app.post("/celulas", async (req, res) => {
     if (Array.isArray(membrosSelecionados) && membrosSelecionados.length > 0) {
       for (const membroId of membrosSelecionados) {
         await pool.query(
-          "UPDATE membros SET celula = $1 WHERE id = $2",
+          `
+          UPDATE membros
+          SET celula = $1
+          WHERE id = $2
+            AND (celula IS NULL OR celula = '' OR celula = $1)
+          `,
           [nomeExibicao, membroId]
         );
       }
@@ -512,6 +597,7 @@ app.put("/celulas/:id", async (req, res) => {
       diaSemana,
       horaReuniao,
       anfitriao,
+      liderCelula,
       cep,
       rua,
       numero,
@@ -549,21 +635,23 @@ app.put("/celulas/:id", async (req, res) => {
         dia_semana = $3,
         hora = $4,
         anfitriao = $5,
-        cep = $6,
-        rua = $7,
-        numero = $8,
-        complemento = $9,
-        bairro = $10,
-        cidade = $11,
-        estado = $12,
-        geolocalizacao = $13
-      WHERE id = $14
+        lider_celula = $6,
+        cep = $7,
+        rua = $8,
+        numero = $9,
+        complemento = $10,
+        bairro = $11,
+        cidade = $12,
+        estado = $13,
+        geolocalizacao = $14
+      WHERE id = $15
     `, [
       nomeExibicao,
       nomeNormalizado,
       normalizarTexto(diaSemana),
       String(horaReuniao || "").trim(),
       String(anfitriao || "").trim(),
+      String(liderCelula || "").trim(),
       String(cep || "").trim(),
       normalizarTexto(rua),
       normalizarTexto(numero),
@@ -575,15 +663,22 @@ app.put("/celulas/:id", async (req, res) => {
       id
     ]);
 
+    /* mantém os membros já vinculados à célula antiga, apenas atualizando o nome da célula */
     await pool.query(
-      "UPDATE membros SET celula = '' WHERE celula = $1",
-      [nomeAntigo]
+      "UPDATE membros SET celula = $1 WHERE celula = $2",
+      [nomeExibicao, nomeAntigo]
     );
 
+    /* adiciona apenas novos membros disponíveis marcados */
     if (Array.isArray(membrosSelecionados) && membrosSelecionados.length > 0) {
       for (const membroId of membrosSelecionados) {
         await pool.query(
-          "UPDATE membros SET celula = $1 WHERE id = $2",
+          `
+          UPDATE membros
+          SET celula = $1
+          WHERE id = $2
+            AND (celula IS NULL OR celula = '' OR celula = $1)
+          `,
           [nomeExibicao, membroId]
         );
       }
@@ -716,7 +811,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V12 rodando na porta ${PORT}`);
+      console.log(`+Células Backend V13 rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
