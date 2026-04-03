@@ -140,7 +140,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V13",
+    sistema: "+Células Backend V14",
     status: "ONLINE"
   });
 });
@@ -191,41 +191,65 @@ app.post("/geolocalizacao", async (req, res) => {
       estado
     } = req.body || {};
 
-    const partes = [
+    const cepLimpo = String(cep || "").replace(/\D/g, "").trim();
+
+    const tentativas = [];
+
+    const principal = [
       String(numero || "").trim(),
       String(rua || "").trim(),
       String(bairro || "").trim(),
       String(cidade || "").trim(),
       String(estado || "").trim(),
-      String(cep || "").trim()
-    ].filter(Boolean);
+      cepLimpo
+    ].filter(Boolean).join(", ");
 
-    if (partes.length < 4) {
-      return res.status(400).json({
-        ok: false,
-        erro: "Endereço insuficiente para geolocalização."
+    if (principal) tentativas.push(principal);
+
+    const semNumero = [
+      String(rua || "").trim(),
+      String(bairro || "").trim(),
+      String(cidade || "").trim(),
+      String(estado || "").trim(),
+      cepLimpo
+    ].filter(Boolean).join(", ");
+
+    if (semNumero && semNumero !== principal) tentativas.push(semNumero);
+
+    const soCepCidade = [
+      cepLimpo,
+      String(cidade || "").trim(),
+      String(estado || "").trim(),
+      "Brasil"
+    ].filter(Boolean).join(", ");
+
+    if (soCepCidade) tentativas.push(soCepCidade);
+
+    for (const tentativa of tentativas) {
+      const url = new URL("https://nominatim.openstreetmap.org/search");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("limit", "1");
+      url.searchParams.set("countrycodes", "br");
+      url.searchParams.set("q", tentativa);
+
+      const resposta = await fetch(url.toString(), {
+        headers: {
+          "User-Agent": "mais-celulas/1.0",
+          "Accept-Language": "pt-BR"
+        }
       });
-    }
 
-    const query = encodeURIComponent(partes.join(", "));
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`;
+      const dados = await resposta.json();
 
-    const resposta = await fetch(url, {
-      headers: {
-        "User-Agent": "mais-celulas/1.0"
+      if (Array.isArray(dados) && dados.length > 0) {
+        const lat = Number(dados[0].lat).toFixed(6);
+        const lon = Number(dados[0].lon).toFixed(6);
+
+        return res.json({
+          ok: true,
+          geolocalizacao: `${lat}, ${lon}`
+        });
       }
-    });
-
-    const dados = await resposta.json();
-
-    if (Array.isArray(dados) && dados.length > 0) {
-      const lat = Number(dados[0].lat).toFixed(6);
-      const lon = Number(dados[0].lon).toFixed(6);
-
-      return res.json({
-        ok: true,
-        geolocalizacao: `${lat}, ${lon}`
-      });
     }
 
     return res.status(404).json({
@@ -246,7 +270,7 @@ app.post("/geolocalizacao", async (req, res) => {
 ================================ */
 app.get("/usuarios", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM usuarios ORDER BY id DESC");
+    const result = await pool.query("SELECT * FROM usuarios ORDER BY nome ASC, id DESC");
     res.json(result.rows);
   } catch (erro) {
     console.error("Erro ao buscar usuários:", erro.message);
@@ -353,7 +377,7 @@ app.delete("/usuarios/:id", async (req, res) => {
 ================================ */
 app.get("/membros", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM membros ORDER BY id DESC");
+    const result = await pool.query("SELECT * FROM membros ORDER BY nome ASC, id DESC");
     res.json(result.rows);
   } catch (erro) {
     console.error("Erro ao buscar membros:", erro.message);
@@ -489,7 +513,7 @@ app.delete("/membros/:id", async (req, res) => {
 ================================ */
 app.get("/celulas", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM celulas ORDER BY id DESC");
+    const result = await pool.query("SELECT * FROM celulas ORDER BY nome ASC, id DESC");
     res.json(result.rows);
   } catch (erro) {
     console.error("Erro ao buscar células:", erro.message);
@@ -663,13 +687,11 @@ app.put("/celulas/:id", async (req, res) => {
       id
     ]);
 
-    /* mantém os membros já vinculados à célula antiga, apenas atualizando o nome da célula */
     await pool.query(
       "UPDATE membros SET celula = $1 WHERE celula = $2",
       [nomeExibicao, nomeAntigo]
     );
 
-    /* adiciona apenas novos membros disponíveis marcados */
     if (Array.isArray(membrosSelecionados) && membrosSelecionados.length > 0) {
       for (const membroId of membrosSelecionados) {
         await pool.query(
@@ -781,9 +803,9 @@ app.post("/presencas", async (req, res) => {
 ================================ */
 app.get("/backup", async (req, res) => {
   try {
-    const membros = await pool.query("SELECT * FROM membros ORDER BY id DESC");
-    const usuarios = await pool.query("SELECT * FROM usuarios ORDER BY id DESC");
-    const celulas = await pool.query("SELECT * FROM celulas ORDER BY id DESC");
+    const membros = await pool.query("SELECT * FROM membros ORDER BY nome ASC, id DESC");
+    const usuarios = await pool.query("SELECT * FROM usuarios ORDER BY nome ASC, id DESC");
+    const celulas = await pool.query("SELECT * FROM celulas ORDER BY nome ASC, id DESC");
     const presencas = await pool.query("SELECT * FROM presencas ORDER BY data DESC, id DESC");
 
     res.setHeader("Content-Disposition", "attachment; filename=backup-celulas.json");
@@ -811,7 +833,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V13 rodando na porta ${PORT}`);
+      console.log(`+Células Backend V14 rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
