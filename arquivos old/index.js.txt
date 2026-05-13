@@ -39,23 +39,6 @@ function montarNomeCelulaExibicao(valor) {
   return base ? `CÉLULA ${base}` : "";
 }
 
-function obterCelulaUsuarioPayload(body = {}) {
-  return (
-    body.celula ??
-    body.celulaUsuario ??
-    body.celulaVinculada ??
-    body.celula_usuario ??
-    ""
-  );
-}
-
-function normalizarNivelUsuario(valor) {
-  const nivel = normalizarTexto(valor || "lider");
-  if (nivel === "ADMIN") return "admin";
-  if (nivel === "SUPERVISOR") return "supervisor";
-  return "lider";
-}
-
 /* ================================
    GARANTIR TABELAS
 ================================ */
@@ -138,12 +121,6 @@ async function garantirTabelas() {
   await pool.query(`
     ALTER TABLE usuarios
     ADD COLUMN IF NOT EXISTS celula TEXT
-  `);
-
-  await pool.query(`
-    UPDATE usuarios
-    SET celula = ''
-    WHERE celula IS NULL
   `);
 
   await pool.query(`
@@ -305,17 +282,7 @@ app.post("/login", async (req, res) => {
     const { usuario, senha } = req.body;
 
     const result = await pool.query(
-      `
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      WHERE usuario = $1 AND senha = $2
-      `,
+      "SELECT * FROM usuarios WHERE usuario = $1 AND senha = $2",
       [String(usuario || "").trim().toLowerCase(), String(senha || "").trim()]
     );
 
@@ -432,17 +399,7 @@ app.post("/geolocalizacao", async (req, res) => {
 ================================ */
 app.get("/usuarios", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      ORDER BY nome ASC, id DESC
-    `);
+    const result = await pool.query("SELECT * FROM usuarios ORDER BY nome ASC, id DESC");
     res.json(result.rows);
   } catch (erro) {
     console.error("Erro ao buscar usuários:", erro.message);
@@ -452,19 +409,9 @@ app.get("/usuarios", async (req, res) => {
 
 app.post("/usuarios", async (req, res) => {
   try {
-    const { nome, usuario, senha } = req.body;
-    const nivelTratado = normalizarNivelUsuario(req.body.nivel);
-    const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
+    const { nome, usuario, senha, nivel, celula } = req.body;
 
     const usuarioTratado = String(usuario || "").trim().toLowerCase();
-
-    if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
-      return res.status(400).json({ erro: "Preencha nome, usuário e senha." });
-    }
-
-    if (nivelTratado === "lider" && !celulaTratada) {
-      return res.status(400).json({ erro: "Usuário líder precisa ter uma célula vinculada." });
-    }
 
     const existe = await pool.query(
       "SELECT * FROM usuarios WHERE usuario = $1",
@@ -475,22 +422,18 @@ app.post("/usuarios", async (req, res) => {
       return res.status(400).json({ erro: "Usuário já existe" });
     }
 
-    const salvo = await pool.query(
-      `
-      INSERT INTO usuarios (nome, usuario, senha, nivel, celula)
-      VALUES ($1,$2,$3,$4,$5)
-      RETURNING id, nome, usuario, senha, nivel, COALESCE(celula, '') AS celula
-      `,
+    await pool.query(
+      "INSERT INTO usuarios (nome, usuario, senha, nivel, celula) VALUES ($1,$2,$3,$4,$5)",
       [
         normalizarTexto(nome),
         usuarioTratado,
         String(senha || "").trim(),
-        nivelTratado,
-        nivelTratado === "lider" ? celulaTratada : ""
+        String(nivel || "lider").trim().toLowerCase(),
+        montarNomeCelulaExibicao(celula)
       ]
     );
 
-    res.json({ ok: true, usuario: salvo.rows[0] });
+    res.json({ ok: true });
   } catch (erro) {
     console.error("Erro ao salvar usuário:", erro.message);
     res.status(500).json({ erro: "Erro ao salvar usuário" });
@@ -500,19 +443,9 @@ app.post("/usuarios", async (req, res) => {
 app.put("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, usuario, senha } = req.body;
-    const nivelTratado = normalizarNivelUsuario(req.body.nivel);
-    const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
+    const { nome, usuario, senha, nivel, celula } = req.body;
 
     const usuarioTratado = String(usuario || "").trim().toLowerCase();
-
-    if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
-      return res.status(400).json({ erro: "Preencha nome, usuário e senha." });
-    }
-
-    if (nivelTratado === "lider" && !celulaTratada) {
-      return res.status(400).json({ erro: "Usuário líder precisa ter uma célula vinculada." });
-    }
 
     const existe = await pool.query(
       "SELECT * FROM usuarios WHERE usuario = $1 AND id <> $2",
@@ -523,65 +456,28 @@ app.put("/usuarios/:id", async (req, res) => {
       return res.status(400).json({ erro: "Já existe outro usuário com esse login" });
     }
 
-    const atualizado = await pool.query(
-      `
-      UPDATE usuarios SET
+    await pool.query(
+      `UPDATE usuarios SET
         nome = $1,
         usuario = $2,
         senha = $3,
         nivel = $4,
         celula = $5
-      WHERE id = $6
-      RETURNING id, nome, usuario, senha, nivel, COALESCE(celula, '') AS celula
-      `,
+      WHERE id = $6`,
       [
         normalizarTexto(nome),
         usuarioTratado,
         String(senha || "").trim(),
-        nivelTratado,
-        nivelTratado === "lider" ? celulaTratada : "",
+        String(nivel || "lider").trim().toLowerCase(),
+        montarNomeCelulaExibicao(celula),
         id
       ]
     );
 
-    if (atualizado.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    res.json({ ok: true, usuario: atualizado.rows[0] });
+    res.json({ ok: true });
   } catch (erro) {
     console.error("Erro ao atualizar usuário:", erro.message);
     res.status(500).json({ erro: "Erro ao atualizar usuário" });
-  }
-});
-
-app.get("/usuarios/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      `
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      WHERE id = $1
-      `,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (erro) {
-    console.error("Erro ao buscar usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao buscar usuário" });
   }
 });
 
