@@ -168,6 +168,11 @@ async function criarAdmin() {
       ["Administrador", "admin", "1234", "admin", ""]
     );
     console.log("Usuário admin criado com sucesso.");
+  } else {
+    await pool.query(
+      "UPDATE usuarios SET nivel = $1, celula = '' WHERE usuario = $2",
+      ["admin", "admin"]
+    );
   }
 }
 
@@ -428,6 +433,28 @@ app.post("/geolocalizacao", async (req, res) => {
 });
 
 /* ================================
+   DEBUG USUÁRIOS
+================================ */
+app.get("/debug/usuarios", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, nome, usuario, nivel, COALESCE(celula, '') AS celula
+      FROM usuarios
+      ORDER BY nome ASC, id DESC
+    `);
+
+    res.json({
+      ok: true,
+      total: result.rows.length,
+      usuarios: result.rows
+    });
+  } catch (erro) {
+    console.error("Erro no debug de usuários:", erro.message);
+    res.status(500).json({ ok: false, erro: "Erro no debug de usuários" });
+  }
+});
+
+/* ================================
    USUÁRIOS
 ================================ */
 app.get("/usuarios", async (req, res) => {
@@ -443,10 +470,41 @@ app.get("/usuarios", async (req, res) => {
       FROM usuarios
       ORDER BY nome ASC, id DESC
     `);
+
     res.json(result.rows);
   } catch (erro) {
     console.error("Erro ao buscar usuários:", erro.message);
     res.status(500).json({ erro: "Erro ao buscar usuários" });
+  }
+});
+
+app.get("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        nome,
+        usuario,
+        senha,
+        nivel,
+        COALESCE(celula, '') AS celula
+      FROM usuarios
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (erro) {
+    console.error("Erro ao buscar usuário:", erro.message);
+    res.status(500).json({ erro: "Erro ao buscar usuário" });
   }
 });
 
@@ -455,7 +513,6 @@ app.post("/usuarios", async (req, res) => {
     const { nome, usuario, senha } = req.body;
     const nivelTratado = normalizarNivelUsuario(req.body.nivel);
     const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
-
     const usuarioTratado = String(usuario || "").trim().toLowerCase();
 
     if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
@@ -503,7 +560,6 @@ app.put("/usuarios/:id", async (req, res) => {
     const { nome, usuario, senha } = req.body;
     const nivelTratado = normalizarNivelUsuario(req.body.nivel);
     const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
-
     const usuarioTratado = String(usuario || "").trim().toLowerCase();
 
     if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
@@ -555,36 +611,6 @@ app.put("/usuarios/:id", async (req, res) => {
   }
 });
 
-app.get("/usuarios/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      `
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      WHERE id = $1
-      `,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (erro) {
-    console.error("Erro ao buscar usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao buscar usuário" });
-  }
-});
-
 app.delete("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -605,6 +631,20 @@ app.delete("/usuarios/:id", async (req, res) => {
   } catch (erro) {
     console.error("Erro ao excluir usuário:", erro.message);
     res.status(500).json({ erro: "Erro ao excluir usuário" });
+  }
+});
+
+app.get("/debug/usuarios", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, nome, usuario, nivel, COALESCE(celula, '') AS celula
+      FROM usuarios
+      ORDER BY nome ASC, id DESC
+    `);
+
+    res.json({ ok: true, usuarios: result.rows });
+  } catch (erro) {
+    res.status(500).json({ ok: false, erro: erro.message });
   }
 });
 
