@@ -2,758 +2,479 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>+Células | Usuários</title>
-
   <style>
     * { box-sizing: border-box; }
 
-    :root{
-      --bg:#eef2f7;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#dbe3ee;
-      --blue:#2563eb;
-      --blue-dark:#1d4ed8;
-      --green:#16a34a;
-      --green-dark:#15803d;
-      --amber:#f59e0b;
-      --red:#dc2626;
-      --gray:#64748b;
-      --gray-dark:#475569;
-      --shadow:0 10px 25px rgba(0,0,0,0.05);
-      --radius:16px;
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
     }
 
-    body{
-      margin:0;
-      font-family:Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
+    .layout {
+      display: flex;
+      min-height: 100vh;
     }
 
-    .layout{display:flex;min-height:100vh;}
-
-    .sidebar{
-      width:250px;
-      background:linear-gradient(180deg,var(--blue-dark),var(--green));
-      color:#fff;
-      padding:24px 18px;
-      position:fixed;
-      top:0;
-      left:0;
-      height:100%;
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
     }
 
-    .logo{font-size:30px;font-weight:bold;margin:0;}
-    .logo-sub{margin:6px 0 28px;font-size:13px;opacity:.9;}
-
-    .menu a{
-      display:block;
-      color:#fff;
-      padding:12px;
-      text-decoration:none;
-      border-radius:10px;
-      margin-bottom:6px;
-      font-weight:bold;
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
 
-    .menu a:hover,.menu a.ativo{
-      background:rgba(255,255,255,.16);
+    .logo-sub {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 28px;
     }
 
-    .btn-sair{
-      margin-top:20px;
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:12px;
-      background:var(--red);
-      color:#fff;
-      font-weight:bold;
-      cursor:pointer;
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .content{
-      margin-left:250px;
-      padding:30px;
-      width:calc(100% - 250px);
+    .menu a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+      display: block;
     }
 
-    .header,.card{
-      background:var(--card);
-      padding:22px;
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.18);
     }
 
-    .header{margin-bottom:20px;}
-
-    .header h1{margin:0 0 8px;font-size:30px;}
-    .header p{margin:0;color:var(--muted);}
-    .usuario-logado{margin-top:10px!important;font-size:14px;}
-
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1.15fr;
-      gap:20px;
-      align-items:start;
+    .content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 30px;
     }
 
-    label{
-      display:block;
-      margin-top:12px;
-      margin-bottom:6px;
-      font-weight:bold;
-      font-size:14px;
+    .header {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
 
-    input,select{
-      width:100%;
-      padding:12px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      font-size:15px;
-      font-family:inherit;
-      background:#fff;
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
     }
 
-    input:focus,select:focus{
-      outline:none;
-      border-color:var(--blue);
-      box-shadow:0 0 0 3px rgba(37,99,235,.12);
+    .header p {
+      margin: 0;
+      color: #4b5563;
     }
 
-    input[type="text"]{text-transform:uppercase;}
-
-    input:disabled,select:disabled{
-      background:#f8fafc;
-      color:#475569;
-      cursor:not-allowed;
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
     }
 
-    .grid-2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
 
-    .acoes{
-      display:flex;
-      gap:10px;
-      margin-top:16px;
-      flex-wrap:wrap;
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
     }
 
-    button{
-      padding:12px 14px;
-      border:none;
-      border-radius:10px;
-      font-weight:bold;
-      cursor:pointer;
-      font-size:14px;
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      font-family: inherit;
     }
 
-    button:disabled{opacity:.6;cursor:not-allowed;}
-
-    .btn-primario{background:var(--blue);color:#fff;}
-    .btn-sucesso{background:var(--green);color:#fff;}
-    .btn-aviso{background:var(--amber);color:#fff;}
-    .btn-perigo{background:var(--red);color:#fff;}
-    .btn-secundario{background:var(--gray);color:#fff;}
-
-    .status-edicao{
-      margin-top:14px;
-      padding:12px;
-      border-radius:12px;
-      font-size:13px;
-      font-weight:bold;
-      background:#fef3c7;
-      color:#92400e;
+    button {
+      margin-top: 18px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
     }
 
-    .painel-selecao{
-      background:#f8fafc;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:16px;
-      margin-bottom:18px;
+    .btn-primary {
+      background: #2563eb;
+      color: white;
     }
 
-    .detalhe-usuario{
-      margin-top:14px;
-      padding:14px;
-      border-radius:14px;
-      background:#fafbfd;
-      border:1px solid var(--line);
-      min-height:112px;
+    .btn-secondary {
+      background: #f59e0b;
+      color: white;
     }
 
-    .detalhe-usuario h3{margin:0 0 8px;font-size:18px;}
-    .detalhe-usuario p{margin:0 0 5px;color:#4b5563;font-size:14px;}
-
-    .badge{
-      display:inline-block;
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:13px;
-      font-weight:bold;
-      background:#e8f0ff;
-      color:var(--blue-dark);
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      width: auto;
+      padding: 10px 14px;
+      margin-top: 0;
     }
 
-    .msg{margin-top:14px;font-weight:bold;min-height:20px;}
-
-    .vazio{
-      color:var(--muted);
-      font-style:italic;
-      padding:18px;
-      border:2px dashed var(--line);
-      border-radius:12px;
-      background:#fcfdff;
-      text-align:center;
+    .btn-edit {
+      background: #2563eb;
+      color: white;
+      width: auto;
+      padding: 10px 14px;
+      margin-top: 0;
     }
 
-    @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
-    @media(max-width:900px){
-      .layout{flex-direction:column;}
-      .sidebar{position:relative;width:100%;height:auto;}
-      .content{margin-left:0;width:100%;padding:20px;}
-      .grid-2{grid-template-columns:1fr;}
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .actions button {
+      flex: 1;
+    }
+
+    .status-msg {
+      margin-top: 14px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .usuario {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+
+    .usuario-info h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .usuario-info p {
+      margin: 4px 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .usuario-botoes {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 8px;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .vazio {
+      text-align: center;
+      color: #6b7280;
+      padding: 30px 10px;
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      background: #fcfcfc;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        bottom: auto;
+      }
+
+      .layout {
+        flex-direction: column;
+      }
+
+      .content {
+        margin-left: 0;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .usuario {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-<div class="layout">
-  <aside class="sidebar">
-    <h2 class="logo">+Células</h2>
-    <div class="logo-sub">Gestão de células</div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">+Células</div>
+      <div class="logo-sub">Gestão de células</div>
 
-    <div class="menu">
-      <a href="painel.html">Painel</a>
-      <a href="cadastro.html">Membros</a>
-      <a href="presenca.html">Presença</a>
-      <a href="celulas.html">Células</a>
-      <a href="relatorios.html">Relatórios</a>
-      <a href="usuarios.html" class="ativo">Usuários</a>
-    </div>
+      <nav class="menu">
+        <a href="painel.html">Painel</a>
+        <a href="cadastro.html">Membros</a>
+        <a href="presenca.html">Presença</a>
+        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
+        <a href="usuarios.html" id="menuUsuarios" class="ativo">Usuários</a>
+      </nav>
 
-    <button class="btn-sair" id="btnSair" type="button">Sair</button>
-  </aside>
+      <div style="margin-top:20px;">
+        <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
+          Sair
+        </button>
+      </div>
+    </aside>
 
-  <main class="content">
-    <div class="header">
-      <h1>Usuários</h1>
-      <p>Gestão de acessos, níveis e vínculo por célula</p>
-      <p id="usuarioLogado" class="usuario-logado"></p>
-    </div>
+    <main class="content">
+      <div class="header">
+        <h1>Usuários do sistema</h1>
+        <p id="usuarioLogado">Usuário logado:</p>
+      </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Selecionar usuário</h2>
+      <div class="grid">
+        <div class="card">
+          <h2 id="titulo-form">Novo usuário</h2>
 
-        <div class="painel-selecao">
-          <label for="seletorUsuario">Lista de usuários</label>
-          <select id="seletorUsuario">
-            <option value="">Novo usuário</option>
+          <input type="hidden" id="usuarioId" />
+
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" placeholder="Nome do usuário" />
+
+          <label for="usuario">Usuário</label>
+          <input type="text" id="usuario" placeholder="Login do usuário" />
+
+          <label for="senha">Senha</label>
+          <input type="text" id="senha" placeholder="Senha de acesso" />
+
+          <label for="nivel">Nível</label>
+          <select id="nivel">
+            <option value="admin">Admin</option>
+            <option value="lider">Líder</option>
+            <option value="supervisor">Supervisor</option>
           </select>
 
-          <div class="acoes">
-            <button id="btnNovoTopo" class="btn-aviso" type="button">Novo</button>
-            <button id="btnRecarregar" class="btn-secundario" type="button">Recarregar</button>
+          <div class="actions">
+            <button class="btn-primary" onclick="salvarUsuario()">Salvar</button>
+            <button class="btn-secondary" onclick="limparFormulario()" type="button">Limpar</button>
           </div>
+
+          <div class="status-msg" id="mensagem"></div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;">
-          <h2 style="margin:0;">Resumo</h2>
-          <span class="badge" id="contador">0 usuário(s)</span>
-        </div>
-
-        <div id="detalheUsuario" class="detalhe-usuario">
-          <div class="vazio">Selecione um usuário ou clique em Novo.</div>
+        <div class="card">
+          <h2>Usuários cadastrados</h2>
+          <div id="listaUsuarios"></div>
         </div>
       </div>
+    </main>
+  </div>
 
-      <div class="card">
-        <h2>Dados do usuário</h2>
-
-        <input id="usuarioId" type="hidden">
-
-        <div class="status-edicao" id="statusEdicao">
-          Modo atual: Visualização.
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label for="nome">Nome</label>
-            <input id="nome" type="text" placeholder="Nome completo">
-          </div>
-
-          <div>
-            <label for="usuario">Usuário</label>
-            <input id="usuario" type="text" placeholder="Login de acesso">
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label for="senha">Senha</label>
-            <input id="senha" type="text" placeholder="Senha de acesso">
-          </div>
-
-          <div>
-            <label for="nivel">Nível</label>
-            <select id="nivel">
-              <option value="ADMIN">ADMIN</option>
-              <option value="SUPERVISOR">SUPERVISOR</option>
-              <option value="LIDER">LÍDER</option>
-            </select>
-          </div>
-        </div>
-
-        <label for="celulaUsuario">Célula vinculada</label>
-        <select id="celulaUsuario">
-          <option value="">Sem vínculo / acesso geral</option>
-        </select>
-
-        <div class="acoes">
-          <button id="btnSalvar" class="btn-primario" type="button" disabled>Salvar</button>
-          <button id="btnNovo" class="btn-aviso" type="button">Novo</button>
-          <button id="btnCancelar" class="btn-secundario" type="button" disabled>Cancelar</button>
-          <button id="btnExcluir" class="btn-perigo" type="button" disabled>Excluir</button>
-          <button id="btnEditar" class="btn-sucesso" type="button" disabled>Editar</button>
-        </div>
-
-        <div id="msg" class="msg"></div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script>
-const API = "https://celulas-backend.onrender.com";
-
-let usuarios = [];
-let celulas = [];
-let usuarioAtual = null;
-let modoEdicao = false;
-let modoNovo = false;
-
-const campoUsuarioLogado = document.getElementById("usuarioLogado");
-const seletorUsuario = document.getElementById("seletorUsuario");
-const campoId = document.getElementById("usuarioId");
-const campoNome = document.getElementById("nome");
-const campoUsuario = document.getElementById("usuario");
-const campoSenha = document.getElementById("senha");
-const campoNivel = document.getElementById("nivel");
-const campoCelulaUsuario = document.getElementById("celulaUsuario");
-const campoMsg = document.getElementById("msg");
-const campoStatusEdicao = document.getElementById("statusEdicao");
-const detalheUsuario = document.getElementById("detalheUsuario");
-const contador = document.getElementById("contador");
-
-const btnEditar = document.getElementById("btnEditar");
-const btnSalvar = document.getElementById("btnSalvar");
-const btnCancelar = document.getElementById("btnCancelar");
-const btnExcluir = document.getElementById("btnExcluir");
-const btnNovo = document.getElementById("btnNovo");
-const btnNovoTopo = document.getElementById("btnNovoTopo");
-
-if(localStorage.getItem("logado") !== "sim"){
-  window.location.href = "login.html";
-}
-
-if(String(localStorage.getItem("nivelUsuario") || "").toLowerCase() !== "admin"){
-  alert("Apenas administradores podem acessar a gestão de usuários.");
-  window.location.href = "painel.html";
-}
-
-campoUsuarioLogado.textContent = `Usuário: ${localStorage.getItem("nomeUsuario") || "Administrador"} | Nível: ${localStorage.getItem("nivelUsuario") || "admin"}`;
-
-document.getElementById("btnSair").onclick = function(){
-  localStorage.clear();
-  window.location.href = "login.html";
-};
-
-function normalizarTexto(valor){
-  return String(valor || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toUpperCase();
-}
-
-function normalizarNomeCelula(valor){
-  return normalizarTexto(valor).replace(/^CELULA\s*/i, "").trim();
-}
-
-function nomeCelulaExibicao(valor){
-  const base = normalizarNomeCelula(valor);
-  return base ? `CÉLULA ${base}` : "";
-}
-
-function mostrarMensagem(texto, cor="#dc2626"){
-  campoMsg.textContent = texto;
-  campoMsg.style.color = cor;
-}
-
-function limparMensagem(){
-  campoMsg.textContent = "";
-}
-
-function garantirOpcaoCelula(valor){
-  const celula = nomeCelulaExibicao(valor);
-  if(!celula) return;
-
-  const existe = Array.from(campoCelulaUsuario.options).some(opt => opt.value === celula);
-  if(!existe){
-    const option = document.createElement("option");
-    option.value = celula;
-    option.textContent = celula;
-    campoCelulaUsuario.appendChild(option);
-  }
-}
-
-function setCamposEditaveis(liberado){
-  modoEdicao = liberado;
-
-  campoNome.disabled = !liberado;
-  campoUsuario.disabled = !liberado;
-  campoSenha.disabled = !liberado;
-  campoNivel.disabled = !liberado;
-
-  const nivel = String(campoNivel.value || "").toUpperCase();
-  campoCelulaUsuario.disabled = !liberado || nivel !== "LIDER";
-
-  seletorUsuario.disabled = liberado;
-
-  btnSalvar.disabled = !liberado;
-  btnCancelar.disabled = !liberado;
-  btnEditar.disabled = liberado || !campoId.value;
-  btnExcluir.disabled = liberado || !campoId.value;
-  btnNovo.disabled = liberado;
-  btnNovoTopo.disabled = liberado;
-
-  atualizarStatusEdicao();
-}
-
-function atualizarStatusEdicao(){
-  if(modoEdicao && modoNovo){
-    campoStatusEdicao.textContent = "Modo atual: Novo cadastro liberado.";
-    campoStatusEdicao.style.background = "#eff6ff";
-    campoStatusEdicao.style.color = "#1d4ed8";
-    return;
-  }
-
-  if(modoEdicao && campoId.value){
-    campoStatusEdicao.textContent = "Modo atual: Edição liberada. Salve ou cancele antes de selecionar outro usuário.";
-    campoStatusEdicao.style.background = "#ecfdf5";
-    campoStatusEdicao.style.color = "#166534";
-    return;
-  }
-
-  campoStatusEdicao.textContent = "Modo atual: Visualização. Selecione um usuário e clique em Editar.";
-  campoStatusEdicao.style.background = "#fef3c7";
-  campoStatusEdicao.style.color = "#92400e";
-}
-
-function atualizarRegraCelulaUsuario(){
-  const nivel = String(campoNivel.value || "").toUpperCase();
-
-  if(nivel === "LIDER"){
-    campoCelulaUsuario.disabled = !modoEdicao;
-  }else{
-    campoCelulaUsuario.value = "";
-    campoCelulaUsuario.disabled = true;
-  }
-}
-
-function renderizarDetalheUsuario(usuario){
-  if(!usuario){
-    detalheUsuario.innerHTML = '<div class="vazio">Selecione um usuário ou clique em Novo.</div>';
-    return;
-  }
-
-  detalheUsuario.innerHTML = `
-    <h3>${usuario.nome || ""}</h3>
-    <p><strong>Usuário:</strong> ${usuario.usuario || "-"}</p>
-    <p><strong>Nível:</strong> ${String(usuario.nivel || "").toUpperCase()}</p>
-    <p><strong>Célula vinculada:</strong> ${usuario.celula || "ACESSO GERAL"}</p>
-  `;
-}
-
-function limparFormularioVisual(){
-  campoId.value = "";
-  campoNome.value = "";
-  campoUsuario.value = "";
-  campoSenha.value = "";
-  campoNivel.value = "ADMIN";
-  campoCelulaUsuario.value = "";
-  seletorUsuario.value = "";
-  renderizarDetalheUsuario(null);
-}
-
-function iniciarNovo(){
-  usuarioAtual = null;
-  modoNovo = true;
-  limparFormularioVisual();
-  limparMensagem();
-  setCamposEditaveis(true);
-  atualizarRegraCelulaUsuario();
-}
-
-function selecionarParaVisualizacao(usuario){
-  usuarioAtual = {...usuario};
-  modoNovo = false;
-
-  campoId.value = usuario.id || "";
-  campoNome.value = usuario.nome || "";
-  campoUsuario.value = usuario.usuario || "";
-  campoSenha.value = usuario.senha || "";
-  campoNivel.value = String(usuario.nivel || "ADMIN").toUpperCase();
-
-  const celulaTratada = nomeCelulaExibicao(usuario.celula || "");
-  garantirOpcaoCelula(celulaTratada);
-  campoCelulaUsuario.value = celulaTratada;
-
-  seletorUsuario.value = String(usuario.id || "");
-
-  renderizarDetalheUsuario({
-    ...usuario,
-    celula: celulaTratada
-  });
-
-  limparMensagem();
-  setCamposEditaveis(false);
-  atualizarRegraCelulaUsuario();
-}
-
-async function carregarCelulas(){
-  try{
-    const resp = await fetch(API + "/celulas",{cache:"no-store"});
-    if(!resp.ok) throw new Error("Erro ao carregar células.");
-
-    celulas = await resp.json();
-
-    const opcoes = celulas
-      .filter(c => c.ativo !== false)
-      .sort((a,b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"))
-      .map(c => `<option value="${c.nome}">${c.nome}</option>`)
-      .join("");
-
-    campoCelulaUsuario.innerHTML = '<option value="">Sem vínculo / acesso geral</option>' + opcoes;
-  }catch(erro){
-    console.error(erro);
-    campoCelulaUsuario.innerHTML = '<option value="">Erro ao carregar células</option>';
-    mostrarMensagem("Erro ao carregar células para vínculo.");
-  }
-}
-
-function renderizarSeletorUsuarios(){
-  contador.textContent = `${usuarios.length} usuário(s)`;
-
-  seletorUsuario.innerHTML = '<option value="">Novo usuário</option>' +
-    [...usuarios]
-      .sort((a,b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"))
-      .map(u => {
-        const celula = u.celula ? ` | ${u.celula}` : "";
-        return `<option value="${u.id}">${u.nome || u.usuario} - ${String(u.nivel || "").toUpperCase()}${celula}</option>`;
-      })
-      .join("");
-
-  if(campoId.value){
-    seletorUsuario.value = campoId.value;
-  }
-}
-
-async function carregarUsuarios(){
-  try{
-    const resp = await fetch(API + "/usuarios",{cache:"no-store"});
-    if(!resp.ok) throw new Error("Erro ao carregar usuários.");
-
-    usuarios = await resp.json();
-    renderizarSeletorUsuarios();
-
-    if(campoId.value){
-      const atualizado = usuarios.find(u => String(u.id) === String(campoId.value));
-      if(atualizado){
-        selecionarParaVisualizacao(atualizado);
-      }
-    }else{
-      setCamposEditaveis(false);
-      atualizarRegraCelulaUsuario();
-    }
-  }catch(erro){
-    console.error(erro);
-    mostrarMensagem("Erro ao carregar usuários.");
-  }
-}
-
-async function excluirUsuarioAtual(){
-  const id = campoId.value;
-  if(!id){
-    mostrarMensagem("Selecione um usuário para excluir.");
-    return;
-  }
-
-  const usuario = usuarios.find(x => String(x.id) === String(id));
-
-  if(String(usuario?.usuario || "").toLowerCase() === "admin"){
-    mostrarMensagem("O usuário admin não pode ser excluído.");
-    return;
-  }
-
-  const confirmou = confirm(`Deseja realmente excluir ${usuario?.nome || "este usuário"}?`);
-  if(!confirmou) return;
-
-  try{
-    const resp = await fetch(API + "/usuarios/" + id,{method:"DELETE"});
-    const dados = await resp.json().catch(() => ({}));
-
-    if(!resp.ok){
-      throw new Error(dados.erro || "Erro ao excluir usuário.");
+  <script>
+    if (localStorage.getItem('logado') !== 'sim') {
+      window.location.href = 'login.html';
     }
 
-    mostrarMensagem("Usuário excluído com sucesso!", "#16a34a");
-    limparFormularioVisual();
-    usuarioAtual = null;
-    modoNovo = false;
-    setCamposEditaveis(false);
-    await carregarUsuarios();
-  }catch(erro){
-    mostrarMensagem(erro.message || "Erro ao excluir usuário.");
-  }
-}
+    const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
+    const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
 
-async function salvarUsuario(){
-  if(!modoEdicao){
-    mostrarMensagem("Clique em Editar ou Novo antes de salvar.");
-    return;
-  }
-
-  const id = campoId.value;
-
-  const dados = {
-    nome: campoNome.value.trim(),
-    usuario: campoUsuario.value.trim().toLowerCase(),
-    senha: campoSenha.value.trim(),
-    nivel: campoNivel.value,
-    celula: campoCelulaUsuario.value,
-    celulaUsuario: campoCelulaUsuario.value,
-    celulaVinculada: campoCelulaUsuario.value
-  };
-
-  if(!dados.nome || !dados.usuario || !dados.senha){
-    mostrarMensagem("Preencha nome, usuário e senha.");
-    return;
-  }
-
-  if(dados.nivel === "LIDER" && !dados.celula){
-    mostrarMensagem("Selecione a célula vinculada para o líder.");
-    return;
-  }
-
-  try{
-    const resp = await fetch(API + (id ? "/usuarios/" + id : "/usuarios"),{
-      method:id ? "PUT" : "POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(dados)
-    });
-
-    const retorno = await resp.json().catch(() => ({}));
-
-    if(!resp.ok){
-      throw new Error(retorno.erro || "Erro ao salvar usuário.");
+    function sair() {
+      localStorage.removeItem('logado');
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('nomeUsuario');
+      localStorage.removeItem('nivelUsuario');
+      window.location.href = 'login.html';
     }
 
-    await carregarUsuarios();
+    const campoUsuario = document.getElementById('usuarioLogado');
+    if (campoUsuario) {
+      campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
+    }
 
-    const usuarioSalvo = retorno.usuario || usuarios.find(u => String(u.usuario || "").toLowerCase() === dados.usuario);
-
-    if(usuarioSalvo){
-      const normalizado = {
-        ...usuarioSalvo,
-        celula: nomeCelulaExibicao(usuarioSalvo.celula || dados.celula)
+    function verificarPermissao(pagina) {
+      const permissoes = {
+        admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
+        supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
+        lider: ['painel', 'membros', 'presenca']
       };
 
-      garantirOpcaoCelula(normalizado.celula);
-      selecionarParaVisualizacao(normalizado);
-      mostrarMensagem(`Usuário salvo com sucesso. Célula gravada: ${normalizado.celula || "ACESSO GERAL"}`, "#16a34a");
-    }else{
-      mostrarMensagem("Usuário salvo com sucesso!", "#16a34a");
-      limparFormularioVisual();
-      setCamposEditaveis(false);
+      const permitidas = permissoes[nivelUsuario] || [];
+
+      if (!permitidas.includes(pagina)) {
+        alert('Você não tem permissão para acessar esta área.');
+        window.location.href = 'painel.html';
+      }
     }
-  }catch(erro){
-    mostrarMensagem(erro.message || "Erro ao salvar usuário.");
-  }
-}
 
-seletorUsuario.addEventListener("change", () => {
-  if(modoEdicao){
-    mostrarMensagem("Salve ou cancele a edição antes de selecionar outro usuário.");
-    seletorUsuario.value = campoId.value || "";
-    return;
-  }
+    function aplicarPermissoesMenu() {
+      const menuUsuarios = document.getElementById('menuUsuarios');
+      const menuRelatorios = document.getElementById('menuRelatorios');
 
-  const id = seletorUsuario.value;
+      if (nivelUsuario !== 'admin' && menuUsuarios) {
+        menuUsuarios.style.display = 'none';
+      }
 
-  if(!id){
-    iniciarNovo();
-    return;
-  }
+      if (nivelUsuario === 'lider' && menuRelatorios) {
+        menuRelatorios.style.display = 'none';
+      }
+    }
 
-  const usuario = usuarios.find(x => Number(x.id) === Number(id));
-  if(usuario){
-    selecionarParaVisualizacao(usuario);
-  }
-});
+    verificarPermissao('usuarios');
+    aplicarPermissoesMenu();
 
-btnEditar.onclick = function(){
-  if(!campoId.value){
-    mostrarMensagem("Selecione um usuário para editar.");
-    return;
-  }
+    const apiUrl = 'https://celulas-backend.onrender.com:3000/usuarios';
 
-  modoNovo = false;
-  setCamposEditaveis(true);
-  atualizarRegraCelulaUsuario();
-  mostrarMensagem("Edição liberada. Ajuste os dados e clique em Salvar.", "#2563eb");
-};
+    async function carregarUsuarios() {
+      const resposta = await fetch(apiUrl);
+      const usuarios = await resposta.json();
+      const lista = document.getElementById('listaUsuarios');
 
-btnNovo.onclick = iniciarNovo;
-btnNovoTopo.onclick = iniciarNovo;
+      if (!Array.isArray(usuarios) || usuarios.length === 0) {
+        lista.innerHTML = '<div class="vazio">Nenhum usuário cadastrado.</div>';
+        return;
+      }
 
-document.getElementById("btnRecarregar").onclick = async function(){
-  await carregarCelulas();
-  await carregarUsuarios();
-  mostrarMensagem("Lista recarregada.", "#64748b");
-};
+      lista.innerHTML = usuarios.map((usuarioItem) => `
+        <div class="usuario">
+          <div class="usuario-info">
+            <h3>${usuarioItem.nome}</h3>
+            <p><strong>Usuário:</strong> ${usuarioItem.usuario}</p>
+            <p><strong>ID:</strong> ${usuarioItem.id}</p>
+            <span class="badge">${usuarioItem.nivel}</span>
+          </div>
+          <div class="usuario-botoes">
+            <button class="btn-edit" onclick="editarUsuario(${usuarioItem.id})">Editar</button>
+            ${usuarioItem.usuario !== 'admin' ? `<button class="btn-danger" onclick="excluirUsuario(${usuarioItem.id})">Excluir</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
 
-btnCancelar.onclick = function(){
-  if(usuarioAtual){
-    selecionarParaVisualizacao(usuarioAtual);
-    mostrarMensagem("Edição cancelada. Dados restaurados.", "#64748b");
-  }else{
-    limparFormularioVisual();
-    modoNovo = false;
-    setCamposEditaveis(false);
-  }
-};
+    async function salvarUsuario() {
+      const id = document.getElementById('usuarioId').value;
+      const nome = document.getElementById('nome').value.trim();
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const nivel = document.getElementById('nivel').value;
+      const mensagem = document.getElementById('mensagem');
 
-btnSalvar.onclick = salvarUsuario;
-btnExcluir.onclick = excluirUsuarioAtual;
+      if (!nome || !usuario || !senha || !nivel) {
+        mensagem.textContent = 'Preencha todos os campos.';
+        mensagem.style.color = '#dc2626';
+        return;
+      }
 
-campoNivel.addEventListener("change", atualizarRegraCelulaUsuario);
+      const dados = { nome, usuario, senha, nivel };
 
-carregarCelulas().then(() => {
-  limparFormularioVisual();
-  modoNovo = false;
-  setCamposEditaveis(false);
-  carregarUsuarios();
-});
-</script>
+      let resposta;
+      if (id) {
+        resposta = await fetch(`${apiUrl}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+      } else {
+        resposta = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+      }
+
+      const retorno = await resposta.json();
+
+      if (resposta.ok) {
+        mensagem.textContent = id ? 'Usuário atualizado com sucesso.' : 'Usuário cadastrado com sucesso.';
+        mensagem.style.color = '#16a34a';
+        limparFormulario(false);
+        carregarUsuarios();
+      } else {
+        mensagem.textContent = retorno.erro || 'Erro ao salvar usuário.';
+        mensagem.style.color = '#dc2626';
+      }
+    }
+
+    async function editarUsuario(id) {
+      const resposta = await fetch(apiUrl);
+      const usuarios = await resposta.json();
+      const usuarioItem = usuarios.find((u) => u.id === id);
+
+      if (!usuarioItem) return;
+
+      document.getElementById('usuarioId').value = usuarioItem.id;
+      document.getElementById('nome').value = usuarioItem.nome || '';
+      document.getElementById('usuario').value = usuarioItem.usuario || '';
+      document.getElementById('senha').value = '';
+      document.getElementById('nivel').value = usuarioItem.nivel || 'lider';
+      document.getElementById('titulo-form').textContent = 'Editar usuário';
+      document.getElementById('mensagem').textContent = 'Informe a nova senha ao editar.';
+      document.getElementById('mensagem').style.color = '#2563eb';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function excluirUsuario(id) {
+      const confirmar = confirm('Deseja excluir este usuário?');
+      if (!confirmar) return;
+
+      const resposta = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      const retorno = await resposta.json();
+
+      if (resposta.ok) {
+        carregarUsuarios();
+      } else {
+        alert(retorno.erro || 'Erro ao excluir usuário.');
+      }
+    }
+
+    function limparFormulario(limparMensagem = true) {
+      document.getElementById('usuarioId').value = '';
+      document.getElementById('nome').value = '';
+      document.getElementById('usuario').value = '';
+      document.getElementById('senha').value = '';
+      document.getElementById('nivel').value = 'admin';
+      document.getElementById('titulo-form').textContent = 'Novo usuário';
+
+      if (limparMensagem) {
+        document.getElementById('mensagem').textContent = '';
+      }
+    }
+
+    carregarUsuarios();
+  </script>
 </body>
 </html>
