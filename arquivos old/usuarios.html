@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>+Células | Usuários</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .logo-sub {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 28px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+      display: block;
+    }
+
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.18);
+    }
+
+    .content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .header {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #4b5563;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    button {
+      margin-top: 18px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      width: auto;
+      padding: 10px 14px;
+      margin-top: 0;
+    }
+
+    .btn-edit {
+      background: #2563eb;
+      color: white;
+      width: auto;
+      padding: 10px 14px;
+      margin-top: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .actions button {
+      flex: 1;
+    }
+
+    .status-msg {
+      margin-top: 14px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .usuario {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+
+    .usuario-info h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .usuario-info p {
+      margin: 4px 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .usuario-botoes {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 8px;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .vazio {
+      text-align: center;
+      color: #6b7280;
+      padding: 30px 10px;
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      background: #fcfcfc;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        bottom: auto;
+      }
+
+      .layout {
+        flex-direction: column;
+      }
+
+      .content {
+        margin-left: 0;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .usuario {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">+Células</div>
+      <div class="logo-sub">Gestão de células</div>
+
+      <nav class="menu">
+        <a href="painel.html">Painel</a>
+        <a href="cadastro.html">Membros</a>
+        <a href="presenca.html">Presença</a>
+        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
+        <a href="usuarios.html" id="menuUsuarios" class="ativo">Usuários</a>
+      </nav>
+
+      <div style="margin-top:20px;">
+        <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
+          Sair
+        </button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="header">
+        <h1>Usuários do sistema</h1>
+        <p id="usuarioLogado">Usuário logado:</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2 id="titulo-form">Novo usuário</h2>
+
+          <input type="hidden" id="usuarioId" />
+
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" placeholder="Nome do usuário" />
+
+          <label for="usuario">Usuário</label>
+          <input type="text" id="usuario" placeholder="Login do usuário" />
+
+          <label for="senha">Senha</label>
+          <input type="text" id="senha" placeholder="Senha de acesso" />
+
+          <label for="nivel">Nível</label>
+          <select id="nivel">
+            <option value="admin">Admin</option>
+            <option value="lider">Líder</option>
+            <option value="supervisor">Supervisor</option>
+          </select>
+
+          <div class="actions">
+            <button class="btn-primary" onclick="salvarUsuario()">Salvar</button>
+            <button class="btn-secondary" onclick="limparFormulario()" type="button">Limpar</button>
+          </div>
+
+          <div class="status-msg" id="mensagem"></div>
+        </div>
+
+        <div class="card">
+          <h2>Usuários cadastrados</h2>
+          <div id="listaUsuarios"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    if (localStorage.getItem('logado') !== 'sim') {
+      window.location.href = 'login.html';
+    }
+
+    const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
+    const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
+
+    function sair() {
+      localStorage.removeItem('logado');
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('nomeUsuario');
+      localStorage.removeItem('nivelUsuario');
+      window.location.href = 'login.html';
+    }
+
+    const campoUsuario = document.getElementById('usuarioLogado');
+    if (campoUsuario) {
+      campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
+    }
+
+    function verificarPermissao(pagina) {
+      const permissoes = {
+        admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
+        supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
+        lider: ['painel', 'membros', 'presenca']
+      };
+
+      const permitidas = permissoes[nivelUsuario] || [];
+
+      if (!permitidas.includes(pagina)) {
+        alert('Você não tem permissão para acessar esta área.');
+        window.location.href = 'painel.html';
+      }
+    }
+
+    function aplicarPermissoesMenu() {
+      const menuUsuarios = document.getElementById('menuUsuarios');
+      const menuRelatorios = document.getElementById('menuRelatorios');
+
+      if (nivelUsuario !== 'admin' && menuUsuarios) {
+        menuUsuarios.style.display = 'none';
+      }
+
+      if (nivelUsuario === 'lider' && menuRelatorios) {
+        menuRelatorios.style.display = 'none';
+      }
+    }
+
+    verificarPermissao('usuarios');
+    aplicarPermissoesMenu();
+
+    const apiUrl = 'https://celulas-backend.onrender.com:3000/usuarios';
+
+    async function carregarUsuarios() {
+      const resposta = await fetch(apiUrl);
+      const usuarios = await resposta.json();
+      const lista = document.getElementById('listaUsuarios');
+
+      if (!Array.isArray(usuarios) || usuarios.length === 0) {
+        lista.innerHTML = '<div class="vazio">Nenhum usuário cadastrado.</div>';
+        return;
+      }
+
+      lista.innerHTML = usuarios.map((usuarioItem) => `
+        <div class="usuario">
+          <div class="usuario-info">
+            <h3>${usuarioItem.nome}</h3>
+            <p><strong>Usuário:</strong> ${usuarioItem.usuario}</p>
+            <p><strong>ID:</strong> ${usuarioItem.id}</p>
+            <span class="badge">${usuarioItem.nivel}</span>
+          </div>
+          <div class="usuario-botoes">
+            <button class="btn-edit" onclick="editarUsuario(${usuarioItem.id})">Editar</button>
+            ${usuarioItem.usuario !== 'admin' ? `<button class="btn-danger" onclick="excluirUsuario(${usuarioItem.id})">Excluir</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function salvarUsuario() {
+      const id = document.getElementById('usuarioId').value;
+      const nome = document.getElementById('nome').value.trim();
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const nivel = document.getElementById('nivel').value;
+      const mensagem = document.getElementById('mensagem');
+
+      if (!nome || !usuario || !senha || !nivel) {
+        mensagem.textContent = 'Preencha todos os campos.';
+        mensagem.style.color = '#dc2626';
+        return;
+      }
+
+      const dados = { nome, usuario, senha, nivel };
+
+      let resposta;
+      if (id) {
+        resposta = await fetch(`${apiUrl}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+      } else {
+        resposta = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+      }
+
+      const retorno = await resposta.json();
+
+      if (resposta.ok) {
+        mensagem.textContent = id ? 'Usuário atualizado com sucesso.' : 'Usuário cadastrado com sucesso.';
+        mensagem.style.color = '#16a34a';
+        limparFormulario(false);
+        carregarUsuarios();
+      } else {
+        mensagem.textContent = retorno.erro || 'Erro ao salvar usuário.';
+        mensagem.style.color = '#dc2626';
+      }
+    }
+
+    async function editarUsuario(id) {
+      const resposta = await fetch(apiUrl);
+      const usuarios = await resposta.json();
+      const usuarioItem = usuarios.find((u) => u.id === id);
+
+      if (!usuarioItem) return;
+
+      document.getElementById('usuarioId').value = usuarioItem.id;
+      document.getElementById('nome').value = usuarioItem.nome || '';
+      document.getElementById('usuario').value = usuarioItem.usuario || '';
+      document.getElementById('senha').value = '';
+      document.getElementById('nivel').value = usuarioItem.nivel || 'lider';
+      document.getElementById('titulo-form').textContent = 'Editar usuário';
+      document.getElementById('mensagem').textContent = 'Informe a nova senha ao editar.';
+      document.getElementById('mensagem').style.color = '#2563eb';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function excluirUsuario(id) {
+      const confirmar = confirm('Deseja excluir este usuário?');
+      if (!confirmar) return;
+
+      const resposta = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      const retorno = await resposta.json();
+
+      if (resposta.ok) {
+        carregarUsuarios();
+      } else {
+        alert(retorno.erro || 'Erro ao excluir usuário.');
+      }
+    }
+
+    function limparFormulario(limparMensagem = true) {
+      document.getElementById('usuarioId').value = '';
+      document.getElementById('nome').value = '';
+      document.getElementById('usuario').value = '';
+      document.getElementById('senha').value = '';
+      document.getElementById('nivel').value = 'admin';
+      document.getElementById('titulo-form').textContent = 'Novo usuário';
+
+      if (limparMensagem) {
+        document.getElementById('mensagem').textContent = '';
+      }
+    }
+
+    carregarUsuarios();
+  </script>
+</body>
+</html>
