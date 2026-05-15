@@ -341,7 +341,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V24 Líderes Em Treinamento",
+    sistema: "+Células Backend V23 Líderes Em Treinamento",
     status: "ONLINE"
   });
 });
@@ -1110,18 +1110,6 @@ app.put("/celulas/:id", async (req, res) => {
         );
       }
     }
-    const membrosRemovidosTratados = Array.isArray(membrosRemovidos)
-      ? membrosRemovidos.map(Number).filter(Boolean)
-      : [];
-
-    if (membrosRemovidosTratados.length > 0) {
-      await pool.query(
-        "UPDATE membros SET celula = '' WHERE id = ANY($1::int[])",
-        [membrosRemovidosTratados]
-      );
-      console.log("Membros removidos da célula:", membrosRemovidosTratados);
-    }
-
 
     res.json({ ok: true, celulaId: id });
   } catch (erro) {
@@ -1407,7 +1395,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V24 Líderes Em Treinamento rodando na porta ${PORT}`);
+      console.log(`+Células Backend V23 Líderes Em Treinamento rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
