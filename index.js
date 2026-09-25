@@ -276,6 +276,32 @@ async function garantirTabelas() {
       AND (p.celula IS NULL OR BTRIM(p.celula) = '')
   `);
 
+  // v1.13 — restaura a célula histórica do cadastro de visitantes arquivados
+  // somente quando todo o histórico conhecido desse visitante aponta para UMA única célula.
+  // O status VISITANTE ARQUIVADO + data_arquivamento continuam controlando a elegibilidade temporal.
+  await pool.query(`
+    WITH celula_unica_visitante AS (
+      SELECT
+        p.membro_id,
+        MIN(BTRIM(p.celula)) AS celula_unica,
+        COUNT(DISTINCT BTRIM(p.celula)) AS qtd_celulas
+      FROM presencas p
+      INNER JOIN membros m ON m.id = p.membro_id
+      WHERE COALESCE(BTRIM(p.celula), '') <> ''
+        AND (
+          UPPER(COALESCE(m.status, '')) = 'VISITANTE ARQUIVADO'
+          OR UPPER(COALESCE(m.origem_cadastro, '')) = 'PRESENCA_VISITANTE'
+        )
+      GROUP BY p.membro_id
+    )
+    UPDATE membros m
+    SET celula = c.celula_unica
+    FROM celula_unica_visitante c
+    WHERE m.id = c.membro_id
+      AND c.qtd_celulas = 1
+      AND COALESCE(BTRIM(m.celula), '') = ''
+  `);
+
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_celulas_nome_normalizado
     ON celulas (nome_normalizado)
@@ -458,7 +484,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V34 Presença v1.12 Histórico por Célula",
+    sistema: "+Células Backend V35 Presença v1.13 Elegibilidade Temporal",
     status: "ONLINE"
   });
 });
@@ -1777,7 +1803,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V34 Presença v1.12 Histórico por Célula rodando na porta ${PORT}`);
+      console.log(`+Células Backend V35 Presença v1.13 Elegibilidade Temporal rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
