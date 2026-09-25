@@ -220,6 +220,25 @@ async function garantirTabelas() {
     )
   `);
 
+  // v1.11: a célula passa a fazer parte do registro histórico da presença.
+  // Assim, arquivar/mover uma pessoa no cadastro não altera a reunião já gravada.
+  await pool.query(`
+    ALTER TABLE presencas
+    ADD COLUMN IF NOT EXISTS celula TEXT DEFAULT NULL
+  `);
+
+  // Compatibilidade com registros antigos: captura a célula atual quando ainda
+  // não existe snapshot no registro de presença. Novos lançamentos gravam a célula diretamente.
+  await pool.query(`
+    UPDATE presencas p
+    SET celula = m.celula
+    FROM membros m
+    WHERE p.membro_id = m.id
+      AND (p.celula IS NULL OR p.celula = '')
+      AND m.celula IS NOT NULL
+      AND m.celula <> ''
+  `);
+
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_celulas_nome_normalizado
     ON celulas (nome_normalizado)
@@ -1607,6 +1626,7 @@ app.get("/presencas/:data", async (req, res) => {
       SELECT
         p.membro_id AS "membroId",
         p.status,
+        p.celula AS "celulaPresenca",
         m.nome,
         m.telefone,
         m.celula,
@@ -1652,7 +1672,7 @@ app.post("/presencas/remover-data-membros", async (req, res) => {
 
 app.post("/presencas", async (req, res) => {
   try {
-    const { data, registros, nivelUsuario } = req.body;
+    const { data, registros, nivelUsuario, celula } = req.body;
     const nivel = normalizarNivelUsuario(nivelUsuario || "lider");
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ erro: "Data da reunião inválida." });
     if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido lançar ou editar presença em data futura." });
@@ -1663,8 +1683,8 @@ app.post("/presencas", async (req, res) => {
     for (const item of registros || []) {
       const { membroId, status } = item;
       const existe = await pool.query("SELECT * FROM presencas WHERE membro_id = $1 AND data = $2", [membroId, data]);
-      if (existe.rows.length > 0) await pool.query("UPDATE presencas SET status = $1 WHERE membro_id = $2 AND data = $3", [status, membroId, data]);
-      else await pool.query("INSERT INTO presencas (membro_id, data, status) VALUES ($1,$2,$3)", [membroId, data, status]);
+      if (existe.rows.length > 0) await pool.query("UPDATE presencas SET status = $1, celula = COALESCE(NULLIF($4, ''), celula) WHERE membro_id = $2 AND data = $3", [status, membroId, data, celula || ""]);
+      else await pool.query("INSERT INTO presencas (membro_id, data, status, celula) VALUES ($1,$2,$3,$4)", [membroId, data, status, celula || null]);
     }
     res.json({ ok: true });
   } catch (erro) {
