@@ -38,6 +38,32 @@ function montarNomeCelulaExibicao(valor) {
   const base = normalizarNomeCelula(valor);
   return base ? `CÉLULA ${base}` : "";
 }
+
+function somenteDigitos(valor) {
+  return String(valor || "").replace(/\D/g, "");
+}
+
+function normalizarTelefoneBR(valor) {
+  let digitos = somenteDigitos(valor);
+  if (digitos.startsWith("55") && digitos.length > 11) digitos = digitos.slice(2);
+  if (![10, 11].includes(digitos.length)) return "";
+  const ddd = digitos.slice(0, 2);
+  const numero = digitos.slice(2);
+  return numero.length === 9
+    ? `(${ddd}) ${numero.slice(0, 5)}-${numero.slice(5)}`
+    : `(${ddd}) ${numero.slice(0, 4)}-${numero.slice(4)}`;
+}
+
+function hojeISO() {
+  const agora = new Date();
+  return `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,"0")}-${String(agora.getDate()).padStart(2,"0")}`;
+}
+
+function diasDesde(dataIso) {
+  const a = new Date(`${dataIso}T12:00:00`);
+  const b = new Date(`${hojeISO()}T12:00:00`);
+  return Math.floor((b - a) / 86400000);
+}
 function normalizarListaIds(valor) {
   if (Array.isArray(valor)) {
     return valor
@@ -143,6 +169,11 @@ async function garantirTabelas() {
     ADD COLUMN IF NOT EXISTS cadastro_completo BOOLEAN DEFAULT TRUE
   `);
 
+  await pool.query(`
+    ALTER TABLE membros
+    ADD COLUMN IF NOT EXISTS data_arquivamento TEXT DEFAULT NULL
+  `);
+
   // corrigir defaults antigos de cadastro criados por versões intermediárias
   await pool.query(`
     UPDATE membros
@@ -185,8 +216,64 @@ async function garantirTabelas() {
       id SERIAL PRIMARY KEY,
       membro_id INTEGER,
       data TEXT,
-      status TEXT
+      status TEXT,
+      celula TEXT
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE presencas
+    ADD COLUMN IF NOT EXISTS celula TEXT DEFAULT NULL
+  `);
+
+  // v1.12 — migração conservadora do vínculo histórico da célula.
+  // 1) Registros antigos herdam a célula atual somente quando ela ainda existe.
+  await pool.query(`
+    UPDATE presencas p
+    SET celula = m.celula
+    FROM membros m
+    WHERE p.membro_id = m.id
+      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
+      AND COALESCE(BTRIM(m.celula), '') <> ''
+  `);
+
+  // 2) Se numa data existe exatamente UMA célula identificável, usa essa célula
+  // para os registros antigos ainda sem vínculo. É o caso seguro de reuniões
+  // antigas em que o visitante foi arquivado depois e perdeu a célula no cadastro.
+  await pool.query(`
+    WITH celulas_por_data AS (
+      SELECT
+        p.data,
+        MIN(COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), ''))) AS celula_unica,
+        COUNT(DISTINCT COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), ''))) AS qtd_celulas
+      FROM presencas p
+      LEFT JOIN membros m ON m.id = p.membro_id
+      WHERE COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), '')) IS NOT NULL
+      GROUP BY p.data
+    )
+    UPDATE presencas p
+    SET celula = c.celula_unica
+    FROM celulas_por_data c
+    WHERE p.data = c.data
+      AND c.qtd_celulas = 1
+      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
+  `);
+
+  // 3) Para uma pessoa cujo histórico já aponta para uma única célula conhecida,
+  // completa outros registros antigos ainda nulos sem adivinhar entre várias células.
+  await pool.query(`
+    WITH celula_unica_por_membro AS (
+      SELECT membro_id, MIN(BTRIM(celula)) AS celula_unica, COUNT(DISTINCT BTRIM(celula)) AS qtd_celulas
+      FROM presencas
+      WHERE COALESCE(BTRIM(celula), '') <> ''
+      GROUP BY membro_id
+    )
+    UPDATE presencas p
+    SET celula = c.celula_unica
+    FROM celula_unica_por_membro c
+    WHERE p.membro_id = c.membro_id
+      AND c.qtd_celulas = 1
+      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
   `);
 
   await pool.query(`
@@ -371,102 +458,9 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V33 Líderes Em Treinamento",
+    sistema: "+Células Backend V34 Presença v1.12 Histórico por Célula",
     status: "ONLINE"
   });
-});
-
-/* ================================
-   DIAGNÓSTICO TEMPORÁRIO — HISTÓRICO DE VISITANTE
-   SOMENTE LEITURA. REMOVER APÓS O DIAGNÓSTICO.
-================================ */
-app.get("/diagnostico/visitante-historico", async (req, res) => {
-  try {
-    const nomeAlvo = "TESTE HOJE240926";
-    const dataAlvo = "2026-05-15";
-
-    const visitantes = await pool.query(
-      `
-      SELECT
-        id, nome, telefone, celula, status,
-        data_cadastro, origem_cadastro, cadastro_completo,
-        created_at
-      FROM membros
-      WHERE UPPER(COALESCE(nome, '')) LIKE UPPER($1)
-      ORDER BY id DESC
-      `,
-      [`%${nomeAlvo}%`]
-    );
-
-    const ids = visitantes.rows.map((v) => Number(v.id)).filter(Number.isFinite);
-
-    let presencasDoVisitante = [];
-    if (ids.length > 0) {
-      const r = await pool.query(
-        `
-        SELECT p.*
-        FROM presencas p
-        WHERE p.membro_id = ANY($1::int[])
-        ORDER BY p.data ASC, p.id ASC
-        `,
-        [ids]
-      );
-      presencasDoVisitante = r.rows;
-    }
-
-    const presencasNaData = await pool.query(
-      `
-      SELECT
-        p.*,
-        m.nome AS membro_nome,
-        m.celula AS membro_celula_atual,
-        m.status AS membro_status_atual,
-        m.origem_cadastro
-      FROM presencas p
-      LEFT JOIN membros m ON m.id = p.membro_id
-      WHERE p.data = $1
-      ORDER BY p.id ASC
-      `,
-      [dataAlvo]
-    );
-
-    const colunasPresencas = await pool.query(
-      `
-      SELECT column_name, data_type
-      FROM information_schema.columns
-      WHERE table_schema = 'public' AND table_name = 'presencas'
-      ORDER BY ordinal_position
-      `
-    );
-
-    const colunasMembros = await pool.query(
-      `
-      SELECT column_name, data_type
-      FROM information_schema.columns
-      WHERE table_schema = 'public' AND table_name = 'membros'
-      ORDER BY ordinal_position
-      `
-    );
-
-    return res.json({
-      ok: true,
-      diagnostico: "SOMENTE LEITURA — nenhum dado foi alterado",
-      alvo: { nome: nomeAlvo, data: dataAlvo, celulaEsperada: "CÉLULA 02 - NOVA" },
-      visitanteEncontrado: visitantes.rows,
-      presencasDoVisitante,
-      presencasNaData,
-      estrutura: {
-        presencas: colunasPresencas.rows,
-        membros: colunasMembros.rows
-      }
-    });
-  } catch (erro) {
-    console.error("Erro no diagnóstico de histórico:", erro);
-    return res.status(500).json({
-      ok: false,
-      erro: erro.message || "Erro ao executar diagnóstico."
-    });
-  }
 });
 
 /* ================================
@@ -849,37 +843,34 @@ app.get("/membros/:id", async (req, res) => {
 app.post("/membros/visitante/:id/arquivar", async (req, res) => {
   try {
     const { id } = req.params;
+    const dataArquivamento = String(req.body?.dataArquivamento || hojeISO()).slice(0, 10);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataArquivamento)) {
+      return res.status(400).json({ erro: "Data de arquivamento inválida." });
+    }
 
     const membroResult = await pool.query("SELECT * FROM membros WHERE id = $1", [id]);
-
-    if (membroResult.rows.length === 0) {
-      return res.status(404).json({ erro: "Visitante não encontrado." });
-    }
+    if (membroResult.rows.length === 0) return res.status(404).json({ erro: "Visitante não encontrado." });
 
     const membro = membroResult.rows[0];
     const origem = normalizarTexto(membro.origem_cadastro || "");
     const status = normalizarTexto(membro.status || "");
-
-    if (origem !== "PRESENCA_VISITANTE" && status !== "VISITANTE") {
+    if (origem !== "PRESENCA_VISITANTE" && status !== "VISITANTE" && status !== "VISITANTE ARQUIVADO") {
       return res.status(400).json({ erro: "Apenas visitantes podem ser arquivados por esta função." });
     }
 
-    await pool.query(
-      `
-      UPDATE membros
-      SET
-        status = 'VISITANTE ARQUIVADO',
-        celula = '',
-        cadastro_completo = false
-      WHERE id = $1
-      `,
-      [id]
-    );
+    const dataCadastro = String(membro.data_cadastro || membro.created_at || "").slice(0, 10);
+    if (dataCadastro && dataArquivamento < dataCadastro) {
+      return res.status(400).json({ erro: "O arquivamento não pode ser anterior ao primeiro cadastro do visitante." });
+    }
 
-    res.json({
-      ok: true,
-      mensagem: "Visitante arquivado. Histórico de presença permanece preservado para relatórios e painel."
-    });
+    await pool.query(`
+      UPDATE membros
+      SET status = 'VISITANTE ARQUIVADO', data_arquivamento = $2, cadastro_completo = false
+      WHERE id = $1
+    `, [id, dataArquivamento]);
+
+    res.json({ ok: true, dataArquivamento, mensagem: `Visitante arquivado a partir de ${dataArquivamento.split("-").reverse().join("/")}. O histórico anterior permanece disponível.` });
   } catch (erro) {
     console.error("Erro ao arquivar visitante:", erro.message);
     res.status(500).json({ erro: erro.message || "Erro ao arquivar visitante." });
@@ -890,33 +881,38 @@ app.post("/membros/visitante/:id/arquivar", async (req, res) => {
 app.post("/membros/visitante", async (req, res) => {
   try {
     const { nome, telefone, celula, dataCadastro, observacoes } = req.body;
-
     const nomeTratado = normalizarTexto(nome);
-    const telefoneTratado = String(telefone || "").trim();
+    const telefoneTratado = normalizarTelefoneBR(telefone);
     const celulaTratada = montarNomeCelulaExibicao(celula || "");
-    const dataCadastroTratada = String(dataCadastro || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const dataCadastroTratada = String(dataCadastro || hojeISO()).slice(0, 10);
 
     if (!nomeTratado || !telefoneTratado || !celulaTratada) {
-      return res.status(400).json({ erro: "Informe nome, telefone e célula para cadastrar o visitante." });
+      return res.status(400).json({ erro: "Informe nome, telefone válido com DDD e célula para cadastrar o visitante." });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataCadastroTratada) || dataCadastroTratada > hojeISO()) {
+      return res.status(400).json({ erro: "A data de cadastro do visitante é inválida ou futura." });
+    }
+
+    const digitos = somenteDigitos(telefoneTratado);
+    const duplicado = await pool.query(
+      `SELECT id, nome FROM membros WHERE regexp_replace(COALESCE(telefone,''), '[^0-9]', '', 'g') = $1 LIMIT 1`,
+      [digitos]
+    );
+    if (duplicado.rows.length) {
+      return res.status(409).json({ erro: `Este telefone já está cadastrado para ${duplicado.rows[0].nome || "outra pessoa"}.` });
     }
 
     await pool.query(`
       INSERT INTO membros (
         nome, telefone, email, documento, celula, nascimento, status,
         cep, rua, numero, complemento, bairro, cidade, estado, observacoes,
-        data_cadastro, origem_cadastro, cadastro_completo
+        data_cadastro, origem_cadastro, cadastro_completo, data_arquivamento
       ) VALUES (
         $1,$2,'','',$3,'','VISITANTE',
         '','','','','','','',$4,
-        $5,'PRESENCA_VISITANTE',false
+        $5,'PRESENCA_VISITANTE',false,NULL
       )
-    `, [
-      nomeTratado,
-      telefoneTratado,
-      celulaTratada,
-      normalizarTexto(observacoes || `VISITANTE CADASTRADO PELA PRESENÇA EM ${dataCadastroTratada}`),
-      dataCadastroTratada
-    ]);
+    `, [nomeTratado, telefoneTratado, celulaTratada, normalizarTexto(observacoes || `VISITANTE CADASTRADO PELA PRESENÇA EM ${dataCadastroTratada}`), dataCadastroTratada]);
 
     res.json({ ok: true, mensagem: "Visitante cadastrado com sucesso." });
   } catch (erro) {
@@ -924,6 +920,7 @@ app.post("/membros/visitante", async (req, res) => {
     res.status(500).json({ erro: erro.message || "Erro ao cadastrar visitante." });
   }
 });
+
 
 app.post("/membros", async (req, res) => {
   try {
@@ -1636,26 +1633,18 @@ app.get("/presencas", async (req, res) => {
 app.delete("/presencas/:data", async (req, res) => {
   try {
     const { data } = req.params;
+    const nivel = normalizarNivelUsuario(req.body?.nivelUsuario || "lider");
+    const ids = Array.isArray(req.body?.membroIds) ? req.body.membroIds.map(Number).filter(Boolean) : [];
+    if (nivel !== "admin") return res.status(403).json({ erro: "Somente administrador pode excluir presença." });
+    if (!data) return res.status(400).json({ erro: "Data da presença não informada." });
+    if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido excluir presença em data futura." });
 
-    if (!data) {
-      return res.status(400).json({ erro: "Data da presença não informada." });
-    }
+    let result;
+    if (ids.length) result = await pool.query("DELETE FROM presencas WHERE data = $1 AND membro_id = ANY($2::int[]) RETURNING id", [data, ids]);
+    else result = await pool.query("DELETE FROM presencas WHERE data = $1 RETURNING id", [data]);
+    if (!result.rowCount) return res.status(404).json({ erro: "Nenhum registro de presença encontrado para esta reunião." });
 
-    const existente = await pool.query(
-      "SELECT COUNT(*)::int AS total FROM presencas WHERE data = $1",
-      [data]
-    );
-
-    if (!existente.rows[0] || Number(existente.rows[0].total || 0) === 0) {
-      return res.status(404).json({ erro: "Nenhum registro de presença encontrado para esta data." });
-    }
-
-    await pool.query("DELETE FROM presencas WHERE data = $1", [data]);
-
-    res.json({
-      ok: true,
-      mensagem: "Presença excluída com sucesso. Impacto: relatórios e painel deixarão de considerar esta reunião."
-    });
+    res.json({ ok: true, mensagem: "Presença excluída com sucesso. Relatórios e painel serão atualizados com a alteração histórica." });
   } catch (erro) {
     console.error("Erro ao excluir presença:", erro.message);
     res.status(500).json({ erro: erro.message || "Erro ao excluir presença." });
@@ -1668,7 +1657,23 @@ app.get("/presencas/:data", async (req, res) => {
     const { data } = req.params;
 
     const result = await pool.query(
-      'SELECT membro_id as "membroId", status FROM presencas WHERE data = $1',
+      `
+      SELECT
+        p.membro_id AS "membroId",
+        p.status,
+        COALESCE(p.celula, '') AS "celulaPresenca",
+        m.nome,
+        m.telefone,
+        m.status AS "statusMembro",
+        m.origem_cadastro AS "origemCadastro",
+        m.cadastro_completo AS "cadastroCompleto",
+        m.data_cadastro AS "dataCadastro",
+        m.data_arquivamento AS "dataArquivamento"
+      FROM presencas p
+      LEFT JOIN membros m ON m.id = p.membro_id
+      WHERE p.data = $1
+      ORDER BY p.id ASC
+      `,
       [data]
     );
 
@@ -1703,35 +1708,39 @@ app.post("/presencas/remover-data-membros", async (req, res) => {
 
 app.post("/presencas", async (req, res) => {
   try {
-    const { data, registros } = req.body;
+    const { data, registros, nivelUsuario, celula } = req.body;
+    const nivel = normalizarNivelUsuario(nivelUsuario || "lider");
+    if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ erro: "Data da reunião inválida." });
+    if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido lançar ou editar presença em data futura." });
+    if (nivel !== "admin" && diasDesde(data) > 20) {
+      return res.status(403).json({ erro: "O prazo de 20 dias para inclusão ou edição desta reunião foi encerrado. Solicite a correção a um administrador." });
+    }
+
+    const celulaTratada = montarNomeCelulaExibicao(celula || "");
+    if (!celulaTratada) return res.status(400).json({ erro: "Célula da reunião não informada." });
 
     for (const item of registros || []) {
       const { membroId, status } = item;
-
-      const existe = await pool.query(
-        "SELECT * FROM presencas WHERE membro_id = $1 AND data = $2",
-        [membroId, data]
-      );
-
+      const existe = await pool.query("SELECT * FROM presencas WHERE membro_id = $1 AND data = $2", [membroId, data]);
       if (existe.rows.length > 0) {
         await pool.query(
-          "UPDATE presencas SET status = $1 WHERE membro_id = $2 AND data = $3",
-          [status, membroId, data]
+          "UPDATE presencas SET status = $1, celula = $2 WHERE membro_id = $3 AND data = $4",
+          [status, celulaTratada, membroId, data]
         );
       } else {
         await pool.query(
-          "INSERT INTO presencas (membro_id, data, status) VALUES ($1,$2,$3)",
-          [membroId, data, status]
+          "INSERT INTO presencas (membro_id, data, status, celula) VALUES ($1,$2,$3,$4)",
+          [membroId, data, status, celulaTratada]
         );
       }
     }
-
     res.json({ ok: true });
   } catch (erro) {
     console.error("Erro ao salvar presenças:", erro.message);
-    res.status(500).json({ erro: "Erro ao salvar presenças" });
+    res.status(500).json({ erro: erro.message || "Erro ao salvar presenças" });
   }
 });
+
 
 /* ================================
    BACKUP
@@ -1768,7 +1777,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V33 Líderes Em Treinamento rodando na porta ${PORT}`);
+      console.log(`+Células Backend V34 Presença v1.12 Histórico por Célula rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
