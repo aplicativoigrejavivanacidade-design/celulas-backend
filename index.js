@@ -1695,6 +1695,78 @@ app.post("/presencas", async (req, res) => {
 
 
 /* ================================
+   DIAGNÓSTICO TEMPORÁRIO — HISTÓRICO DE VISITANTE
+   Remover após a investigação.
+================================ */
+app.get("/diagnostico/historico-visitante", async (req, res) => {
+  try {
+    const nomeAlvo = "TESTE HOJE240926";
+    const dataAlvo = "2026-05-15";
+
+    const membrosResult = await pool.query(`
+      SELECT
+        id,
+        nome,
+        status,
+        origem_cadastro AS "origemCadastro",
+        celula,
+        data_cadastro AS "dataCadastro",
+        data_arquivamento AS "dataArquivamento"
+      FROM membros
+      WHERE UPPER(TRIM(nome)) = UPPER($1)
+      ORDER BY id ASC
+    `, [nomeAlvo]);
+
+    const ids = membrosResult.rows.map((m) => m.id);
+
+    let historicoVisitante = [];
+    if (ids.length) {
+      const historicoResult = await pool.query(`
+        SELECT id, membro_id AS "membroId", data, status, celula
+        FROM presencas
+        WHERE membro_id = ANY($1::int[])
+        ORDER BY data ASC, id ASC
+      `, [ids]);
+      historicoVisitante = historicoResult.rows;
+    }
+
+    const reuniaoDataResult = await pool.query(`
+      SELECT
+        p.id AS "presencaId",
+        p.membro_id AS "membroId",
+        p.data,
+        p.status AS "statusPresenca",
+        p.celula AS "celulaPresenca",
+        m.nome,
+        m.status AS "statusMembro",
+        m.origem_cadastro AS "origemCadastro",
+        m.celula AS "celulaAtual",
+        m.data_cadastro AS "dataCadastro",
+        m.data_arquivamento AS "dataArquivamento"
+      FROM presencas p
+      LEFT JOIN membros m ON m.id = p.membro_id
+      WHERE p.data = $1
+      ORDER BY p.id ASC
+    `, [dataAlvo]);
+
+    res.json({
+      diagnostico: "historico-visitante-v1",
+      alvo: { nome: nomeAlvo, data: dataAlvo, celulaEsperada: "CÉLULA 02 - NOVA" },
+      visitanteEncontrado: membrosResult.rows.length > 0,
+      cadastrosDoVisitante: membrosResult.rows,
+      presencasDoVisitante: historicoVisitante,
+      todosOsRegistrosNaData: reuniaoDataResult.rows
+    });
+  } catch (erro) {
+    console.error("Erro no diagnóstico histórico:", erro.message);
+    res.status(500).json({
+      erro: "Erro ao executar diagnóstico histórico.",
+      detalhe: erro.message
+    });
+  }
+});
+
+/* ================================
    BACKUP
 ================================ */
 app.get("/backup", async (req, res) => {
