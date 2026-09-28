@@ -1669,7 +1669,7 @@ app.get("/presencas", async (req, res) => {
 
 // v1.14 — consulta histórica otimizada: um único pedido para todo o período.
 // Esta rota deve permanecer antes de /presencas/:data.
-app.get("/presencas/periodo", async (req, res) => {
+app.get("/presencas/periodo/consulta", async (req, res) => {
   try {
     const inicio = String(req.query?.inicio || "").slice(0, 10);
     const fim = String(req.query?.fim || "").slice(0, 10);
