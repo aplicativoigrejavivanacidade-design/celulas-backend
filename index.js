@@ -226,6 +226,17 @@ async function garantirTabelas() {
     ADD COLUMN IF NOT EXISTS celula TEXT DEFAULT NULL
   `);
 
+  // v1.14 — índices para acelerar consultas históricas por período e célula.
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_presencas_data
+    ON presencas (data)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_presencas_data_celula
+    ON presencas (data, celula)
+  `);
+
   // v1.12 — migração conservadora do vínculo histórico da célula.
   // 1) Registros antigos herdam a célula atual somente quando ela ainda existe.
   await pool.query(`
@@ -484,7 +495,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V35 Presença v1.13 Elegibilidade Temporal",
+    sistema: "+Células Backend V36 Presença v1.14 Consulta Otimizada e Exclusão Segura",
     status: "ONLINE"
   });
 });
@@ -1656,21 +1667,81 @@ app.get("/presencas", async (req, res) => {
 });
 
 
+// v1.14 — consulta histórica otimizada: um único pedido para todo o período.
+// Esta rota deve permanecer antes de /presencas/:data.
+app.get("/presencas/periodo", async (req, res) => {
+  try {
+    const inicio = String(req.query?.inicio || "").slice(0, 10);
+    const fim = String(req.query?.fim || "").slice(0, 10);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim)) {
+      return res.status(400).json({ erro: "Informe data inicial e final válidas." });
+    }
+    if (inicio > fim) {
+      return res.status(400).json({ erro: "A data inicial não pode ser maior que a data final." });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT
+        p.data,
+        p.membro_id AS "membroId",
+        p.status,
+        COALESCE(p.celula, '') AS "celulaPresenca",
+        m.nome,
+        m.telefone,
+        m.status AS "statusMembro",
+        m.origem_cadastro AS "origemCadastro",
+        m.cadastro_completo AS "cadastroCompleto",
+        m.data_cadastro AS "dataCadastro",
+        m.data_arquivamento AS "dataArquivamento"
+      FROM presencas p
+      LEFT JOIN membros m ON m.id = p.membro_id
+      WHERE p.data BETWEEN $1 AND $2
+      ORDER BY p.data ASC, p.id ASC
+      `,
+      [inicio, fim]
+    );
+
+    res.json(result.rows);
+  } catch (erro) {
+    console.error("Erro ao buscar presenças por período:", erro.message);
+    res.status(500).json({ erro: "Erro ao buscar presenças por período" });
+  }
+});
+
+
 app.delete("/presencas/:data", async (req, res) => {
   try {
     const { data } = req.params;
     const nivel = normalizarNivelUsuario(req.body?.nivelUsuario || "lider");
+    const celula = montarNomeCelulaExibicao(req.body?.celula || "");
     const ids = Array.isArray(req.body?.membroIds) ? req.body.membroIds.map(Number).filter(Boolean) : [];
+
     if (nivel !== "admin") return res.status(403).json({ erro: "Somente administrador pode excluir presença." });
     if (!data) return res.status(400).json({ erro: "Data da presença não informada." });
     if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido excluir presença em data futura." });
+    if (!celula) return res.status(400).json({ erro: "Célula da reunião não informada. A exclusão foi cancelada por segurança." });
+    if (!ids.length) return res.status(400).json({ erro: "Nenhum participante da reunião foi informado. A exclusão foi cancelada por segurança." });
 
-    let result;
-    if (ids.length) result = await pool.query("DELETE FROM presencas WHERE data = $1 AND membro_id = ANY($2::int[]) RETURNING id", [data, ids]);
-    else result = await pool.query("DELETE FROM presencas WHERE data = $1 RETURNING id", [data]);
-    if (!result.rowCount) return res.status(404).json({ erro: "Nenhum registro de presença encontrado para esta reunião." });
+    // v1.14: nunca excluir somente pela data. Data + célula + participantes
+    // formam a proteção da reunião selecionada. Registros ambíguos ficam preservados.
+    const result = await pool.query(
+      `DELETE FROM presencas
+       WHERE data = $1
+         AND UPPER(BTRIM(COALESCE(celula, ''))) = UPPER(BTRIM($2))
+         AND membro_id = ANY($3::int[])
+       RETURNING id`,
+      [data, celula, ids]
+    );
 
-    res.json({ ok: true, mensagem: "Presença excluída com sucesso. Relatórios e painel serão atualizados com a alteração histórica." });
+    if (!result.rowCount) return res.status(404).json({ erro: "Nenhum registro foi excluído. A reunião informada não corresponde exatamente à data e célula selecionadas." });
+
+    res.json({
+      ok: true,
+      excluidos: result.rowCount,
+      mensagem: "Presença excluída com sucesso. Relatórios e painel serão atualizados com a alteração histórica."
+    });
   } catch (erro) {
     console.error("Erro ao excluir presença:", erro.message);
     res.status(500).json({ erro: erro.message || "Erro ao excluir presença." });
@@ -1803,7 +1874,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V35 Presença v1.13 Elegibilidade Temporal rodando na porta ${PORT}`);
+      console.log(`+Células Backend V36 Presença v1.14 Consulta Otimizada e Exclusão Segura rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
