@@ -1711,7 +1711,7 @@ app.get("/presencas/periodo/consulta", async (req, res) => {
 });
 
 
-app.delete("/presencas/:data", async (req, res) => {
+app.delete("/presencas/reuniao/segura", async (req, res) => {
   try {
     const { data } = req.params;
     const nivel = normalizarNivelUsuario(req.body?.nivelUsuario || "lider");
