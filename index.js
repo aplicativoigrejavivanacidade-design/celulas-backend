@@ -1713,26 +1713,23 @@ app.get("/presencas/periodo/consulta", async (req, res) => {
 
 app.delete("/presencas/reuniao/segura", async (req, res) => {
   try {
-    const { data } = req.params;
+    const data = String(req.body?.data || "").slice(0, 10);
     const nivel = normalizarNivelUsuario(req.body?.nivelUsuario || "lider");
     const celula = montarNomeCelulaExibicao(req.body?.celula || "");
-    const ids = Array.isArray(req.body?.membroIds) ? req.body.membroIds.map(Number).filter(Boolean) : [];
 
     if (nivel !== "admin") return res.status(403).json({ erro: "Somente administrador pode excluir presença." });
     if (!data) return res.status(400).json({ erro: "Data da presença não informada." });
     if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido excluir presença em data futura." });
     if (!celula) return res.status(400).json({ erro: "Célula da reunião não informada. A exclusão foi cancelada por segurança." });
-    if (!ids.length) return res.status(400).json({ erro: "Nenhum participante da reunião foi informado. A exclusão foi cancelada por segurança." });
 
-    // v1.14: nunca excluir somente pela data. Data + célula + participantes
-    // formam a proteção da reunião selecionada. Registros ambíguos ficam preservados.
+    // v1.14: nunca excluir somente pela data. A reunião é identificada
+    // obrigatoriamente por data + célula; registros de outras células ficam preservados.
     const result = await pool.query(
       `DELETE FROM presencas
        WHERE data = $1
          AND UPPER(BTRIM(COALESCE(celula, ''))) = UPPER(BTRIM($2))
-         AND membro_id = ANY($3::int[])
        RETURNING id`,
-      [data, celula, ids]
+      [data, celula]
     );
 
     if (!result.rowCount) return res.status(404).json({ erro: "Nenhum registro foi excluído. A reunião informada não corresponde exatamente à data e célula selecionadas." });
