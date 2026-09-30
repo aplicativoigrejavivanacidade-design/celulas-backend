@@ -8,6 +8,14 @@ const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
+// Financeiro v0.1: ativação explícita; não altera as rotas de Presença.
+// Evita que o diretório do módulo seja exposto pelo static legado.
+let moduloFinanceiro;
+app.use('/financeiro', (req, res, next) => {
+  if (process.env.FINANCEIRO_ATIVO !== 'true' || !moduloFinanceiro) return res.status(404).send('Financeiro não ativado.');
+  if (req.originalUrl === '/financeiro') return res.redirect('/financeiro/');
+  return moduloFinanceiro.router(req, res, next);
+});
 app.use(express.static(__dirname));
 
 const pool = new Pool({
@@ -1869,6 +1877,10 @@ async function iniciarServidor() {
   try {
     await garantirTabelas();
     await criarAdmin();
+    if (process.env.FINANCEIRO_ATIVO === 'true') {
+      moduloFinanceiro = require('./financeiro/router').criarFinanceiro(pool);
+      await moduloFinanceiro.iniciar();
+    }
 
     app.listen(PORT, () => {
       console.log(`+Células Backend V36 Presença v1.14 Consulta Otimizada e Exclusão Segura rodando na porta ${PORT}`);
