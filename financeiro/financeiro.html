@@ -1,16 +1,212 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>+Células | Financeiro</title>
 <style>
-:root{font-family:Arial,sans-serif;color:#25334a;background:#f2f5fa}*{box-sizing:border-box}body{margin:0}header{background:#183958;color:white;padding:20px 5%;display:flex;align-items:center;justify-content:space-between}header h1{font-size:24px;margin:0}main{max-width:1200px;margin:24px auto;padding:0 20px}.card{background:white;padding:22px;border-radius:12px;margin-bottom:20px;box-shadow:0 3px 15px #173a5810}h2{margin:0 0 18px;font-size:20px}h3{font-size:16px}label{display:block;font-size:14px;font-weight:bold}input,select,textarea,button{font:inherit;border:1px solid #c4cfdd;border-radius:7px;padding:10px;width:100%;margin:6px 0 14px}button{width:auto;background:#20649b;color:white;cursor:pointer;font-weight:bold;border:0}button:disabled{opacity:.5;cursor:wait}button.secondary{background:#e4edf5;color:#24445c}button.danger{background:#a72b3a}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 18px}.wide{grid-column:1/-1}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:12px 9px;border-bottom:1px solid #e0e6ef}th{background:#edf2f8}td.money{text-align:right;white-space:nowrap}.small{font-size:13px;color:#53667f}.notice{padding:12px;background:#fff2d7;color:#634609;border-radius:6px}.tabs{display:flex;gap:12px;flex-wrap:wrap}.tiles{display:flex;gap:18px;flex-wrap:wrap}.tile{flex:1;min-width:190px;padding:16px;border:1px solid #dae3ee;border-radius:8px}.tile b{font-size:22px;display:block;margin-top:9px}[hidden]{display:none!important}dialog{border:0;border-radius:12px;max-width:650px;width:95%;padding:25px}dialog::backdrop{background:#13263b88}.status{font-size:12px;font-weight:bold}header a{color:white}#login{max-width:450px;margin:auto}@media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}header{gap:16px}header h1{font-size:20px}}
-</style></head><body><header><h1>+Células · Financeiro v0.1</h1><span id="identity"></span><button id="logout" hidden>Sair</button></header><main>
-<section class="card" id="login"><h2>Acesso financeiro</h2><p class="small">Use seu usuário do +Células. O acesso financeiro deve ser concedido pelo Admin.</p><form id="loginForm"><label>Usuário<input name="usuario" required autocomplete="username"></label><label>Senha<input name="senha" type="password" required autocomplete="current-password"></label><button>Entrar</button></form></section>
-<section id="app" hidden><nav class="tabs"><button data-tab="resumo">Resumo e contas</button><button data-tab="lancamento">Novo lançamento</button><button data-tab="cadastros">Cadastros</button><button data-tab="acessos" class="admin">Hierarquia e acessos</button></nav>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --red-dark: #b91c1c;
+      --gray: #64748b;
+      --gray-dark: #475569;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+    }
+
+    .logo {
+      font-size: 30px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .logo-sub {
+      margin: 6px 0 28px;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .menu a {
+      display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.16);
+    }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .versao-sistema {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.72);
+      user-select: none;
+    }
+
+    .versao-sistema strong {
+      color: rgba(255,255,255,0.92);
+      font-weight: 700;
+    }
+
+    .content {
+      margin-left: 250px;
+      padding: 30px;
+      width: calc(100% - 250px);
+    }
+
+    .header {
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .usuario-logado {
+      margin-top: 10px !important;
+      font-size: 14px;
+    }
+
+
+.card{background:var(--card);padding:22px;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px}
+h2{margin:0 0 16px;font-size:22px}h3{font-size:18px}p{line-height:1.55}
+label{display:block;font-weight:bold;font-size:14px;margin:12px 0 6px}
+input,select,textarea{display:block;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);font:15px Arial,sans-serif;background:#fff;color:var(--text);margin-top:6px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+button{padding:12px 16px;border:0;border-radius:10px;font: bold 14px Arial,sans-serif;background:var(--blue);color:#fff;cursor:pointer;margin:8px 0}
+button:hover{background:var(--blue-dark)}button:disabled{opacity:.58;cursor:not-allowed}
+button.secondary{background:var(--gray)}button.secondary:hover{background:var(--gray-dark)}button.danger,#logout{background:var(--red)}button.danger:hover,#logout:hover{background:var(--red-dark)}
+form>button,form .wide>button:first-of-type{background:var(--green)}form>button:hover,form .wide>button:first-of-type:hover{background:var(--green-dark)}
+.menu button{display:block;width:100%;text-align:left;background:transparent;border-radius:10px;margin:0 0 6px;padding:12px;font-size:16px}
+.menu button:hover,.menu button.ativo{background:rgba(255,255,255,.16)}#logout{width:100%;margin-top:20px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px;align-items:end}.grid>button{justify-self:start}.wide{grid-column:1/-1}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{background:#f8fafc}td.money{text-align:right;white-space:nowrap}.small{font-size:14px;color:var(--muted)}.notice{padding:14px 16px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:14px}.tiles{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.tile{flex:1;min-width:190px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#f8fafc}.tile b{font-size:24px;display:block;margin:8px 0}.status{font-size:13px;font-weight:bold}[hidden]{display:none!important}#login{max-width:450px;margin:0 auto}#login button{width:100%}.version-note{margin-top:14px;text-align:center;font-size:11px;color:rgba(255,255,255,.72)}
+dialog{border:1px solid var(--line);border-radius:var(--radius);padding:0;max-width:700px;width:calc(100% - 40px);max-height:90vh;overflow:auto;box-shadow:0 20px 55px rgba(15,23,42,.22)}dialog::backdrop{background:rgba(15,23,42,.46);backdrop-filter:blur(2px)}dialog>h2{padding:18px 22px;color:white;background:linear-gradient(90deg,var(--blue-dark),var(--green));font-size:20px;margin:0}dialog>form,dialog>#historyContent{padding:22px}#history>button{margin:0 22px 22px}#message,#decision{max-width:470px}dialog.popup-card{width:calc(100% - 40px)}.popup-acoes button{margin:0}.popup-card p{margin-bottom:12px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.layout{flex-direction:column}.sidebar{position:relative;width:100%;height:auto}.content{margin-left:0;width:100%;padding:20px}.menu{display:flex;flex-wrap:wrap;gap:6px}.menu button{width:auto;font-size:14px}.logo-sub{margin-bottom:16px}#logout{width:auto;margin-top:10px}.version-note{text-align:left}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.header h1{font-size:26px}.card{padding:18px}dialog>form{padding:18px}}
+    .popup-card {
+      width: min(470px, 100%);
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 55px rgba(15, 23, 42, 0.22);
+    }
+
+    .popup-cabecalho {
+      padding: 18px 22px;
+      color: #fff;
+      background: linear-gradient(90deg, var(--blue-dark), var(--green));
+    }
+
+    .popup-card.erro .popup-cabecalho {
+      background: linear-gradient(90deg, var(--red-dark), var(--red));
+    }
+
+    .popup-card.atencao .popup-cabecalho {
+      background: linear-gradient(90deg, #d97706, var(--amber));
+    }
+
+    .popup-card.sucesso .popup-cabecalho {
+      background: linear-gradient(90deg, var(--green-dark), var(--green));
+    }
+
+    .popup-card h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .popup-corpo { padding: 22px; }
+
+    .popup-card p {
+      margin: 0;
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .popup-acoes {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .popup-acoes button { min-width: 100px; }
+
+</style></head><body><div class="layout"><aside class="sidebar"><h2 class="logo">+Células</h2><div class="logo-sub">Gestão financeira</div><nav class="menu" id="financialMenu" aria-label="Financeiro" hidden><button data-tab="resumo" class="ativo" aria-current="page">Resumo e contas</button><button data-tab="lancamento">Novo lançamento</button><button data-tab="cadastros">Cadastros</button><button data-tab="acessos" class="admin">Hierarquia e acessos</button></nav><button id="logout" hidden>Sair</button><div class="version-note">Financeiro v0.2 · Ambiente de testes</div></aside><main class="content"><div class="header"><h1>Financeiro</h1><p>Controle contas a pagar, recebimentos e saldos.</p><p id="identity" class="usuario-logado"></p></div><section class="card" id="login"><h2>Acesso financeiro</h2><p class="small">Use seu usuário do +Células. O acesso financeiro deve ser concedido pelo Admin.</p><form id="loginForm"><label>Usuário<input name="usuario" required autocomplete="username"></label><label>Senha<input name="senha" type="password" required autocomplete="current-password"></label><button>Entrar</button></form></section>
+<section id="app" hidden>
 <section class="card tab" id="resumo"><h2>Saldos por banco e caixa</h2><div id="balances" class="tiles"></div><p class="small">Saldos consideram o saldo inicial e as liquidações confirmadas. Arrecadação da Presença e extratos serão integrados nas próximas etapas.</p><h2>Contas a pagar e receber</h2><form id="filter" class="grid"><label>Vencimento inicial<input type="date" name="de"></label><label>Vencimento final<input type="date" name="ate"></label><div><button>Filtrar</button><button type="button" id="clear" class="secondary">Limpar</button></div></form><div id="totals" class="tiles"></div><p id="limit" class="notice" hidden>Há mais de 1.000 parcelas. Reduza o período para consultar e totalizar todas.</p><div class="scroll"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Unidade</th><th>Tipo</th><th>Parcela</th><th>Valor</th><th>Saldo</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="titles"></tbody></table></div></section>
-<section class="card tab" id="lancamento" hidden><h2>Conta à vista ou parcelada</h2><form id="titleForm" class="grid"><label>Tipo<select name="tipo"><option value="pagar">A pagar</option><option value="receber">A receber</option></select></label><label>Unidade<select name="unidade_id" class="units" required></select></label><label>Categoria<select name="categoria_id" id="titleCategories" required></select></label><label class="wide">Descrição<input name="descricao" required maxlength="200"></label><label>Fornecedor ou contraparte<select name="fornecedor_id" id="suppliers"></select></label><label>Valor total em reais<input name="valor" required inputmode="decimal" placeholder="0,00"></label><label>Quantidade de parcelas<input name="parcelas" type="number" min="1" max="120" value="1" required></label><label>Competência<input name="competencia" type="date" required></label><label>Primeiro vencimento<input name="vencimento" type="date" required></label><label class="wide">Observação<textarea name="observacao" maxlength="1000"></textarea></label><div class="wide"><p class="small">O valor total será dividido em parcelas mensais. Em meses mais curtos, o vencimento será no último dia do mês. Não gera pagamento automático.</p><button>Registrar conta</button></div></form></section>
-<section class="card tab" id="cadastros" hidden><div class="admin"><h2>Unidades e contas</h2><form id="unitForm" class="grid"><label>Nome<input name="nome" required></label><label>Tipo<select name="tipo"><option value="igreja">Igreja local</option><option value="campus">Campus</option><option value="rede">Rede</option></select></label><label>Unidade superior<select name="pai_id" class="units optional"></select></label><button>Cadastrar unidade</button></form><form id="accountForm" class="grid"><label>Nome da conta<input name="nome" required></label><label>Tipo<select name="tipo"><option value="banco">Banco</option><option value="caixa">Caixa</option></select></label><label>Unidade<select name="unidade_id" class="units" required></select></label><label>Saldo inicial em reais<input name="saldo_inicial" value="0" required></label><label>Data do saldo inicial<input name="data_saldo" type="date" required></label><label>Saldo negativo<select name="negativo"><option value="false">Não</option><option value="true">Sim</option></select></label><button>Cadastrar conta</button></form><h2>Categorias</h2><form id="categoryForm" class="grid"><label>Nome<input name="nome" required></label><label>Tipo<select name="tipo"><option value="pagar">Despesa</option><option value="receber">Entrada</option></select></label><button>Cadastrar categoria</button></form></div><h2>Fornecedores e contrapartes</h2><form id="supplierForm" class="grid"><label>Nome<input name="nome" required></label><label>Documento<input name="documento" maxlength="30"></label><label>Telefone<input name="telefone" maxlength="30"></label><button>Cadastrar fornecedor</button></form><div id="catalogue"></div></section>
+<section class="card tab" id="lancamento" hidden><h2>Conta à vista ou parcelada</h2><form id="titleForm" class="grid"><label>Tipo<select name="tipo"><option value="pagar">A pagar</option><option value="receber">A receber</option></select></label><label>Unidade<select name="unidade_id" class="units" required></select></label><label>Categoria<select name="categoria_id" id="titleCategories" required></select></label><label class="wide">Descrição<input name="descricao" required maxlength="200"></label><label>Fornecedor ou responsável<select name="fornecedor_id" id="suppliers"></select></label><label>Valor total em reais<input name="valor" required inputmode="decimal" placeholder="0,00"></label><label>Quantidade de parcelas<input name="parcelas" type="number" min="1" max="120" value="1" required></label><label>Competência<input name="competencia" type="date" required></label><label>Primeiro vencimento<input name="vencimento" type="date" required></label><label class="wide">Observação<textarea name="observacao" maxlength="1000"></textarea></label><div class="wide"><p class="small">O valor total será dividido em parcelas mensais. Em meses mais curtos, o vencimento será no último dia do mês. Não gera pagamento automático.</p><button>Registrar conta</button></div></form></section>
+<section class="card tab" id="cadastros" hidden><div class="admin"><h2>Unidades e contas</h2><form id="unitForm" class="grid"><label>Nome<input name="nome" required></label><label>Tipo<select name="tipo"><option value="igreja">Igreja local</option><option value="campus">Campus</option><option value="rede">Rede</option></select></label><label>Unidade superior<select name="pai_id" class="units optional"></select></label><button>Cadastrar unidade</button></form><form id="accountForm" class="grid"><label>Nome da conta<input name="nome" required></label><label>Tipo<select name="tipo"><option value="banco">Banco</option><option value="caixa">Caixa</option></select></label><label>Unidade<select name="unidade_id" class="units" required></select></label><label>Saldo inicial em reais<input name="saldo_inicial" value="0" required></label><label>Data do saldo inicial<input name="data_saldo" type="date" required></label><label>Saldo negativo<select name="negativo"><option value="false">Não</option><option value="true">Sim</option></select></label><button>Cadastrar conta</button></form><h2>Categorias</h2><form id="categoryForm" class="grid"><label>Nome<input name="nome" required></label><label>Tipo<select name="tipo"><option value="pagar">Despesa</option><option value="receber">Entrada</option></select></label><button>Cadastrar categoria</button></form></div><h2>Fornecedores e responsáveis</h2><form id="supplierForm" class="grid"><label>Nome<input name="nome" required></label><label>Documento<input name="documento" maxlength="30"></label><label>Telefone<input name="telefone" maxlength="30"></label><button>Cadastrar fornecedor</button></form><div id="catalogue"></div></section>
 <section class="card tab admin" id="acessos" hidden><h2>Permissões financeiras</h2><p>Admin possui acesso total. Para os demais perfis, o alcance se estende às unidades subordinadas. Igreja contém campus; campus contém redes. Consulta não concede autorização para movimentar valores.</p><form id="accessForm" class="grid"><label>Usuário<select name="usuario_id" id="users" required></select></label><label>Perfil<select name="perfil"><option value="tesoureiro">Tesoureiro</option><option value="pastor_presidente">Pastor Presidente</option><option value="pastor_governo">Pastor de Governo</option><option value="pastor_rede">Pastor de Rede</option><option value="consulta">Consulta</option></select></label><label>Alcance<select name="unidade_id" class="units optional"></select></label><label>Lançar<select name="lancar"><option value="false">Não</option><option value="true">Sim</option></select></label><label>Pagar e receber<select name="liquidar"><option value="false">Não</option><option value="true">Sim</option></select></label><label>Estornar<select name="estornar"><option value="false">Não</option><option value="true">Sim</option></select></label><div class="wide"><p class="small">Alcance vazio concede acesso global. Governo exige igreja; Pastor de Rede exige rede. Cadastro estrutural e concessão de acessos são exclusivos do Admin nesta versão.</p><button>Conceder acesso</button></div></form><div class="scroll"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Alcance</th><th>Ações concedidas</th><th></th></tr></thead><tbody id="grants"></tbody></table></div></section></section>
 <dialog id="payment"><h2 id="paymentTitle">Registrar liquidação</h2><form id="paymentForm" class="grid"><label>Data efetiva<input name="data" type="date" required></label><label>Conta financeira<select name="conta_id" id="paymentAccounts" required></select></label><label>Meio<select name="meio"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="deposito">Depósito</option><option value="boleto">Boleto</option><option value="debito">Débito automático</option><option value="cartao">Cartão</option><option value="outro">Outro</option></select></label><label>Principal liquidado<input name="principal" required inputmode="decimal"></label><label>Juros<input name="juros" value="0" inputmode="decimal"></label><label>Multa<input name="multa" value="0" inputmode="decimal"></label><label>Desconto<input name="desconto" value="0" inputmode="decimal"></label><label class="wide">Referência do comprovante<input name="comprovante" maxlength="500" placeholder="Número ou referência do comprovante"></label><label class="wide">Observação<textarea name="observacao" maxlength="1000"></textarea></label><div class="wide"><button>Confirmar</button><button type="button" class="secondary" data-close="payment">Cancelar</button></div></form></dialog>
-<dialog id="history"><h2>Histórico de pagamentos e recebimentos</h2><div id="historyContent"></div><button class="secondary" data-close="history">Fechar</button></dialog><dialog id="message"><h2 id="messageTitle">Informação</h2><p id="messageText"></p><button class="secondary" data-close="message">Fechar</button></dialog>
-</main><script>
+<dialog id="history"><h2>Histórico de pagamentos e recebimentos</h2><div id="historyContent"></div><button class="secondary" data-close="history">Fechar</button></dialog><dialog id="message" class="popup-card info" aria-labelledby="messageTitle"><div class="popup-cabecalho"><h3 id="messageTitle">Informação</h3></div><div class="popup-corpo"><p id="messageText"></p><div class="popup-acoes"><button data-close="message">OK</button></div></div></dialog>
+<dialog id="decision" class="popup-card atencao" aria-labelledby="decisionTitle"><div class="popup-cabecalho"><h3 id="decisionTitle">Confirmação</h3></div><form id="decisionForm"><p id="decisionText"></p><label id="reasonLabel" hidden>Motivo do estorno<textarea id="reason" maxlength="1000"></textarea></label><p id="decisionError" role="alert" hidden style="color:var(--red)">Informe o motivo do estorno.</p><div class="popup-acoes"><button type="button" class="secondary" id="decisionCancel">Cancelar</button><button type="submit">Confirmar</button></div></form></dialog>
+</main></div><script>
 'use strict';
 const $=s=>document.querySelector(s);let token='',catalogue={},records=[],paymentId=null,titleKey=crypto.randomUUID(),paymentKey='';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,24 +214,25 @@ const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).
 const date=v=>String(v||'').slice(0,10).split('-').reverse().join('/');
 const data=form=>Object.fromEntries(new FormData(form));
 const can=(action,unit)=>catalogue.usuario?.admin||catalogue.permissoes?.[action]===null||catalogue.permissoes?.[action]?.includes(Number(unit));
-function notify(t,error=false){$('#messageTitle').textContent=error?'Não foi possível concluir':'Informação';$('#messageText').textContent=t;$('#message').showModal();}
-async function api(route,method='GET',body){const r=await fetch('api/'+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});const result=await r.json();if(!r.ok){if(r.status===401&&token){token='';$('#app').hidden=true;$('#login').hidden=false;$('#logout').hidden=true;}throw Error(result.erro||'Falha na operação.');}return result;}
-function bind(form,fn){$(form).addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{await fn(e.target);}catch(err){notify(err.message,true);}finally{button.disabled=false;}});}
+function notify(t,error=false){$('#messageTitle').textContent=error?'Não foi possível concluir':'Informação';$('#messageText').textContent=t;$('#message').className='popup-card '+(error?'erro':'sucesso');$('#message').showModal();}
+function decide(text,reason=false){return new Promise(resolve=>{const d=$('#decision');$('#decisionTitle').textContent=reason?'Confirmar estorno':'Confirmar revogação';$('#decisionText').textContent=text;$('#reasonLabel').hidden=!reason;$('#reason').value='';$('#decisionError').hidden=true;let done=false;function finish(value){if(done)return;done=true;d.close();resolve(value);}$('#decisionCancel').onclick=()=>finish(null);d.oncancel=e=>{e.preventDefault();finish(null);};$('#decisionForm').onsubmit=e=>{e.preventDefault();const value=$('#reason').value.trim();if(reason&&!value){$('#decisionError').hidden=false;$('#reason').focus();return;}finish(reason?value:true);};d.showModal();if(reason)$('#reason').focus();});}
+async function api(route,method='GET',body){const r=await fetch('api/'+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});const result=await r.json();if(!r.ok){if(r.status===401&&token){token='';$('#app').hidden=true;$('#login').hidden=false;$('#logout').hidden=true;$('#financialMenu').hidden=true;}throw Error(result.erro||'Falha na operação.');}return result;}
+function bind(form,fn){$(form).noValidate=true;$(form).addEventListener('submit',async e=>{e.preventDefault();const invalid=e.target.querySelector(':invalid');if(invalid){const label=invalid.closest('label')?.childNodes[0]?.textContent.trim()||'Campo';notify(label+': '+invalid.validationMessage,true);$('#message').addEventListener('close',()=>invalid.focus(),{once:true});return;}const button=e.submitter;button.disabled=true;try{await fn(e.target);}catch(err){notify(err.message,true);}finally{button.disabled=false;}});}
 function options(select,items,empty){const old=select.value;select.innerHTML=(empty?'<option value="">'+esc(empty)+'</option>':'')+items.map(i=>'<option value="'+i.id+'">'+esc(i.nome)+'</option>').join('');if(items.some(i=>String(i.id)===old))select.value=old;}
-async function refresh(){catalogue=await api('cadastros');$('#identity').textContent=catalogue.usuario.nome;document.querySelectorAll('.admin').forEach(el=>{if(!el.classList.contains('tab'))el.hidden=!catalogue.usuario.admin;else if(!catalogue.usuario.admin)el.hidden=true;});document.querySelectorAll('select.units').forEach(el=>options(el,catalogue.unidades,el.classList.contains('optional')?'Sem unidade / global':'Selecione'));options($('#suppliers'),catalogue.fornecedores,'Não informado');options($('#paymentAccounts'),catalogue.contas.filter(c=>can('liquidar',c.unidade_id)),'Selecione');categories();$('#balances').innerHTML=catalogue.contas.map(c=>'<div class="tile">'+esc(c.nome)+'<b>'+money(c.saldo)+'</b><span class="small">Saldo inicial em '+date(c.data_saldo)+'</span></div>').join('')||'<p>Nenhuma conta cadastrada no seu alcance.</p>';$('#catalogue').innerHTML='<h3>Categorias</h3><p>'+catalogue.categorias.map(c=>esc(c.nome)+' ('+esc(c.tipo)+')').join(', ')+'</p><h3>Fornecedores</h3><p>'+catalogue.fornecedores.map(c=>esc(c.nome)).join(', ')+'</p>';if(catalogue.usuario.admin)await accesses();await titles();}
+async function refresh(){catalogue=await api('cadastros');$('#identity').textContent=catalogue.usuario.nome;document.querySelectorAll('.admin').forEach(el=>{if(!el.classList.contains('tab'))el.hidden=!catalogue.usuario.admin;else if(!catalogue.usuario.admin)el.hidden=true;});document.querySelectorAll('select.units').forEach(el=>options(el,catalogue.unidades,el.classList.contains('optional')?'Sem unidade / global':'Selecione'));options($('#suppliers'),catalogue.fornecedores,'Não informado');options($('#paymentAccounts'),catalogue.contas.filter(c=>can('liquidar',c.unidade_id)),'Selecione');categories();$('#balances').innerHTML=catalogue.contas.map(c=>'<div class="tile">'+esc(c.nome)+'<b>'+money(c.saldo)+'</b><span class="small">Saldo inicial em '+date(c.data_saldo)+'</span></div>').join('')||'<p>Nenhuma conta cadastrada no seu alcance.</p>';$('#catalogue').innerHTML='<h3>Categorias</h3><p>'+catalogue.categorias.map(c=>esc(c.nome)+' ('+(c.tipo==='pagar'?'Despesa':'Entrada')+')').join(', ')+'</p><h3>Fornecedores</h3><p>'+catalogue.fornecedores.map(c=>esc(c.nome)).join(', ')+'</p>';if(catalogue.usuario.admin)await accesses();await titles();}
 function categories(){options($('#titleCategories'),(catalogue.categorias||[]).filter(c=>c.tipo===$('#titleForm [name=tipo]').value),'Selecione');}
-async function accesses(){options($('#users'),await api('usuarios'),'Selecione');const grants=await api('acessos');$('#grants').innerHTML=grants.map(g=>'<tr><td>'+esc(g.nome)+'</td><td>'+esc(g.perfil)+'</td><td>'+esc(catalogue.unidades.find(u=>u.id===g.unidade_id)?.nome||'Global')+'</td><td>'+['consultar','lancar','liquidar','estornar'].filter(a=>g[a]).join(', ')+'</td><td>'+(g.ativo?'<button class="danger" data-revoke="'+g.id+'">Revogar</button>':'Revogado')+'</td></tr>').join('');}
-async function titles(){const filters=data($('#filter'));const query=new URLSearchParams(Object.entries(filters).filter(([k,v])=>v)).toString();const out=await api('titulos'+(query?'?'+query:''));records=out.registros;$('#limit').hidden=!out.limite;$('#titles').innerHTML=records.map(t=>{const saldo=Number(t.saldo),late=String(t.vencimento).slice(0,10)<new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());return '<tr><td>'+date(t.vencimento)+'</td><td>'+esc(t.descricao)+'<br><span class="small">'+esc(t.categoria)+(t.fornecedor?' · '+esc(t.fornecedor):'')+'</span></td><td>'+esc(t.unidade)+'</td><td>'+esc(t.tipo)+'</td><td>'+t.numero+'/'+t.parcelas+'</td><td class="money">'+money(t.valor)+'</td><td class="money">'+money(saldo)+'</td><td class="status">'+(saldo===0?'Quitada':saldo<Number(t.valor)?'Parcial':'Aberta')+(saldo>0&&late?' · Vencida':'')+'</td><td>'+(saldo>0&&can('liquidar',t.unidade_id)?'<button data-pay="'+t.id+'">'+(t.tipo==='pagar'?'Pagar':'Receber')+'</button>':'')+'<button class="secondary" data-history="'+t.id+'">Histórico</button></td></tr>';}).join('')||'<tr><td colspan="9">Nenhuma conta no período.</td></tr>';$('#totals').innerHTML=['pagar','receber'].map(type=>'<div class="tile">Saldo '+(type==='pagar'?'a pagar':'a receber')+' nas parcelas exibidas<b>'+money(records.filter(t=>t.tipo===type).reduce((a,t)=>a+Number(t.saldo),0))+'</b></div>').join('');}
-bind('#loginForm',async f=>{const r=await api('login','POST',data(f));token=r.token;f.querySelector('[name=senha]').value='';$('#login').hidden=true;$('#app').hidden=false;$('#logout').hidden=false;await refresh();});
+async function accesses(){options($('#users'),await api('usuarios'),'Selecione');const grants=await api('acessos');$('#grants').innerHTML=grants.map(g=>'<tr><td>'+esc(g.nome)+'</td><td>'+esc(({tesoureiro:'Tesoureiro',pastor_presidente:'Pastor Presidente',pastor_governo:'Pastor de Governo',pastor_rede:'Pastor de Rede',consulta:'Consulta'})[g.perfil]||g.perfil)+'</td><td>'+esc(catalogue.unidades.find(u=>u.id===g.unidade_id)?.nome||'Global')+'</td><td>'+['consultar','lancar','liquidar','estornar'].filter(a=>g[a]).map(a=>({consultar:'Consultar',lancar:'Lançar',liquidar:'Pagar e receber',estornar:'Estornar'})[a]).join(', ')+'</td><td>'+(g.ativo?'<button class="danger" data-revoke="'+g.id+'">Revogar</button>':'Revogado')+'</td></tr>').join('');}
+async function titles(){const filters=data($('#filter'));const query=new URLSearchParams(Object.entries(filters).filter(([k,v])=>v)).toString();const out=await api('titulos'+(query?'?'+query:''));records=out.registros;$('#limit').hidden=!out.limite;$('#titles').innerHTML=records.map(t=>{const saldo=Number(t.saldo),late=String(t.vencimento).slice(0,10)<new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());return '<tr><td>'+date(t.vencimento)+'</td><td>'+esc(t.descricao)+'<br><span class="small">'+esc(t.categoria)+(t.fornecedor?' · '+esc(t.fornecedor):'')+'</span></td><td>'+esc(t.unidade)+'</td><td>'+(t.tipo==='pagar'?'A pagar':'A receber')+'</td><td>'+t.numero+'/'+t.parcelas+'</td><td class="money">'+money(t.valor)+'</td><td class="money">'+money(saldo)+'</td><td class="status">'+(saldo===0?'Quitada':saldo<Number(t.valor)?'Parcial':'Aberta')+(saldo>0&&late?' · Vencida':'')+'</td><td>'+(saldo>0&&can('liquidar',t.unidade_id)?'<button data-pay="'+t.id+'">'+(t.tipo==='pagar'?'Pagar':'Receber')+'</button>':'')+'<button class="secondary" data-history="'+t.id+'">Histórico</button></td></tr>';}).join('')||'<tr><td colspan="9">Nenhuma conta no período.</td></tr>';$('#totals').innerHTML=['pagar','receber'].map(type=>'<div class="tile">Saldo '+(type==='pagar'?'a pagar':'a receber')+' nas parcelas exibidas<b>'+money(records.filter(t=>t.tipo===type).reduce((a,t)=>a+Number(t.saldo),0))+'</b></div>').join('');}
+bind('#loginForm',async f=>{const r=await api('login','POST',data(f));token=r.token;f.querySelector('[name=senha]').value='';$('#login').hidden=true;$('#app').hidden=false;$('#logout').hidden=false;$('#financialMenu').hidden=false;await refresh();});
 bind('#filter',async()=>titles());$('#clear').onclick=()=>{$('#filter').reset();titles().catch(e=>notify(e.message,true));};
 bind('#titleForm',async f=>{await api('titulos','POST',{...data(f),chave:titleKey});titleKey=crypto.randomUUID();f.reset();await refresh();notify('Conta registrada. As parcelas foram geradas.');});$('#titleForm [name=tipo]').onchange=categories;
 for(const [form,route] of [['#unitForm','unidades'],['#accountForm','contas'],['#categoryForm','categorias'],['#supplierForm','fornecedores'],['#accessForm','acessos']])bind(form,async f=>{const b=data(f);for(const k of ['negativo','lancar','liquidar','estornar'])if(k in b)b[k]=b[k]==='true';await api(route,'POST',b);f.reset();await refresh();notify('Cadastro salvo.');});
 bind('#paymentForm',async f=>{await api('titulos/'+paymentId+'/liquidar','POST',{...data(f),chave:paymentKey});$('#payment').close();await refresh();notify('Liquidação registrada.');});
 $('#logout').onclick=async()=>{try{await api('logout','POST',{});}finally{token='';location.reload();}};
-document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;try{if(b.dataset.close)$('#'+b.dataset.close).close();if(b.dataset.tab){document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!==b.dataset.tab);}
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;try{if(b.dataset.close)$('#'+b.dataset.close).close();if(b.dataset.tab){document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!==b.dataset.tab);document.querySelectorAll('[data-tab]').forEach(el=>{el.classList.toggle('ativo',el===b);if(el===b)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});}
 if(b.dataset.pay){const t=records.find(t=>String(t.id)===b.dataset.pay);paymentId=t.id;paymentKey=crypto.randomUUID();$('#paymentForm').reset();$('#paymentForm [name=principal]').value=(Number(t.saldo)/100).toFixed(2);$('#paymentTitle').textContent=(t.tipo==='pagar'?'Pagar ':'Receber ')+t.descricao;$('#payment').showModal();}
 if(b.dataset.history){const t=records.find(t=>String(t.id)===b.dataset.history);const rows=await api('titulos/'+t.id+'/liquidacoes');$('#historyContent').innerHTML=rows.map(l=>'<p><b>'+date(l.data)+' · '+money(l.efetivo)+'</b><br>'+esc(l.conta)+' · '+esc(l.meio)+'<br>Principal '+money(l.principal)+' · juros '+money(l.juros)+' · multa '+money(l.multa)+' · desconto '+money(l.desconto)+'<br>'+esc(l.observacao)+(l.estornado_em?'<br>Estornado: '+esc(l.motivo_estorno):can('estornar',t.unidade_id)?'<br><button class="danger" data-reverse="'+l.id+'">Estornar</button>':'')+'</p>').join('')||'<p>Nenhuma liquidação.</p>';$('#history').showModal();}
-if(b.dataset.reverse){const motivo=prompt('Informe o motivo do estorno:');if(!motivo)return;await api('liquidacoes/'+b.dataset.reverse+'/estornar','POST',{motivo});$('#history').close();await refresh();notify('Estorno registrado com histórico.');}
-if(b.dataset.revoke){if(!confirm('Revogar este acesso financeiro?'))return;await api('acessos/'+b.dataset.revoke+'/revogar','POST',{});await refresh();}}
+if(b.dataset.reverse){const motivo=await decide('O estorno reverterá esta movimentação e ficará registrado no histórico. Informe o motivo para continuar.',true);if(!motivo)return;await api('liquidacoes/'+b.dataset.reverse+'/estornar','POST',{motivo});$('#history').close();await refresh();notify('Estorno registrado com histórico.');}
+if(b.dataset.revoke){if(!await decide('Deseja revogar este acesso financeiro? O usuário perderá as permissões concedidas por este cadastro.'))return;await api('acessos/'+b.dataset.revoke+'/revogar','POST',{});await refresh();}}
 catch(err){notify(err.message,true);}});
 </script></body></html>
