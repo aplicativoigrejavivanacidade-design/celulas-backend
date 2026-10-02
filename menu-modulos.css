@@ -11,3 +11,8 @@
 .menu .pendente small{display:block;font-size:10px;margin-top:3px}
 .menu .ativo{background:rgba(255,255,255,.16);font-weight:bold}
 @media(max-width:900px){.sidebar{height:auto;position:relative}.menu{display:block}}
+
+/* Never paint the legacy menu while the common navigation initializes. */
+.sidebar .menu:not([data-modulos]){visibility:hidden}
+.sidebar{scrollbar-gutter:stable}
+[hidden]{display:none!important}

@@ -1,0 +1,8 @@
+Correção de navegação v0.4
+
+Enviar os arquivos e a pasta financeiro deste pacote à branch financeiro-teste do celulas-backend, substituindo os existentes. Manter a estrutura das pastas. Não enviar para main ou celulas-site.
+
+Após o deploy Live, entrar novamente no ambiente de testes. Conferir Painel, Presença, Financeiro > Resumo, Bancos, Pagamentos e Recebimentos. O menu agrupado deve aparecer desde o início. Enquanto busca dados, o Financeiro apresenta Carregando dados, sem exibir outra página antes.
+
+Sem alteração de banco de dados, senha ou configurações do Render.
+Validação: 14 testes automatizados e sintaxe de todos os scripts. Validação visual no serviço após atualização.

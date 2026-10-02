@@ -58,6 +58,7 @@ function criarFinanceiro(pool) {
  }));
  router.use('/api',autenticar,(req,res,next)=>{res.set('Cache-Control','no-store');next();});
  router.post('/api/logout',run(async(req,res)=>{sessions.delete(String(req.headers.authorization||'').replace(/^Bearer /,''));res.json({ok:true});}));
+ router.get('/api/sessao',run(async(req,res)=>res.json({usuario:req.user})));
  router.get('/api/cadastros',run(async(req,res)=>{
   const allowed=await alcance(req,'consultar');
   const unidades=await pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]);
