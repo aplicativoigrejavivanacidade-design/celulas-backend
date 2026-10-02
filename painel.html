@@ -1,18 +1,33 @@
-<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>+Células | Painel</title>
+  <title>+Células | Painel Executivo</title>
   <style>
     * { box-sizing: border-box; }
+
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
 
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      color: #1f2937;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .layout {
@@ -22,135 +37,276 @@
 
     .sidebar {
       width: 250px;
-      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
       color: white;
       padding: 24px 18px;
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
+      height: 100%;
     }
 
     .logo {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin: 0;
     }
 
     .logo-sub {
-      font-size: 14px;
+      margin: 6px 0 28px;
+      font-size: 13px;
       opacity: 0.9;
-      margin-bottom: 28px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .menu a {
-      text-decoration: none;
-      color: white;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      transition: 0.2s;
       display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
 
     .menu a:hover,
     .menu a.ativo {
-      background: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .content {
       margin-left: 250px;
-      flex: 1;
       padding: 30px;
+      width: calc(100% - 250px);
     }
 
-    .hero {
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-      margin-bottom: 24px;
+    .header {
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
     }
 
-    .hero h1 {
+    .header h1 {
       margin: 0 0 8px;
       font-size: 30px;
     }
 
-    .hero p {
+    .header p {
       margin: 0;
-      color: #4b5563;
+      color: var(--muted);
     }
 
-    .resumo {
+    .usuario-logado {
+      margin-top: 10px !important;
+      font-size: 14px;
+    }
+
+    .grid-hero {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
     }
 
     .card {
-      background: white;
-      border-radius: 20px;
+      background: var(--card);
       padding: 22px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
-    .card h3 {
-      margin: 0 0 10px;
-      font-size: 15px;
-      color: #4b5563;
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
     }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: white;
+    }
+
+    .b-blue { background: var(--blue); }
+    .b-green { background: var(--green); }
+    .b-amber { background: var(--amber); }
+    .b-red { background: var(--red); }
+    .b-purple { background: var(--purple); }
 
     .numero {
       font-size: 34px;
       font-weight: bold;
-      color: #111827;
+      margin: 0;
     }
 
-    .secao {
-      background: white;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    }
-
-    .secao h2 {
-      margin-top: 0;
-      margin-bottom: 18px;
-      font-size: 24px;
-    }
-
-    .lista {
-      display: grid;
-      gap: 12px;
+    .subnumero {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
     }
 
     .item {
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 14px 16px;
-      background: #fafafa;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: #fafbfd;
     }
 
-    .item strong {
+    .item h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .item p {
+      margin: 0 0 4px;
+      color: #4b5563;
+      font-size: 13px;
+    }
+
+    .barra {
+      width: 100%;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .barra-interna {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      border-radius: 999px;
+    }
+
+    .lista-simples {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mini-kpi {
+      padding: 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+    }
+
+    .mini-kpi strong {
       display: block;
-      margin-bottom: 4px;
+      font-size: 26px;
+      margin-top: 6px;
     }
 
-    .vazio {
-      color: #6b7280;
-      padding: 16px;
-      border: 2px dashed #d1d5db;
-      border-radius: 14px;
+    .msg-vazio {
+      color: var(--muted);
+      font-style: italic;
       text-align: center;
-      background: #fcfcfc;
+      padding: 20px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    .visao-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .visao-box h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .visao-box p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .tag-visao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 13px;
+      background: var(--blue);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .alerta-suave { border-left: 5px solid var(--amber); }
+    .alerta-ok { border-left: 5px solid var(--green); }
+
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      margin-left: 8px;
+      border-radius: 999px;
+      background: #25D366;
+      text-decoration: none;
+      vertical-align: middle;
+      box-shadow: 0 4px 10px rgba(37, 211, 102, 0.25);
+    }
+
+    .btn-whatsapp svg {
+      width: 18px;
+      height: 18px;
+      fill: #ffffff;
+    }
+
+    @media (max-width: 1400px) {
+      .grid-hero {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 900px) {
@@ -161,190 +317,743 @@
       .sidebar {
         position: relative;
         width: 100%;
-        bottom: auto;
+        height: auto;
       }
 
       .content {
         margin-left: 0;
+        width: 100%;
+        padding: 20px;
       }
 
-      .resumo {
+      .grid-hero {
         grid-template-columns: 1fr;
       }
     }
+
+    /* ===== FILTRO DO PAINEL — PADRÃO DA TELA PRESENÇA ===== */
+    .filtro-painel {
+      margin-bottom: 20px;
+    }
+
+    .filtro-painel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 14px;
+      align-items: end;
+    }
+
+    .filtro-painel label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .filtro-painel input,
+    .filtro-painel select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    .filtro-painel input:focus,
+    .filtro-painel select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    .botoes-filtro-painel {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filtro-painel button {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-secondary { background: #64748b; color: #fff; }
+    .btn-amber { background: var(--amber); color: #fff; }
+
+    .msg-filtro-painel {
+      display: block;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: #475569;
+    }
+
+    @media (max-width: 1100px) {
+      .filtro-painel-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
+<link rel="stylesheet" href="menu-modulos.css">
 </head>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
-  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('nomeUsuario');
-    localStorage.removeItem('nivelUsuario');
-    window.location.href = 'login.html';
-  }
-
-  const campoUsuario = document.getElementById('usuarioLogado');
-  if (campoUsuario) {
-    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
-  }
-
-  function verificarPermissao(pagina) {
-    const permissoes = {
-      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
-      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
-      lider: ['painel', 'membros', 'presenca']
-    };
-
-    const permitidas = permissoes[nivelUsuario] || [];
-
-    if (!permitidas.includes(pagina)) {
-      alert('Você não tem permissão para acessar esta área.');
-      window.location.href = 'painel.html';
-    }
-  }
-
-  function aplicarPermissoesMenu() {
-    const menuUsuarios = document.getElementById('menuUsuarios');
-    const menuRelatorios = document.getElementById('menuRelatorios');
-
-    if (nivelUsuario !== 'admin' && menuUsuarios) {
-      menuUsuarios.style.display = 'none';
-    }
-
-    if (nivelUsuario === 'lider' && menuRelatorios) {
-      menuRelatorios.style.display = 'none';
-    }
-  }
-
-  aplicarPermissoesMenu();
-</script>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">+Células</div>
-      <div class="logo-sub">Gestão de células</div>
+      <h2 class="logo">+Células</h2>
+      <div class="logo-sub">Painel Executivo</div>
 
-      <nav class="menu">
-        <a href="painel.html">Painel</a>
+      <div class="menu">
+        <a href="painel.html" class="ativo">Painel</a>
         <a href="cadastro.html">Membros</a>
         <a href="presenca.html">Presença</a>
-        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
-        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
-<script>
-  verificarPermissao('painel');
-</script>
-      </nav>
-<div style="margin-top: 20px;">
-  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
-    Sair
-  </button>
-</div>
+        <a href="celulas.html">Células</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="usuarios.html">Usuários</a>
+      </div>
+
+      <button class="btn-sair" id="btnSair" type="button">Sair</button>
     </aside>
 
     <main class="content">
-      <div class="hero">
-        <h1>Painel principal</h1>
-        <p>Visão geral do sistema +Células</p>
+      <div class="header">
+        <h1>Painel Executivo</h1>
+        <p>Visão estratégica de crescimento, retenção e frequência ministerial</p>
+        <p id="usuarioLogado" class="usuario-logado"></p>
       </div>
 
-      <div class="resumo">
-        <div class="card">
-          <h3>Total de membros</h3>
-          <div class="numero" id="totalMembros">0</div>
-        </div>
+      <div class="card filtro-painel">
+        <h2>Filtro do Painel</h2>
+        <div id="msgFiltroPainel" class="msg-filtro-painel">Escolha o período e a célula e clique em Filtrar.</div>
 
-        <div class="card">
-          <h3>Presentes hoje</h3>
-          <div class="numero" id="presentesHoje">0</div>
-        </div>
+        <div class="filtro-painel-grid">
+          <div>
+            <label for="dataInicialFiltroPainel">Data inicial</label>
+            <input type="date" id="dataInicialFiltroPainel" />
+          </div>
 
-        <div class="card">
-          <h3>Ausentes hoje</h3>
-          <div class="numero" id="ausentesHoje">0</div>
-        </div>
+          <div>
+            <label for="dataFinalFiltroPainel">Data final</label>
+            <input type="date" id="dataFinalFiltroPainel" />
+          </div>
 
-        <div class="card">
-          <h3>Registros de presença</h3>
-          <div class="numero" id="totalPresencas">0</div>
+          <div>
+            <label for="filtroCelulaPainel">Célula</label>
+            <select id="filtroCelulaPainel">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div class="botoes-filtro-painel">
+            <button class="btn-primary" id="btnPainelHoje" type="button">Hoje</button>
+            <button class="btn-success" id="btnPainel7" type="button">7 dias</button>
+            <button class="btn-amber" id="btnPainel30" type="button">30 dias</button>
+            <button class="btn-primary" id="btnFiltrarPainel" type="button">Filtrar</button>
+          </div>
         </div>
       </div>
 
-      <div class="secao">
-        <h2>Últimos membros cadastrados</h2>
-        <div class="lista" id="ultimosMembros"></div>
+      <div class="visao-box" id="boxVisao">
+        <div>
+          <h2 id="tituloVisao">Visão geral</h2>
+          <p id="descricaoVisao">Carregando informações do painel...</p>
+        </div>
+        <div class="tag-visao" id="tagVisao">ADMIN</div>
+      </div>
+
+      <div class="grid-hero">
+        <div class="card">
+          <div class="badge b-blue">Total membros</div>
+          <p class="numero" id="kpiTotal">0</p>
+          <div class="subnumero">Base geral</div>
+        </div>
+
+        <div class="card">
+          <div class="badge b-green">Frequência média</div>
+          <p class="numero" id="kpiFreq">0%</p>
+          <div class="subnumero">Últimos registros</div>
+        </div>
+
+        <div class="card">
+          <div class="badge b-purple">Células ativas</div>
+          <p class="numero" id="kpiCelulas">0</p>
+          <div class="subnumero">Com membros</div>
+        </div>
+
+        <div class="card">
+          <div class="badge b-amber">Sem célula</div>
+          <p class="numero" id="kpiSemCelula">0</p>
+          <div class="subnumero">Precisam vínculo</div>
+        </div>
+
+        <div class="card">
+          <div class="badge b-red">Visitantes</div>
+          <p class="numero" id="kpiVisitantes">0</p>
+          <div class="subnumero">Status visitante</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>🏆 Ranking de células por crescimento</h2>
+          <div id="rankingCelulas"></div>
+        </div>
+
+        <div class="card">
+          <h2>🔥 Célula com maior frequência</h2>
+          <div id="melhorCelula"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h2>📈 Novos membros por status</h2>
+          <div id="novosPorStatus"></div>
+        </div>
+
+        <div class="card">
+          <h2>⚠️ Membros sem célula</h2>
+          <div id="listaSemCelula"></div>
+        </div>
+
+        <div class="card">
+          <h2>🎯 Top retenção individual</h2>
+          <div id="topRetencao"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h2>🚨 Alerta pastoral</h2>
+          <div id="alertaPastoral"></div>
+        </div>
+
+        <div class="card">
+          <h2>🎂 Aniversariantes do mês</h2>
+          <div id="aniversariantesMes"></div>
+        </div>
+
+        <div class="card">
+          <h2>🗓️ Última presença registrada</h2>
+          <div id="ultimaPresenca"></div>
+        </div>
       </div>
     </main>
   </div>
 
   <script>
-    const apiMembros = 'https://celulas-backend.onrender.com:3000/membros';
-    const apiPresencas = 'https://celulas-backend.onrender.com:3000/presencas';
+    const API_BASE = "";
+    const API_MEMBROS = API_BASE + "/membros";
+    const API_PRESENCAS = API_BASE + "/presencas";
 
-    function dataHoje() {
-      const hoje = new Date();
-      const ano = hoje.getFullYear();
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      return `${ano}-${mes}-${dia}`;
+    let todosMembros = [];
+    let todasPresencas = [];
+    let membros = [];
+    let presencas = [];
+
+    const nivelUsuario = String(localStorage.getItem("nivelUsuario") || "admin").toLowerCase();
+    const celulaUsuario = String(localStorage.getItem("celulaUsuario") || "").trim();
+
+    function protegerPagina() {
+      if (localStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
     }
 
-    async function carregarPainel() {
-      const [resMembros, resPresencas] = await Promise.all([
-        fetch(apiMembros),
-        fetch(apiPresencas)
-      ]);
+    function usuarioEhLider() {
+      return nivelUsuario === "lider";
+    }
 
-      const membros = await resMembros.json();
-      const presencas = await resPresencas.json();
+    function preencherUsuario() {
+      document.getElementById("usuarioLogado").textContent =
+        `Usuário: ${localStorage.getItem("nomeUsuario") || "Administrador"} | Nível: ${nivelUsuario}${usuarioEhLider() ? ` | Célula: ${celulaUsuario || "não vinculada"}` : ""}`;
+    }
 
-      document.getElementById('totalMembros').textContent = membros.length;
-      document.getElementById('totalPresencas').textContent = presencas.length;
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
 
-      const hoje = dataHoje();
-      const presencasHoje = presencas.filter(item => item.data === hoje);
-      const presentesHoje = presencasHoje.filter(item => item.status === 'presente').length;
-      const ausentesHoje = presencasHoje.filter(item => item.status === 'ausente').length;
+    function normalizarTexto(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toUpperCase();
+    }
 
-      document.getElementById('presentesHoje').textContent = presentesHoje;
-      document.getElementById('ausentesHoje').textContent = ausentesHoje;
+    function nomeCelula(valor) {
+      const texto = normalizarTexto(valor);
+      if (!texto) return "";
+      return texto.replace(/^CELULA\s*/i, "").trim();
+    }
 
-      const ultimos = [...membros].slice(-5).reverse();
-      const lista = document.getElementById('ultimosMembros');
+    function nomeCelulaExibicao(valor) {
+      const base = nomeCelula(valor);
+      return base ? `CÉLULA ${base}` : "SEM CÉLULA";
+    }
 
-      if (ultimos.length === 0) {
-        lista.innerHTML = '<div class="vazio">Nenhum membro cadastrado ainda.</div>';
+    function membroPermitido(membro) {
+      if (!usuarioEhLider()) return true;
+      return nomeCelula(membro.celula) === nomeCelula(celulaUsuario);
+    }
+
+    function percentual(valor) {
+      return `${Math.round(valor || 0)}%`;
+    }
+
+    function formatarDataBR(dataIso) {
+      if (!dataIso) return "-";
+      const partes = String(dataIso).slice(0, 10).split("-");
+      if (partes.length !== 3) return dataIso;
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function formatarWhatsapp(telefone) {
+      const numero = String(telefone || "").replace(/\D/g, "");
+      if (!numero) return "";
+      return numero.startsWith("55") ? numero : `55${numero}`;
+    }
+
+    function whatsappIcon(telefone) {
+      const link = formatarWhatsapp(telefone);
+      if (!link) return "";
+      return `
+        <a class="btn-whatsapp" target="_blank" href="https://wa.me/${link}" aria-label="WhatsApp">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M27.997 15.989c0 6.617-5.375 11.981-12.003 11.981a11.95 11.95 0 0 1-6.115-1.676L3 28.157l1.901-6.73a11.926 11.926 0 0 1-1.91-6.438C2.991 8.372 8.366 3 14.994 3c6.628 0 12.003 5.372 12.003 11.989zm-12.003-9.08c-5.016 0-9.094 4.066-9.094 9.08 0 1.759.504 3.471 1.459 4.944l.232.358-1.126 3.988 4.08-1.068.343.204a9.124 9.124 0 0 0 4.106.98c5.016 0 9.094-4.066 9.094-9.08 0-5.014-4.078-9.406-9.094-9.406zm5.282 11.596c-.289-.145-1.708-.842-1.973-.94-.264-.097-.456-.145-.648.146-.191.29-.744.94-.912 1.133-.168.193-.336.218-.625.073-.289-.145-1.22-.449-2.325-1.434-.86-.768-1.441-1.716-1.61-2.006-.168-.29-.018-.447.127-.591.131-.13.289-.339.433-.509.145-.169.192-.29.289-.484.096-.193.048-.363-.024-.508-.072-.145-.648-1.567-.888-2.146-.233-.56-.469-.484-.648-.493l-.552-.01c-.192 0-.504.073-.768.363-.264.29-1.008.988-1.008 2.41s1.032 2.797 1.176 2.991c.145.193 2.03 3.095 4.917 4.34.687.297 1.223.474 1.641.606.689.219 1.315.188 1.81.114.552-.083 1.708-.697 1.949-1.37.24-.672.24-1.248.168-1.37-.072-.121-.264-.193-.553-.338z"/>
+          </svg>
+        </a>`;
+    }
+
+
+    function hojeISO() {
+      const hoje = new Date();
+      return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+    }
+
+    function deslocarDias(dataIso, dias) {
+      const d = new Date(`${dataIso}T12:00:00`);
+      d.setDate(d.getDate() + dias);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function preencherFiltroCelulas() {
+      const campo = document.getElementById("filtroCelulaPainel");
+      if (!campo) return;
+
+      const celulas = Array.from(new Set(
+        todosMembros
+          .filter(membroPermitido)
+          .map(m => nomeCelulaExibicao(m.celula))
+          .filter(c => c && c !== "SEM CÉLULA")
+      )).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+      if (usuarioEhLider()) {
+        const celula = nomeCelulaExibicao(celulaUsuario);
+        campo.innerHTML = `<option value="${celula}">${celula}</option>`;
+        campo.value = celula;
+        campo.disabled = true;
+      } else {
+        const atual = campo.value;
+        campo.innerHTML = '<option value="">Todas</option>' +
+          celulas.map(c => `<option value="${c}">${c}</option>`).join("");
+        if (celulas.includes(atual)) campo.value = atual;
+      }
+    }
+
+    function aplicarFiltroPainel() {
+      const campoInicio = document.getElementById("dataInicialFiltroPainel");
+      const campoFim = document.getElementById("dataFinalFiltroPainel");
+      const campoCelula = document.getElementById("filtroCelulaPainel");
+      const msg = document.getElementById("msgFiltroPainel");
+
+      const inicio = campoInicio?.value || "";
+      const fim = campoFim?.value || "";
+      const celulaSelecionada = usuarioEhLider()
+        ? nomeCelulaExibicao(celulaUsuario)
+        : (campoCelula?.value || "");
+
+      if (!inicio || !fim) {
+        if (msg) msg.textContent = "Informe a data inicial e a data final.";
         return;
       }
 
-      lista.innerHTML = ultimos.map(membro => `
-        <div class="item">
-          <strong>${membro.nome}</strong>
-          <span>Telefone: ${membro.telefone || '-'}</span><br>
-          <span>Célula: ${membro.celula || '-'}</span><br>
-          <span>Status: ${membro.status || '-'}</span>
-        </div>
-      `).join('');
+      if (inicio > fim) {
+        if (msg) msg.textContent = "A data inicial não pode ser maior que a data final.";
+        return;
+      }
+
+      membros = todosMembros
+        .filter(membroPermitido)
+        .filter(m => !celulaSelecionada || nomeCelulaExibicao(m.celula) === celulaSelecionada);
+
+      const idsPermitidos = new Set(membros.map(m => Number(m.id)));
+
+      presencas = todasPresencas.filter(p => {
+        const data = String(p.data || "").slice(0, 10);
+        const id = Number(p.membro_id || p.membroId);
+        return data >= inicio && data <= fim && idsPermitidos.has(id);
+      });
+
+      localStorage.setItem("painelFiltroDataInicial", inicio);
+      localStorage.setItem("painelFiltroDataFinal", fim);
+      localStorage.setItem("painelFiltroCelula", celulaSelecionada || "");
+
+      if (msg) {
+        const celulaTexto = celulaSelecionada || "Todas as células";
+        msg.textContent = `Filtro aplicado: ${formatarDataBR(inicio)} a ${formatarDataBR(fim)} | ${celulaTexto}.`;
+      }
+
+      renderizarDashboard();
     }
 
-    carregarPainel();
-  </script>
-</body>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
+    function definirPeriodoPainel(dias) {
+      const fim = hojeISO();
+      const inicio = deslocarDias(fim, -(dias - 1));
+      document.getElementById("dataInicialFiltroPainel").value = inicio;
+      document.getElementById("dataFinalFiltroPainel").value = fim;
+    }
 
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-  }
-</script>
+    function atualizarVisao() {
+      const titulo = document.getElementById("tituloVisao");
+      const descricao = document.getElementById("descricaoVisao");
+      const tag = document.getElementById("tagVisao");
+
+      if (usuarioEhLider()) {
+        titulo.textContent = "Resumo da minha célula";
+        descricao.textContent = `Este painel está filtrado para ${celulaUsuario || "sua célula vinculada"}.`;
+        tag.textContent = celulaUsuario || "LÍDER";
+      } else {
+        titulo.textContent = "Visão geral do sistema";
+        descricao.textContent = "Este painel apresenta os dados consolidados de todas as células.";
+        tag.textContent = "ADMIN";
+      }
+    }
+
+    function atualizarKpis() {
+      const total = membros.length;
+      const semCelula = usuarioEhLider() ? 0 : membros.filter(m => !String(m.celula || "").trim()).length;
+      const visitantes = membros.filter(m => normalizarTexto(m.status) === "VISITANTE").length;
+
+      const celulas = new Set(
+        membros.map(m => nomeCelulaExibicao(m.celula)).filter(c => c !== "SEM CÉLULA")
+      ).size;
+
+      const idsPermitidos = new Set(membros.map(m => Number(m.id)));
+      const presencasFiltradas = presencas.filter(p => idsPermitidos.has(Number(p.membro_id || p.membroId)));
+
+      const totalPres = presencasFiltradas.length;
+      const presentes = presencasFiltradas.filter(p => normalizarTexto(p.status) === "PRESENTE").length;
+      const freq = totalPres > 0 ? (presentes / totalPres) * 100 : 0;
+
+      document.getElementById("kpiTotal").textContent = total;
+      document.getElementById("kpiFreq").textContent = percentual(freq);
+      document.getElementById("kpiCelulas").textContent = usuarioEhLider() ? (total ? 1 : 0) : celulas;
+      document.getElementById("kpiSemCelula").textContent = semCelula;
+      document.getElementById("kpiVisitantes").textContent = visitantes;
+    }
+
+    function renderRankingCelulas() {
+      const el = document.getElementById("rankingCelulas");
+      const mapa = new Map();
+
+      membros.forEach((m) => {
+        const nome = nomeCelulaExibicao(m.celula);
+        if (nome === "SEM CÉLULA") return;
+        mapa.set(nome, (mapa.get(nome) || 0) + 1);
+      });
+
+      const ranking = Array.from(mapa.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, usuarioEhLider() ? 1 : 8);
+
+      if (!ranking.length) {
+        el.innerHTML = '<div class="msg-vazio">Nenhuma célula encontrada.</div>';
+        return;
+      }
+
+      el.innerHTML = ranking.map(([nome, total], index) => `
+        <div class="item">
+          <h3>${usuarioEhLider() ? nome : `${index + 1}. ${nome}`}</h3>
+          <p><strong>Membros:</strong> ${total}</p>
+          <div class="barra"><div class="barra-interna" style="width:${Math.min(100, total * 10)}%"></div></div>
+        </div>
+      `).join("");
+    }
+
+    function renderMelhorCelula() {
+      const el = document.getElementById("melhorCelula");
+      const mapaMembros = new Map();
+
+      membros.forEach((m) => mapaMembros.set(Number(m.id), nomeCelulaExibicao(m.celula)));
+
+      const mapa = new Map();
+
+      presencas.forEach((p) => {
+        const celula = mapaMembros.get(Number(p.membro_id || p.membroId)) || "SEM CÉLULA";
+        if (celula === "SEM CÉLULA") return;
+        if (!mapa.has(celula)) mapa.set(celula, { total: 0, presentes: 0 });
+        const item = mapa.get(celula);
+        item.total += 1;
+        if (normalizarTexto(p.status) === "PRESENTE") item.presentes += 1;
+      });
+
+      const ranking = Array.from(mapa.entries())
+        .map(([nome, dados]) => ({
+          nome,
+          perc: dados.total > 0 ? (dados.presentes / dados.total) * 100 : 0,
+          total: dados.total
+        }))
+        .sort((a, b) => b.perc - a.perc);
+
+      if (!ranking.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem registros de presença.</div>';
+        return;
+      }
+
+      const melhor = ranking[0];
+
+      el.innerHTML = `
+        <div class="item">
+          <h3>${melhor.nome}</h3>
+          <p><strong>Frequência:</strong> ${percentual(melhor.perc)}</p>
+          <p><strong>Registros:</strong> ${melhor.total}</p>
+          <div class="barra"><div class="barra-interna" style="width:${melhor.perc}%"></div></div>
+        </div>`;
+    }
+
+    function renderNovosPorStatus() {
+      const el = document.getElementById("novosPorStatus");
+      const mapa = {};
+
+      membros.forEach((m) => {
+        const status = normalizarTexto(m.status) || "SEM STATUS";
+        mapa[status] = (mapa[status] || 0) + 1;
+      });
+
+      const itens = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
+
+      if (!itens.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem membros para exibir.</div>';
+        return;
+      }
+
+      el.innerHTML = itens.map(([status, total]) => `
+        <div class="mini-kpi">${status}<strong>${total}</strong></div>
+      `).join("");
+    }
+
+    function renderSemCelula() {
+      const el = document.getElementById("listaSemCelula");
+
+      if (usuarioEhLider()) {
+        el.innerHTML = '<div class="msg-vazio">Visão restrita à célula vinculada.</div>';
+        return;
+      }
+
+      const lista = membros.filter(m => !String(m.celula || "").trim()).slice(0, 10);
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Todos estão vinculados.</div>';
+        return;
+      }
+
+      el.innerHTML = `<div class="lista-simples">${
+        lista.map(m => `
+          <div class="item">
+            <h3>${m.nome}</h3>
+            <p><strong>Telefone:</strong> ${m.telefone || "-"} ${whatsappIcon(m.telefone)}</p>
+          </div>
+        `).join("")
+      }</div>`;
+    }
+
+    function renderTopRetencao() {
+      const el = document.getElementById("topRetencao");
+      const mapa = new Map();
+
+      membros.forEach((m) => mapa.set(Number(m.id), { nome: m.nome, total: 0, presentes: 0 }));
+
+      presencas.forEach((p) => {
+        const id = Number(p.membro_id || p.membroId);
+        if (!mapa.has(id)) return;
+        const item = mapa.get(id);
+        item.total += 1;
+        if (normalizarTexto(p.status) === "PRESENTE") item.presentes += 1;
+      });
+
+      const ranking = Array.from(mapa.values())
+        .filter(i => i.total > 0)
+        .map(i => ({ ...i, perc: i.total > 0 ? (i.presentes / i.total) * 100 : 0 }))
+        .sort((a, b) => b.perc - a.perc)
+        .slice(0, 5);
+
+      if (!ranking.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem dados de frequência.</div>';
+        return;
+      }
+
+      el.innerHTML = ranking.map((item, index) => `
+        <div class="item">
+          <h3>${index + 1}. ${item.nome}</h3>
+          <p><strong>Frequência:</strong> ${percentual(item.perc)}</p>
+          <div class="barra"><div class="barra-interna" style="width:${item.perc}%"></div></div>
+        </div>
+      `).join("");
+    }
+
+    function renderAlertaPastoral() {
+      const el = document.getElementById("alertaPastoral");
+      const idsComPresenca = new Set(
+        presencas.filter(p => normalizarTexto(p.status) === "PRESENTE").map(p => Number(p.membro_id || p.membroId))
+      );
+
+      const semPresenca = membros.filter(m => !idsComPresenca.has(Number(m.id))).slice(0, 6);
+
+      if (!semPresenca.length) {
+        el.innerHTML = '<div class="item alerta-ok"><h3>Tudo em ordem</h3><p>Todos possuem registro de presença.</p></div>';
+        return;
+      }
+
+      el.innerHTML = semPresenca.map(m => `
+        <div class="item alerta-suave">
+          <h3>${m.nome}</h3>
+          <p><strong>Ação sugerida:</strong> entrar em contato e acompanhar.</p>
+          <p><strong>Telefone:</strong> ${m.telefone || "-"} ${whatsappIcon(m.telefone)}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderAniversariantesMes() {
+      const el = document.getElementById("aniversariantesMes");
+      const mes = new Date().getMonth() + 1;
+
+      const lista = membros
+        .filter(m => {
+          const nascimento = String(m.nascimento || "");
+          if (!nascimento.includes("-")) return false;
+          const partes = nascimento.slice(0, 10).split("-");
+          return Number(partes[1]) === mes;
+        })
+        .sort((a, b) => String(a.nascimento || "").slice(8,10).localeCompare(String(b.nascimento || "").slice(8,10)))
+        .slice(0, 8);
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Nenhum aniversariante neste mês.</div>';
+        return;
+      }
+
+      el.innerHTML = lista.map(m => `
+        <div class="item">
+          <h3>${m.nome}</h3>
+          <p><strong>Data:</strong> ${formatarDataBR(m.nascimento)}</p>
+          <p><strong>Telefone:</strong> ${m.telefone || "-"} ${whatsappIcon(m.telefone)}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderUltimaPresenca() {
+      const el = document.getElementById("ultimaPresenca");
+      const idsPermitidos = new Set(membros.map(m => Number(m.id)));
+
+      const lista = presencas
+        .filter(p => idsPermitidos.has(Number(p.membro_id || p.membroId)))
+        .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Nenhuma presença registrada.</div>';
+        return;
+      }
+
+      const ultimaData = lista[0].data;
+      const registrosData = lista.filter(p => p.data === ultimaData);
+      const presentes = registrosData.filter(p => normalizarTexto(p.status) === "PRESENTE").length;
+      const freq = registrosData.length ? (presentes / registrosData.length) * 100 : 0;
+
+      el.innerHTML = `
+        <div class="item">
+          <h3>${formatarDataBR(ultimaData)}</h3>
+          <p><strong>Presentes:</strong> ${presentes}</p>
+          <p><strong>Total registros:</strong> ${registrosData.length}</p>
+          <p><strong>Frequência:</strong> ${percentual(freq)}</p>
+          <div class="barra"><div class="barra-interna" style="width:${freq}%"></div></div>
+        </div>`;
+    }
+
+    function renderizarDashboard() {
+      atualizarVisao();
+      atualizarKpis();
+      renderRankingCelulas();
+      renderMelhorCelula();
+      renderNovosPorStatus();
+      renderSemCelula();
+      renderTopRetencao();
+      renderAlertaPastoral();
+      renderAniversariantesMes();
+      renderUltimaPresenca();
+    }
+
+    async function carregarDados() {
+      const [respMembros, respPresencas] = await Promise.all([
+        fetch(API_MEMBROS, { cache: "no-store" }),
+        fetch(API_PRESENCAS, { cache: "no-store" })
+      ]);
+
+      if (!respMembros.ok) throw new Error("Erro ao carregar membros.");
+      if (!respPresencas.ok) throw new Error("Erro ao carregar presenças.");
+
+      const dadosMembros = await respMembros.json();
+      const dadosPresencas = await respPresencas.json();
+
+      todosMembros = Array.isArray(dadosMembros) ? dadosMembros : [];
+      todasPresencas = Array.isArray(dadosPresencas) ? dadosPresencas : [];
+
+      preencherFiltroCelulas();
+
+      const hoje = hojeISO();
+      const inicioSalvo = localStorage.getItem("painelFiltroDataInicial") || deslocarDias(hoje, -29);
+      const fimSalvo = localStorage.getItem("painelFiltroDataFinal") || hoje;
+      const celulaSalva = localStorage.getItem("painelFiltroCelula") || "";
+
+      document.getElementById("dataInicialFiltroPainel").value = inicioSalvo;
+      document.getElementById("dataFinalFiltroPainel").value = fimSalvo;
+
+      const campoCelula = document.getElementById("filtroCelulaPainel");
+      if (!usuarioEhLider() && campoCelula) campoCelula.value = celulaSalva;
+
+      aplicarFiltroPainel();
+    }
+
+    document.getElementById("btnSair").addEventListener("click", sair);
+    document.getElementById("btnPainelHoje").addEventListener("click", () => definirPeriodoPainel(1));
+    document.getElementById("btnPainel7").addEventListener("click", () => definirPeriodoPainel(7));
+    document.getElementById("btnPainel30").addEventListener("click", () => definirPeriodoPainel(30));
+    document.getElementById("btnFiltrarPainel").addEventListener("click", aplicarFiltroPainel);
+
+    if (protegerPagina()) {
+      preencherUsuario();
+      carregarDados().catch((erro) => {
+        console.error(erro);
+        const msg = document.getElementById("msgFiltroPainel");
+        if (msg) msg.textContent = erro.message || "Erro ao carregar o Painel.";
+      });
+    }
+  </script>
+<script src="menu-modulos.js"></script>
+</body>
 </html>

@@ -2,247 +2,265 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>+Células | Login</title>
+
   <style>
+    * { box-sizing: border-box; }
+
     :root {
       --blue: #2563eb;
       --blue-dark: #1d4ed8;
-      --green: #0f766e;
-      --text: #111827;
-      --muted: #6b7280;
-      --danger: #dc2626;
-      --success: #16a34a;
-      --bg: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
-      --shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
-      --radius: 26px;
-    }
-
-    * {
-      box-sizing: border-box;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --text: #1f2937;
+      --muted: #64748b;
+      --line: #dbe3ee;
+      --card: #ffffff;
+      --red: #dc2626;
+      --shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+      --radius: 22px;
     }
 
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
       min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.20), transparent 32%),
+        linear-gradient(135deg, var(--blue-dark), var(--green-dark));
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      color: var(--text);
     }
 
-    .card-login {
+    .login-wrapper {
       width: 100%;
-      max-width: 520px;
-      background: #ffffff;
+      max-width: 430px;
+    }
+
+    .login-card {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(255,255,255,0.35);
       border-radius: var(--radius);
+      padding: 34px;
       box-shadow: var(--shadow);
-      padding: 34px 28px 26px;
+      backdrop-filter: blur(8px);
     }
 
-    .logo {
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+      font-weight: 900;
+      box-shadow: 0 12px 25px rgba(37,99,235,0.28);
+    }
+
+    .brand h1 {
       margin: 0;
-      text-align: center;
-      font-size: 56px;
+      font-size: 30px;
       line-height: 1;
-      color: var(--blue);
-      font-weight: 800;
-      letter-spacing: -1px;
     }
 
-    .sub {
-      text-align: center;
+    .brand p {
+      margin: 6px 0 0;
       color: var(--muted);
-      font-size: 17px;
-      margin: 12px 0 28px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .intro {
+      margin: 0 0 24px;
+      color: #475569;
+      font-size: 15px;
+      line-height: 1.45;
     }
 
     label {
       display: block;
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: #111827;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
     }
 
     input {
       width: 100%;
-      height: 66px;
-      border: 1px solid #d1d9e6;
-      border-radius: 18px;
-      padding: 0 18px;
-      font-size: 18px;
-      outline: none;
-      transition: 0.2s;
-      margin-bottom: 22px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      font-size: 15px;
+      font-family: inherit;
       background: #fff;
     }
 
     input:focus {
+      outline: none;
       border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-    }
-
-    .acoes {
-      margin-top: 6px;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.14);
     }
 
     button {
       width: 100%;
-      height: 66px;
+      margin-top: 22px;
+      padding: 14px;
       border: none;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: #fff;
-      font-size: 20px;
-      font-weight: 700;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
       cursor: pointer;
-      transition: 0.2s;
+      box-shadow: 0 10px 22px rgba(22,163,74,0.22);
     }
 
     button:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.03);
+      filter: brightness(0.97);
     }
 
-    button:disabled {
-      opacity: 0.7;
-      cursor: wait;
-      transform: none;
+    .login-seguro {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      font-weight: bold;
     }
 
     .msg {
-      min-height: 28px;
+      min-height: 22px;
+      margin-top: 14px;
       text-align: center;
-      font-size: 16px;
-      font-weight: 700;
-      margin-top: 18px;
-    }
-
-    .msg.erro {
-      color: var(--danger);
-    }
-
-    .msg.sucesso {
-      color: var(--success);
-    }
-
-    .box-ajuda {
-      margin-top: 22px;
-      background: #eef4ff;
-      border-radius: 18px;
-      padding: 18px;
-      font-size: 15px;
-      line-height: 1.6;
-      color: #111827;
+      font-weight: bold;
+      font-size: 14px;
+      color: var(--red);
     }
 
     .rodape {
-      margin-top: 14px;
+      margin-top: 18px;
       text-align: center;
-      color: #94a3b8;
+      color: rgba(255,255,255,0.82);
       font-size: 13px;
+      font-weight: bold;
     }
 
-    @media (max-width: 600px) {
-      .card-login {
-        padding: 26px 20px 22px;
-        border-radius: 22px;
+    @media (max-width: 520px) {
+      .login-card {
+        padding: 26px;
       }
 
-      .logo {
-        font-size: 48px;
-      }
-
-      .sub {
-        font-size: 16px;
-      }
-
-      input,
-      button {
-        height: 60px;
-        font-size: 17px;
+      .brand h1 {
+        font-size: 26px;
       }
     }
   </style>
 </head>
+
 <body>
-  <div class="card-login">
-    <h1 class="logo">+Células</h1>
-    <div class="sub">Acesse o sistema com seu usuário</div>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-icon">+C</div>
+        <div>
+          <h1>+Células</h1>
+          <p>Gestão de células</p>
+        </div>
+      </div>
 
-    <label for="usuario">Usuário</label>
-    <input id="usuario" type="text" placeholder="Digite seu usuário" value="admin" autocomplete="username" />
+      <p class="intro">
+        Acesse sua área para acompanhar membros, células, presença e relatórios ministeriais.
+      </p>
 
-    <label for="senha">Senha</label>
-    <input id="senha" type="password" placeholder="Digite sua senha" value="1234" autocomplete="current-password" />
+      <form id="formLogin">
+        <label for="usuario">Usuário</label>
+        <input id="usuario" type="text" autocomplete="username" placeholder="Digite seu usuário" required />
 
-    <div class="acoes">
-      <button id="btnEntrar" type="button">Entrar</button>
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required />
+
+        <button id="btnEntrar" type="submit">Entrar</button>
+
+        <p class="login-seguro">Acesso restrito aos usuários cadastrados.</p>
+        <div id="msg" class="msg"></div>
+      </form>
     </div>
 
-    <div id="msg" class="msg"></div>
-
-    <div class="box-ajuda">
-      <strong>Acesso inicial:</strong><br />
-      Usuário: <strong>admin</strong><br />
-      Senha: <strong>1234</strong>
-    </div>
-
-    <div class="rodape">+Células • Gestão de células</div>
+    <div class="rodape">+Células • Sistema ministerial</div>
   </div>
 
   <script>
-    const API_BASE = "https://celulas-backend.onrender.com";
+    const API_BASE = "";
+    const API_LOGIN = API_BASE + "/login";
 
+    const formLogin = document.getElementById("formLogin");
     const campoUsuario = document.getElementById("usuario");
     const campoSenha = document.getElementById("senha");
+    const campoMsg = document.getElementById("msg");
     const btnEntrar = document.getElementById("btnEntrar");
-    const msg = document.getElementById("msg");
 
-    function mostrarMensagem(texto, tipo = "") {
-      msg.textContent = texto;
-      msg.className = "msg" + (tipo ? " " + tipo : "");
+    function mostrarMensagem(texto, cor = "#dc2626") {
+      campoMsg.textContent = texto;
+      campoMsg.style.color = cor;
     }
 
-    function limparSessaoAntiga() {
+    function limparSessao() {
+      sessionStorage.removeItem("celulasSessao");
       localStorage.removeItem("logado");
       localStorage.removeItem("usuario");
       localStorage.removeItem("nomeUsuario");
       localStorage.removeItem("nivelUsuario");
       localStorage.removeItem("usuarioId");
+      localStorage.removeItem("celulaUsuario");
     }
 
-    function salvarSessao(dados) {
-      const usuario = dados?.usuario || {};
+    function salvarSessao(usuario) {
+      const celulaVinculada = (
+        usuario.celula ||
+        usuario.celula_usuario ||
+        usuario.celulaVinculada ||
+        usuario.celula_vinculada ||
+        ""
+      );
 
       localStorage.setItem("logado", "sim");
-      localStorage.setItem("usuario", usuario.usuario || campoUsuario.value.trim());
+      localStorage.setItem("usuario", usuario.usuario || campoUsuario.value.trim().toLowerCase());
       localStorage.setItem("nomeUsuario", usuario.nome || usuario.usuario || campoUsuario.value.trim() || "Administrador");
-      localStorage.setItem("nivelUsuario", String(usuario.nivel || "ADMIN").toLowerCase());
+      localStorage.setItem("nivelUsuario", String(usuario.nivel || "admin").toLowerCase());
       localStorage.setItem("usuarioId", usuario.id || "");
+      localStorage.setItem("celulaUsuario", String(celulaVinculada || "").trim());
     }
 
-    async function fazerLogin() {
-      const usuario = campoUsuario.value.trim();
+    async function entrar(evento) {
+      evento.preventDefault();
+
+      const usuario = campoUsuario.value.trim().toLowerCase();
       const senha = campoSenha.value.trim();
 
       if (!usuario || !senha) {
-        mostrarMensagem("Informe usuário e senha.", "erro");
+        mostrarMensagem("Informe usuário e senha.");
         return;
       }
 
-      btnEntrar.disabled = true;
-      btnEntrar.textContent = "Entrando...";
-      mostrarMensagem("Validando acesso...");
-
       try {
-        limparSessaoAntiga();
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Entrando...";
+        mostrarMensagem("Validando acesso...", "#2563eb");
 
-        const resposta = await fetch(`${API_BASE}/login`, {
+        const resposta = await fetch(API_LOGIN, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -250,55 +268,29 @@
           body: JSON.stringify({ usuario, senha })
         });
 
-        let dados = {};
-        try {
-          dados = await resposta.json();
-        } catch {
-          dados = {};
-        }
+        const dados = await resposta.json().catch(() => ({}));
 
-        if (!resposta.ok) {
-          throw new Error(dados.erro || dados.mensagem || "Falha no login.");
-        }
-
-        if (dados.sucesso === false) {
+        if (!resposta.ok || dados.sucesso === false) {
+          limparSessao();
           throw new Error(dados.erro || "Usuário ou senha inválidos.");
         }
 
-        salvarSessao(dados);
-        mostrarMensagem("Login realizado com sucesso.", "sucesso");
+        const usuarioLogado = dados.usuario || dados;
+        salvarSessao(usuarioLogado);
+        if (dados.token) sessionStorage.setItem("celulasSessao", dados.token);
 
-        setTimeout(() => {
-          window.location.href = "/painel.html";
-        }, 500);
+        mostrarMensagem("Acesso liberado. Redirecionando...", "#16a34a");
+        window.location.href = "painel.html";
       } catch (erro) {
-        console.error("Erro no login:", erro);
-        mostrarMensagem(erro.message || "Usuário ou senha inválidos.", "erro");
+        mostrarMensagem(erro.message || "Erro ao entrar no sistema.");
       } finally {
         btnEntrar.disabled = false;
         btnEntrar.textContent = "Entrar";
       }
     }
 
-    btnEntrar.addEventListener("click", fazerLogin);
-
-    campoSenha.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        fazerLogin();
-      }
-    });
-
-    campoUsuario.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        fazerLogin();
-      }
-    });
-
-    window.addEventListener("load", () => {
-      limparSessaoAntiga();
-      campoUsuario.focus();
-      campoUsuario.select();
-    });
+    limparSessao();
+    formLogin.addEventListener("submit", entrar);
   </script>
 </body>
 </html>

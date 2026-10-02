@@ -1,4 +1,4 @@
-<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,270 +8,937 @@
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #1f2937;
+      background: var(--bg);
+      color: var(--text);
     }
 
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
+    .layout { display: flex; min-height: 100vh; }
 
     .sidebar {
       width: 250px;
-      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
       color: white;
       padding: 24px 18px;
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
+      height: 100%;
     }
 
-    .logo {
-      font-size: 28px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    .logo-sub {
-      font-size: 14px;
-      opacity: 0.9;
-      margin-bottom: 28px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .logo { font-size: 30px; font-weight: bold; margin: 0; }
+    .logo-sub { margin: 6px 0 28px; font-size: 13px; opacity: 0.9; }
 
     .menu a {
-      text-decoration: none;
-      color: white;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      transition: 0.2s;
       display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
 
-    .menu a:hover,
-    .menu a.ativo {
-      background: rgba(255,255,255,0.18);
+    .menu a:hover, .menu a.ativo { background: rgba(255,255,255,0.16); }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .content {
       margin-left: 250px;
-      flex: 1;
       padding: 30px;
+      width: calc(100% - 250px);
     }
 
     .header {
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
     }
 
-    .header h1 {
-      margin: 0 0 8px;
-      font-size: 30px;
-    }
-
-    .header p {
-      margin: 0;
-      color: #4b5563;
-    }
+    .header h1 { margin: 0 0 8px; font-size: 30px; }
+    .header p { margin: 0; color: var(--muted); }
+    .usuario-logado { margin-top: 10px !important; font-size: 14px; }
 
     .card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-      margin-bottom: 18px;
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
-    .card h2 {
-      margin-top: 0;
+    .card h2 { margin: 0 0 16px; font-size: 22px; }
+
+    .filtros {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr auto auto auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    button {
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-amber { background: var(--amber); color: white; }
+    .btn-purple { background: var(--purple); color: white; }
+
+    .grid-kpis {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .kpi {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .b-blue { background: var(--blue); }
+    .b-green { background: var(--green); }
+    .b-red { background: var(--red); }
+    .b-amber { background: var(--amber); }
+    .b-purple { background: var(--purple); }
+
+    .numero {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .subnumero {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
     }
 
     .item {
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
       padding: 14px;
-      margin-bottom: 12px;
-      background: #fafafa;
+      background: #fafbfd;
+      margin-bottom: 10px;
     }
 
-    .vazio {
+    .item h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .item p {
+      margin: 0 0 4px;
+      color: #4b5563;
+      font-size: 13px;
+    }
+
+    .barra {
+      width: 100%;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .barra-interna {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      border-radius: 999px;
+    }
+
+    .lista-simples {
+      display: grid;
+      gap: 10px;
+    }
+
+    .msg-vazio {
+      color: var(--muted);
+      font-style: italic;
       text-align: center;
-      color: #6b7280;
-      padding: 24px;
-      border: 2px dashed #d1d5db;
-      border-radius: 14px;
-      background: #fcfcfc;
+      padding: 20px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    .periodo-info {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: -6px;
+      margin-bottom: 16px;
+    }
+
+    .visao-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .visao-box h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .visao-box p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .tag-visao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 13px;
+      background: var(--blue);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .tabela-relatorio {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .tabela-relatorio th,
+    .tabela-relatorio td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .tabela-relatorio th {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: bold;
+    }
+
+    .tabela-relatorio td {
+      background: #ffffff;
+    }
+
+    .nota-relatorio {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #fff7ed;
+      color: #92400e;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #fed7aa;
+    }
+
+    select:disabled {
+      background: #f8fafc;
+      color: #475569;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 1400px) {
+      .grid-kpis { grid-template-columns: repeat(3, 1fr); }
+      .filtros { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    }
+
+    @media (max-width: 1100px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .grid-kpis { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 900px) {
-      .sidebar {
-        position: relative;
-        width: 100%;
-        bottom: auto;
-      }
-
-      .layout {
-        flex-direction: column;
-      }
-
-      .content {
-        margin-left: 0;
-      }
+      .layout { flex-direction: column; }
+      .sidebar { position: relative; width: 100%; height: auto; }
+      .content { margin-left: 0; width: 100%; padding: 20px; }
+      .filtros, .grid-kpis { grid-template-columns: 1fr; }
     }
   </style>
+<link rel="stylesheet" href="menu-modulos.css">
 </head>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
-  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('nomeUsuario');
-    localStorage.removeItem('nivelUsuario');
-    window.location.href = 'login.html';
-  }
-
-  const campoUsuario = document.getElementById('usuarioLogado');
-  if (campoUsuario) {
-    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
-  }
-
-  function verificarPermissao(pagina) {
-    const permissoes = {
-      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
-      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
-      lider: ['painel', 'membros', 'presenca']
-    };
-
-    const permitidas = permissoes[nivelUsuario] || [];
-
-    if (!permitidas.includes(pagina)) {
-      alert('Você não tem permissão para acessar esta área.');
-      window.location.href = 'painel.html';
-    }
-  }
-
-  function aplicarPermissoesMenu() {
-    const menuUsuarios = document.getElementById('menuUsuarios');
-    const menuRelatorios = document.getElementById('menuRelatorios');
-
-    if (nivelUsuario !== 'admin' && menuUsuarios) {
-      menuUsuarios.style.display = 'none';
-    }
-
-    if (nivelUsuario === 'lider' && menuRelatorios) {
-      menuRelatorios.style.display = 'none';
-    }
-  }
-
-  aplicarPermissoesMenu();
-</script>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">+Células</div>
-      <div class="logo-sub">Gestão de células</div>
+      <h2 class="logo">+Células</h2>
+      <div class="logo-sub">Relatórios inteligentes</div>
 
-      <nav class="menu">
+      <div class="menu">
         <a href="painel.html">Painel</a>
         <a href="cadastro.html">Membros</a>
         <a href="presenca.html">Presença</a>
-        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
-        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
-<script>
-  verificarPermissao('usuarios');
-</script>
-<div style="margin-top: 20px;">
-  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
-    Sair
-  </button>
-</div>
-      </nav>
+        <a href="celulas.html">Células</a>
+        <a href="relatorios.html" class="ativo">Relatórios</a>
+        <a href="usuarios.html">Usuários</a>
+      </div>
+
+      <button class="btn-sair" id="btnSair" type="button">Sair</button>
     </aside>
 
     <main class="content">
       <div class="header">
         <h1>Relatórios</h1>
-        <p>Resumo de frequência por membro</p>
+        <p>Análise de presença, frequência, ausências e distribuição por célula</p>
+        <p id="usuarioLogado" class="usuario-logado"></p>
       </div>
 
-      <div class="card">
-        <h2>Resumo de frequência por membro</h2>
-        <div id="relatorioFrequencia"></div>
+      <div class="visao-box">
+        <div>
+          <h2 id="tituloVisao">Relatórios operacionais</h2>
+          <p id="descricaoVisao">Carregando permissões e dados do relatório...</p>
+        </div>
+        <div class="tag-visao" id="tagVisao">ADMIN</div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="filtros">
+          <div>
+            <label for="filtroCelula">Célula</label>
+            <select id="filtroCelula">
+              <option value="">Todas as células</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtroStatus">Status do membro</label>
+            <select id="filtroStatus">
+              <option value="">Todos</option>
+              <option value="ATIVO">ATIVO</option>
+              <option value="VISITANTE">VISITANTE</option>
+              <option value="AFASTADO">AFASTADO</option>
+            </select>
+          </div>
+          <div>
+            <label for="dataInicial">Data inicial</label>
+            <input id="dataInicial" type="date" />
+          </div>
+          <div>
+            <label for="dataFinal">Data final</label>
+            <input id="dataFinal" type="date" />
+          </div>
+          <div><button class="btn-blue" id="btnHoje" type="button">Hoje</button></div>
+          <div><button class="btn-green" id="btn7dias" type="button">7 dias</button></div>
+          <div><button class="btn-amber" id="btn30dias" type="button">30 dias</button></div>
+        </div>
+        <div class="periodo-info" id="periodoInfo">Período analisado: carregando...</div>
+        <button class="btn-purple" id="btnAplicar" type="button" style="max-width:220px;">Aplicar</button>
+      </div>
+
+      <div class="grid-kpis">
+        <div class="kpi">
+          <div class="badge b-blue">Registros</div>
+          <p class="numero" id="kpiRegistros">0</p>
+          <div class="subnumero">No período filtrado</div>
+        </div>
+        <div class="kpi">
+          <div class="badge b-green">Presentes</div>
+          <p class="numero" id="kpiPresentes">0</p>
+          <div class="subnumero">Participações confirmadas</div>
+        </div>
+        <div class="kpi">
+          <div class="badge b-red">Ausentes</div>
+          <p class="numero" id="kpiAusentes">0</p>
+          <div class="subnumero">Faltas registradas</div>
+        </div>
+        <div class="kpi">
+          <div class="badge b-purple">Frequência média</div>
+          <p class="numero" id="kpiFrequencia">0%</p>
+          <div class="subnumero">Presença geral</div>
+        </div>
+        <div class="kpi">
+          <div class="badge b-amber">Membros filtrados</div>
+          <p class="numero" id="kpiMembros">0</p>
+          <div class="subnumero">Base considerada</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>🏆 Ranking de células por frequência</h2>
+          <div id="rankingCelulas"></div>
+        </div>
+
+        <div class="card">
+          <h2>👥 Membros por célula</h2>
+          <div id="membrosPorCelula"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h2>⚠️ Ausentes recorrentes</h2>
+          <div id="ausentesRecorrentes"></div>
+        </div>
+
+        <div class="card">
+          <h2>📈 Distribuição por status</h2>
+          <div id="distribuicaoStatus"></div>
+        </div>
+
+        <div class="card">
+          <h2>🗓️ Resumo por dia</h2>
+          <div id="resumoPorDia"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <h2>📋 Relatório de Supervisão</h2>
+        <p class="periodo-info">Estrutura preparada com base no modelo em Excel. Campos ainda não existentes no sistema ficam como pendentes para futura automação.</p>
+        <div id="relatorioSupervisao"></div>
       </div>
     </main>
   </div>
 
   <script>
-    const apiMembros = 'https://celulas-backend.onrender.com:3000/membros';
-    const apiPresencas = 'https://celulas-backend.onrender.com:3000/presencas';
+    const API_BASE = "";
+    const API_MEMBROS = API_BASE + "/membros";
+    const API_PRESENCAS = API_BASE + "/presencas";
+    const API_CELULAS = API_BASE + "/celulas";
 
-    async function carregarRelatorio() {
-      const [resMembros, resPresencas] = await Promise.all([
-        fetch(apiMembros),
-        fetch(apiPresencas)
-      ]);
+    let membros = [];
+    let presencas = [];
+    let celulas = [];
 
-      const membros = await resMembros.json();
-      const presencas = await resPresencas.json();
+    const nivelUsuario = String(localStorage.getItem("nivelUsuario") || "admin").toLowerCase();
+    const celulaUsuario = String(localStorage.getItem("celulaUsuario") || "").trim();
 
-      const container = document.getElementById('relatorioFrequencia');
+    function protegerPagina() {
+      if (localStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
 
-      if (membros.length === 0) {
-        container.innerHTML = '<div class="vazio">Nenhum membro cadastrado.</div>';
+    function usuarioEhLider() {
+      return nivelUsuario === "lider";
+    }
+
+    function preencherUsuario() {
+      document.getElementById("usuarioLogado").textContent =
+        `Usuário: ${localStorage.getItem("nomeUsuario") || "Administrador"} | Nível: ${nivelUsuario}${usuarioEhLider() ? ` | Célula: ${celulaUsuario || "não vinculada"}` : ""}`;
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    function normalizarTexto(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toUpperCase();
+    }
+
+    function nomeCelula(valor) {
+      const texto = normalizarTexto(valor);
+      if (!texto) return "";
+      return texto.replace(/^CELULA\s*/i, "").replace(/^C[EÉ]LULA\s*/i, "").trim();
+    }
+
+    function nomeCelulaExibicao(valor) {
+      const base = nomeCelula(valor);
+      return base ? `CÉLULA ${base}` : "SEM CÉLULA";
+    }
+
+    function membroPermitido(membro) {
+      if (!usuarioEhLider()) return true;
+      return nomeCelula(membro.celula) === nomeCelula(celulaUsuario);
+    }
+
+    function percentual(valor) {
+      return `${Math.round(valor || 0)}%`;
+    }
+
+    function hojeISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function deslocarDias(dataIso, dias) {
+      const d = new Date(`${dataIso}T12:00:00`);
+      d.setDate(d.getDate() + dias);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function dataBR(dataIso) {
+      if (!dataIso) return "-";
+      const partes = String(dataIso).slice(0,10).split("-");
+      if (partes.length !== 3) return dataIso;
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function preencherPeriodo(dias) {
+      const fim = hojeISO();
+      const inicio = deslocarDias(fim, -(dias - 1));
+      document.getElementById("dataInicial").value = inicio;
+      document.getElementById("dataFinal").value = fim;
+      aplicarFiltros();
+    }
+
+    function atualizarVisao() {
+      const titulo = document.getElementById("tituloVisao");
+      const descricao = document.getElementById("descricaoVisao");
+      const tag = document.getElementById("tagVisao");
+
+      if (usuarioEhLider()) {
+        titulo.textContent = "Relatórios da minha célula";
+        descricao.textContent = `A visão está limitada à ${celulaUsuario || "célula vinculada ao líder"}.`;
+        tag.textContent = celulaUsuario || "LÍDER";
+      } else {
+        titulo.textContent = "Relatórios gerais";
+        descricao.textContent = "Visão consolidada de todas as células e presença ministerial.";
+        tag.textContent = "ADMIN";
+      }
+    }
+
+    function preencherFiltroCelula() {
+      const select = document.getElementById("filtroCelula");
+
+      if (usuarioEhLider()) {
+        const celula = nomeCelulaExibicao(celulaUsuario);
+        select.innerHTML = `<option value="${celula}">${celula}</option>`;
+        select.value = celula;
+        select.disabled = true;
         return;
       }
 
-      const html = membros.map(membro => {
-        const registros = presencas.filter(p => p.membroId === membro.id);
-        const presentes = registros.filter(p => p.status === 'presente').length;
-        const ausentes = registros.filter(p => p.status === 'ausente').length;
-        const total = registros.length;
+      const atual = select.value;
 
-        return `
-          <div class="item">
-            <strong>${membro.nome}</strong><br>
-            Total de registros: ${total}<br>
-            Presentes: ${presentes}<br>
-            Ausentes: ${ausentes}
-          </div>
-        `;
-      }).join('');
+      const nomes = Array.from(new Set(
+        celulas
+          .filter(c => c.ativo !== false)
+          .map(c => nomeCelulaExibicao(c.nome))
+          .filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-      container.innerHTML = html;
+      select.innerHTML =
+        '<option value="">Todas as células</option>' +
+        nomes.map(nome => `<option value="${nome}">${nome}</option>`).join("");
+
+      if (nomes.includes(atual)) select.value = atual;
     }
 
-    carregarRelatorio();
-  </script>
-</body>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
+    function membrosFiltrados() {
+      const filtroCelula = document.getElementById("filtroCelula").value;
+      const filtroStatus = normalizarTexto(document.getElementById("filtroStatus").value);
 
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-  }
-</script>
+      return membros.filter(m => {
+        const permissaoOk = membroPermitido(m);
+        const celulaOk = !filtroCelula || nomeCelulaExibicao(m.celula) === filtroCelula;
+        const statusOk = !filtroStatus || normalizarTexto(m.status) === filtroStatus;
+        return permissaoOk && celulaOk && statusOk;
+      });
+    }
+
+    function presencasFiltradas(baseMembros) {
+      const ids = new Set(baseMembros.map(m => Number(m.id)));
+      const inicio = document.getElementById("dataInicial").value;
+      const fim = document.getElementById("dataFinal").value;
+
+      return presencas.filter(p => {
+        const id = Number(p.membro_id || p.membroId);
+        const data = String(p.data || "");
+        const membroOk = ids.has(id);
+        const inicioOk = !inicio || data >= inicio;
+        const fimOk = !fim || data <= fim;
+        return membroOk && inicioOk && fimOk;
+      });
+    }
+
+    function atualizarPeriodoInfo(inicio, fim) {
+      document.getElementById("periodoInfo").textContent =
+        `Período analisado: ${dataBR(inicio) || "-"} até ${dataBR(fim) || "-"}`;
+    }
+
+    function atualizarKpis(baseMembros, basePresencas) {
+      const presentes = basePresencas.filter(p => normalizarTexto(p.status) === "PRESENTE").length;
+      const ausentes = basePresencas.filter(p => normalizarTexto(p.status) === "AUSENTE").length;
+      const total = basePresencas.length;
+      const freq = total > 0 ? (presentes / total) * 100 : 0;
+
+      document.getElementById("kpiRegistros").textContent = total;
+      document.getElementById("kpiPresentes").textContent = presentes;
+      document.getElementById("kpiAusentes").textContent = ausentes;
+      document.getElementById("kpiFrequencia").textContent = percentual(freq);
+      document.getElementById("kpiMembros").textContent = baseMembros.length;
+    }
+
+    function renderRankingCelulas(baseMembros, basePresencas) {
+      const el = document.getElementById("rankingCelulas");
+      const mapaMembros = new Map();
+
+      baseMembros.forEach(m => mapaMembros.set(Number(m.id), nomeCelulaExibicao(m.celula)));
+
+      const mapa = new Map();
+
+      basePresencas.forEach(p => {
+        const celula = mapaMembros.get(Number(p.membro_id || p.membroId)) || "SEM CÉLULA";
+        if (celula === "SEM CÉLULA") return;
+        if (!mapa.has(celula)) mapa.set(celula, { total: 0, presentes: 0 });
+        const item = mapa.get(celula);
+        item.total += 1;
+        if (normalizarTexto(p.status) === "PRESENTE") item.presentes += 1;
+      });
+
+      const ranking = Array.from(mapa.entries())
+        .map(([nome, dados]) => ({
+          nome,
+          perc: dados.total > 0 ? (dados.presentes / dados.total) * 100 : 0,
+          total: dados.total
+        }))
+        .sort((a, b) => b.perc - a.perc);
+
+      if (!ranking.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem registros de presença para o filtro atual.</div>';
+        return;
+      }
+
+      el.innerHTML = ranking.map((item, index) => `
+        <div class="item">
+          <h3>${usuarioEhLider() ? item.nome : `${index + 1}. ${item.nome}`}</h3>
+          <p><strong>Frequência:</strong> ${percentual(item.perc)}</p>
+          <p><strong>Registros:</strong> ${item.total}</p>
+          <div class="barra">
+            <div class="barra-interna" style="width:${item.perc}%"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderMembrosPorCelula(baseMembros) {
+      const el = document.getElementById("membrosPorCelula");
+      const mapa = new Map();
+
+      baseMembros.forEach(m => {
+        const cel = nomeCelulaExibicao(m.celula);
+        mapa.set(cel, (mapa.get(cel) || 0) + 1);
+      });
+
+      const lista = Array.from(mapa.entries())
+        .sort((a, b) => {
+          if (a[0] === "SEM CÉLULA") return 1;
+          if (b[0] === "SEM CÉLULA") return -1;
+          return a[0].localeCompare(b[0], "pt-BR");
+        });
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Nenhum membro encontrado.</div>';
+        return;
+      }
+
+      el.innerHTML = lista.map(([nome, total]) => `
+        <div class="item">
+          <h3>${nome}</h3>
+          <p><strong>Membros:</strong> ${total}</p>
+          <div class="barra">
+            <div class="barra-interna" style="width:${Math.min(100, total * 10)}%"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderAusentesRecorrentes(baseMembros, basePresencas) {
+      const el = document.getElementById("ausentesRecorrentes");
+      const mapa = new Map();
+
+      baseMembros.forEach(m => {
+        mapa.set(Number(m.id), {
+          nome: m.nome,
+          celula: nomeCelulaExibicao(m.celula),
+          ausentes: 0,
+          total: 0
+        });
+      });
+
+      basePresencas.forEach(p => {
+        const id = Number(p.membro_id || p.membroId);
+        if (!mapa.has(id)) return;
+        const item = mapa.get(id);
+        item.total += 1;
+        if (normalizarTexto(p.status) === "AUSENTE") item.ausentes += 1;
+      });
+
+      const lista = Array.from(mapa.values())
+        .filter(i => i.total > 0 && i.ausentes > 0)
+        .sort((a, b) => b.ausentes - a.ausentes || a.nome.localeCompare(b.nome, "pt-BR"))
+        .slice(0, 10);
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem ausências recorrentes no período.</div>';
+        return;
+      }
+
+      el.innerHTML = lista.map(item => `
+        <div class="item">
+          <h3>${item.nome}</h3>
+          <p><strong>Célula:</strong> ${item.celula}</p>
+          <p><strong>Ausências:</strong> ${item.ausentes}</p>
+          <p><strong>Registros:</strong> ${item.total}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderDistribuicaoStatus(baseMembros) {
+      const el = document.getElementById("distribuicaoStatus");
+      const mapa = {};
+
+      baseMembros.forEach(m => {
+        const status = normalizarTexto(m.status) || "SEM STATUS";
+        mapa[status] = (mapa[status] || 0) + 1;
+      });
+
+      const lista = Object.entries(mapa).sort((a,b) => b[1] - a[1]);
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem membros para o filtro atual.</div>';
+        return;
+      }
+
+      el.innerHTML = lista.map(([status, total]) => `
+        <div class="item">
+          <h3>${status}</h3>
+          <p><strong>Total:</strong> ${total}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderResumoPorDia(basePresencas) {
+      const el = document.getElementById("resumoPorDia");
+      const mapa = new Map();
+
+      basePresencas.forEach(p => {
+        const data = String(p.data || "");
+        if (!mapa.has(data)) mapa.set(data, { total: 0, presentes: 0, ausentes: 0 });
+        const item = mapa.get(data);
+        item.total += 1;
+        if (normalizarTexto(p.status) === "PRESENTE") item.presentes += 1;
+        if (normalizarTexto(p.status) === "AUSENTE") item.ausentes += 1;
+      });
+
+      const lista = Array.from(mapa.entries()).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10);
+
+      if (!lista.length) {
+        el.innerHTML = '<div class="msg-vazio">Sem registros no período.</div>';
+        return;
+      }
+
+      el.innerHTML = lista.map(([data, item]) => {
+        const perc = item.total > 0 ? (item.presentes / item.total) * 100 : 0;
+        return `
+          <div class="item">
+            <h3>${dataBR(data)}</h3>
+            <p><strong>Presentes:</strong> ${item.presentes}</p>
+            <p><strong>Ausentes:</strong> ${item.ausentes}</p>
+            <div class="barra">
+              <div class="barra-interna" style="width:${perc}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderRelatorioSupervisao(baseMembros, basePresencas) {
+      const el = document.getElementById("relatorioSupervisao");
+
+      const presentes = basePresencas.filter(p => normalizarTexto(p.status) === "PRESENTE").length;
+      const totalRegistros = basePresencas.length;
+      const freq = totalRegistros > 0 ? (presentes / totalRegistros) * 100 : 0;
+      const celulasUnicas = new Set(baseMembros.map(m => nomeCelulaExibicao(m.celula)).filter(c => c !== "SEM CÉLULA"));
+      const visitantes = baseMembros.filter(m => normalizarTexto(m.status) === "VISITANTE").length;
+      const ativos = baseMembros.filter(m => normalizarTexto(m.status) === "ATIVO").length;
+      const afastados = baseMembros.filter(m => normalizarTexto(m.status) === "AFASTADO").length;
+
+      const igreja = "VINHA PARANÁ";
+      const pastor = "A DEFINIR";
+      const supervisor = usuarioEhLider() ? (localStorage.getItem("nomeUsuario") || "LÍDER") : "A DEFINIR";
+
+      el.innerHTML = `
+        <table class="tabela-relatorio">
+          <thead>
+            <tr>
+              <th>Igreja</th>
+              <th>Pastor</th>
+              <th>Supervisor</th>
+              <th>Nº Células</th>
+              <th>Nº Participantes</th>
+              <th>Presença Média</th>
+              <th>Ativos</th>
+              <th>Visitantes</th>
+              <th>Afastados</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${igreja}</td>
+              <td>${pastor}</td>
+              <td>${supervisor}</td>
+              <td>${usuarioEhLider() ? 1 : celulasUnicas.size}</td>
+              <td>${baseMembros.length}</td>
+              <td>${percentual(freq)}</td>
+              <td>${ativos}</td>
+              <td>${visitantes}</td>
+              <td>${afastados}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="nota-relatorio">
+          Campos do modelo Excel ainda pendentes para automação futura: Dízimo, MI + FA, CME, CTL, Dizimistas, Arrecadação, Alvos de células e Alvos de membros.
+        </div>
+      `;
+    }
+
+    function aplicarFiltros() {
+      const inicio = document.getElementById("dataInicial").value;
+      const fim = document.getElementById("dataFinal").value;
+
+      atualizarPeriodoInfo(inicio, fim);
+
+      const baseMembros = membrosFiltrados();
+      const basePresencas = presencasFiltradas(baseMembros);
+
+      atualizarKpis(baseMembros, basePresencas);
+      renderRankingCelulas(baseMembros, basePresencas);
+      renderMembrosPorCelula(baseMembros);
+      renderAusentesRecorrentes(baseMembros, basePresencas);
+      renderDistribuicaoStatus(baseMembros);
+      renderResumoPorDia(basePresencas);
+      renderRelatorioSupervisao(baseMembros, basePresencas);
+    }
+
+    async function carregarDados() {
+      const [resMembros, resPresencas, resCelulas] = await Promise.all([
+        fetch(API_MEMBROS, { cache: "no-store" }),
+        fetch(API_PRESENCAS, { cache: "no-store" }),
+        fetch(API_CELULAS, { cache: "no-store" })
+      ]);
+
+      if (!resMembros.ok || !resPresencas.ok || !resCelulas.ok) {
+        throw new Error("Erro ao carregar dados dos relatórios.");
+      }
+
+      membros = await resMembros.json();
+      presencas = await resPresencas.json();
+      celulas = await resCelulas.json();
+
+      atualizarVisao();
+      preencherFiltroCelula();
+      preencherPeriodo(30);
+    }
+
+    document.getElementById("btnSair").addEventListener("click", sair);
+    document.getElementById("btnHoje").addEventListener("click", () => preencherPeriodo(1));
+    document.getElementById("btn7dias").addEventListener("click", () => preencherPeriodo(7));
+    document.getElementById("btn30dias").addEventListener("click", () => preencherPeriodo(30));
+    document.getElementById("btnAplicar").addEventListener("click", aplicarFiltros);
+    document.getElementById("filtroCelula").addEventListener("change", aplicarFiltros);
+    document.getElementById("filtroStatus").addEventListener("change", aplicarFiltros);
+
+    if (protegerPagina()) {
+      preencherUsuario();
+      carregarDados().catch((erro) => {
+        console.error(erro);
+        document.getElementById("rankingCelulas").innerHTML = '<div class="msg-vazio">Erro ao carregar relatórios.</div>';
+        document.getElementById("membrosPorCelula").innerHTML = '<div class="msg-vazio">Erro ao carregar relatórios.</div>';
+        document.getElementById("ausentesRecorrentes").innerHTML = '<div class="msg-vazio">Erro ao carregar relatórios.</div>';
+        document.getElementById("distribuicaoStatus").innerHTML = '<div class="msg-vazio">Erro ao carregar relatórios.</div>';
+        document.getElementById("resumoPorDia").innerHTML = '<div class="msg-vazio">Erro ao carregar relatórios.</div>';
+      });
+    }
+  </script>
+<script src="menu-modulos.js"></script>
+</body>
 </html>

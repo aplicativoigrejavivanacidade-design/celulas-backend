@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>+Células | Células</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --gray: #64748b;
+      --gray-dark: #475569;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
+      color: white;
+      padding: 24px 18px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+    }
+
+    .logo {
+      font-size: 30px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .logo-sub {
+      margin: 6px 0 28px;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .menu a {
+      display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .menu a:hover,
+    .menu a.ativo {
+      background: rgba(255,255,255,0.16);
+    }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .content {
+      margin-left: 250px;
+      padding: 30px;
+      width: calc(100% - 250px);
+    }
+
+    .header {
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .header .usuario-logado {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .visao-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .visao-box h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .visao-box p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .tag-visao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 13px;
+      background: var(--blue);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    input[type="text"] {
+      text-transform: uppercase;
+    }
+
+    input[readonly],
+    select:disabled {
+      background: #f8fafc;
+      color: #475569;
+      cursor: not-allowed;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .acoes-topo-sistema {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    button {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .btn-success {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--green-dark);
+    }
+
+    .btn-warning {
+      background: var(--amber);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--gray);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-dark);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-edicao {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .msg {
+      margin-top: 14px;
+      font-weight: bold;
+      min-height: 20px;
+      font-size: 14px;
+    }
+
+    .msg-topo {
+      display: block;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: #475569;
+    }
+
+    .msg-topo.erro { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .msg-topo.sucesso { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .msg-topo.info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .msg-topo.neutro { background: #f8fafc; color: #475569; border-color: var(--line); }
+
+    .contador {
+      background: #e8f0ff;
+      color: var(--blue-dark);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .topo-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .item-celula {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fafbfd;
+      margin-bottom: 10px;
+    }
+
+    .item-celula h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .item-celula p {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .membro-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fafbfd;
+      margin-bottom: 10px;
+    }
+
+    .membro-box h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .membro-box p {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .membro-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #25D366;
+      text-decoration: none;
+      flex: 0 0 auto;
+      border: none;
+    }
+
+    .btn-whatsapp svg {
+      width: 22px;
+      height: 22px;
+      fill: #ffffff;
+    }
+
+    .btn-whatsapp.disabled {
+      background: #cbd5e1;
+      pointer-events: none;
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .check-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .check-wrap input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .check-wrap input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+    }
+
+    .vazio {
+      color: var(--muted);
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    .info-ajuda {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .campo-obrigatorio::after {
+      content: " *";
+      color: var(--red);
+      font-weight: bold;
+    }
+
+    .campo-alerta {
+      border-color: var(--red) !important;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.14) !important;
+    }
+
+    .status-celula-box {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-celula-label {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--muted);
+    }
+
+    .status-celula-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .status-celula-chip.ativa {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-celula-chip.inativa {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .secao {
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .top-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+
+      .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .membro-topo {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="menu-modulos.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2 class="logo">+Células</h2>
+      <div class="logo-sub">Gestão de células</div>
+
+      <div class="menu">
+        <a href="painel.html">Painel</a>
+        <a href="cadastro.html">Membros</a>
+        <a href="presenca.html">Presença</a>
+        <a href="celulas.html" class="ativo">Células</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="usuarios.html">Usuários</a>
+      </div>
+
+      <button class="btn-sair" id="btnSair" type="button">Sair</button>
+    </aside>
+
+    <main class="content">
+      <div class="header">
+        <h1>Células</h1>
+        <p>Selecione a célula, visualize os dados e clique em editar para alterar com segurança</p>
+        <p class="usuario-logado" id="usuarioLogado"></p>
+      </div>
+
+      <div class="visao-box">
+        <div>
+          <h2 id="tituloVisao">Gestão de células</h2>
+          <p id="descricaoVisao">Carregando permissões...</p>
+        </div>
+        <div class="tag-visao" id="tagVisao">ADMIN</div>
+      </div>
+
+      <div class="top-grid">
+        <div class="card">
+          <h2>Editar</h2>
+
+          <input id="celulaId" type="hidden" />
+
+          <label for="seletorCelula">Selecionar célula cadastrada</label>
+          <select id="seletorCelula">
+            <option value="">Carregando células...</option>
+          </select>
+
+          <div id="msgTopo" class="msg-topo neutro">Selecione uma célula para visualizar ou editar.</div>
+
+          <div class="status-edicao" id="statusEdicao">
+            Modo atual: VISUALIZAÇÃO. Selecione uma célula e clique em Editar.
+          </div>
+
+          <div class="acoes-topo-sistema">
+            <button class="btn-secondary" id="btnNova" type="button">Novo</button>
+            <button class="btn-primary" id="btnEditar" type="button">Editar</button>
+            <button class="btn-secondary" id="btnCancelar" type="button" disabled>Cancelar</button>
+            <button class="btn-success" id="btnSalvar" type="button" disabled>Salvar</button>
+            <button class="btn-danger" id="btnExcluir" type="button" disabled>Excluir</button>
+            <button class="btn-warning" id="btnMultiplicar" type="button" disabled>Multiplicar</button>
+            <button class="btn-secondary" id="btnInativar" type="button" disabled>Inativar</button>
+            <button class="btn-secondary" id="btnAtivar" type="button" disabled>Ativar</button>
+            <button class="btn-warning" id="btnGeo" type="button" disabled>Atualizar geolocalização</button>
+          </div>
+
+
+          <label for="nomeCelula" class="campo-obrigatorio">Nome da célula</label>
+          <input id="nomeCelula" type="text" placeholder="CÉLULA 00" readonly />
+
+          <div class="grid-2">
+            <div>
+              <label for="diaSemana" class="campo-obrigatorio">Dia da semana</label>
+              <select id="diaSemana" disabled>
+                <option value="">Selecione</option>
+                <option value="SEGUNDA-FEIRA">SEGUNDA-FEIRA</option>
+                <option value="TERÇA-FEIRA">TERÇA-FEIRA</option>
+                <option value="QUARTA-FEIRA">QUARTA-FEIRA</option>
+                <option value="QUINTA-FEIRA">QUINTA-FEIRA</option>
+                <option value="SEXTA-FEIRA">SEXTA-FEIRA</option>
+                <option value="SÁBADO">SÁBADO</option>
+                <option value="DOMINGO">DOMINGO</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="horaReuniao" class="campo-obrigatorio">Hora</label>
+              <input id="horaReuniao" type="time" readonly />
+            </div>
+          </div>
+
+          <label for="anfitriao" class="campo-obrigatorio">Anfitrião</label>
+          <select id="anfitriao" disabled>
+            <option value="">Carregando membros...</option>
+          </select>
+
+          <label for="liderCelula" class="campo-obrigatorio">LÍDER DA CÉLULA</label>
+          <select id="liderCelula" disabled>
+            <option value="">Carregando membros...</option>
+          </select>
+
+          <label for="cep" class="campo-obrigatorio">CEP</label>
+          <input id="cep" type="text" placeholder="00000-000" readonly />
+
+          <label for="rua" class="campo-obrigatorio">Rua</label>
+          <input id="rua" type="text" placeholder="Rua" readonly />
+
+          <div class="grid-2">
+            <div>
+              <label for="numero" class="campo-obrigatorio">Número</label>
+              <input id="numero" type="text" placeholder="Número" readonly />
+            </div>
+
+            <div>
+              <label for="complemento">Complemento</label>
+              <input id="complemento" type="text" placeholder="Complemento" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="bairro" class="campo-obrigatorio">Bairro</label>
+              <input id="bairro" type="text" placeholder="Bairro" readonly />
+            </div>
+
+            <div>
+              <label for="cidade" class="campo-obrigatorio">Cidade</label>
+              <input id="cidade" type="text" placeholder="Cidade" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="estado" class="campo-obrigatorio">Estado</label>
+              <input id="estado" type="text" placeholder="UF" readonly />
+            </div>
+
+            <div>
+              <label for="geolocalizacao" class="campo-obrigatorio">Geolocalização</label>
+              <input id="geolocalizacao" type="text" placeholder="-23.000000, -51.000000" readonly />
+            </div>
+          </div>
+
+          <div class="status-celula-box">
+            <span class="status-celula-label">Status:</span>
+            <span id="statusCelulaChip" class="status-celula-chip ativa">ATIVA</span>
+          </div>
+<div class="info-ajuda">
+            A seleção da célula apenas carrega os dados. As alterações só são permitidas após clicar em <strong>Editar</strong>.
+          </div>
+
+          <div id="msg" class="msg"></div>
+        </div>
+
+        <div class="card">
+          <div class="topo-card">
+            <h2 style="margin:0;">Resumo da célula selecionada</h2>
+            <span class="contador" id="contadorMembrosVinculados">0 membro(s)</span>
+          </div>
+
+          <div id="resumoCelula"></div>
+
+          <div class="secao">
+            <div class="topo-card">
+              <h2 style="margin:0;">Membros vinculados à célula</h2>
+              <span class="contador" id="contadorRemoverVinculados">0 remover</span>
+            </div>
+            <div id="listaVinculados"></div>
+          </div>
+
+          <div class="secao" id="secaoMultiplicacao" style="display:none;">
+            <div class="topo-card">
+              <h2 style="margin:0;">Membros para a nova célula</h2>
+              <span class="contador" id="contadorMultiplicacao">0 selecionado(s)</span>
+            </div>
+            <div class="info-ajuda" id="avisoMultiplicacao">
+              Se o líder ou anfitrião da célula original forem para a nova célula, primeiro defina substitutos na célula original.
+            </div>
+            <div id="listaMultiplicacao"></div>
+            <div class="info-ajuda">
+              Selecione os membros da célula atual que serão transferidos para a nova célula multiplicada.
+            </div>
+          </div>
+
+          <div class="secao">
+            <div class="topo-card">
+              <h2 style="margin:0;">Líderes em treinamento</h2>
+              <span class="contador" id="contadorLideresTreinamento">0 selecionado(s)</span>
+            </div>
+            <div id="listaLideresTreinamento"></div>
+            <div class="info-ajuda">Selecione membros cadastrados para acompanhar como líderes em treinamento desta célula.</div>
+          </div>
+
+          <div class="secao">
+            <div class="topo-card">
+              <h2 style="margin:0;">Membros disponíveis para vínculo</h2>
+              <span class="contador" id="contadorDisponiveis">0 membro(s)</span>
+            </div>
+            <div id="listaDisponiveis"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "";
+    const API_MEMBROS = API_BASE + "/membros";
+    const API_CELULAS = API_BASE + "/celulas";
+    const API_GEO = API_BASE + "/geolocalizacao";
+
+    let membros = [];
+    let celulas = [];
+    let modoEdicao = false;
+    let modoMultiplicacao = false;
+    let celulaAtual = null;
+
+    const nivelUsuario = String(localStorage.getItem("nivelUsuario") || "admin").toLowerCase();
+    const celulaUsuario = String(localStorage.getItem("celulaUsuario") || "").trim();
+
+    const campoCelulaId = document.getElementById("celulaId");
+    const campoSeletorCelula = document.getElementById("seletorCelula");
+    const campoNomeCelula = document.getElementById("nomeCelula");
+    const campoDiaSemana = document.getElementById("diaSemana");
+    const campoHoraReuniao = document.getElementById("horaReuniao");
+    const campoAnfitriao = document.getElementById("anfitriao");
+    const campoLiderCelula = document.getElementById("liderCelula");
+    const campoCep = document.getElementById("cep");
+    const campoRua = document.getElementById("rua");
+    const campoNumero = document.getElementById("numero");
+    const campoComplemento = document.getElementById("complemento");
+    const campoBairro = document.getElementById("bairro");
+    const campoCidade = document.getElementById("cidade");
+    const campoEstado = document.getElementById("estado");
+    const campoGeolocalizacao = document.getElementById("geolocalizacao");
+    const campoMsg = document.getElementById("msg");
+    const campoMsgTopo = document.getElementById("msgTopo");
+    const campoUsuarioLogado = document.getElementById("usuarioLogado");
+    const campoStatusEdicao = document.getElementById("statusEdicao");
+    const campoResumoCelula = document.getElementById("resumoCelula");
+    const campoListaVinculados = document.getElementById("listaVinculados");
+    const campoListaDisponiveis = document.getElementById("listaDisponiveis");
+    const contadorMembrosVinculados = document.getElementById("contadorMembrosVinculados");
+    const contadorDisponiveis = document.getElementById("contadorDisponiveis");
+    const contadorRemoverVinculados = document.getElementById("contadorRemoverVinculados");
+    const statusCelulaChip = document.getElementById("statusCelulaChip");
+
+    const tituloVisao = document.getElementById("tituloVisao");
+    const descricaoVisao = document.getElementById("descricaoVisao");
+    const tagVisao = document.getElementById("tagVisao");
+
+    const listaLideresTreinamento = document.getElementById("listaLideresTreinamento");
+    const contadorLideresTreinamento = document.getElementById("contadorLideresTreinamento");
+    const secaoMultiplicacao = document.getElementById("secaoMultiplicacao");
+    const listaMultiplicacao = document.getElementById("listaMultiplicacao");
+    const contadorMultiplicacao = document.getElementById("contadorMultiplicacao");
+
+    const btnEditar = document.getElementById("btnEditar");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const btnGeo = document.getElementById("btnGeo");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const btnNova = document.getElementById("btnNova");
+    const btnInativar = document.getElementById("btnInativar");
+    const btnAtivar = document.getElementById("btnAtivar");
+    const btnExcluir = document.getElementById("btnExcluir");
+    const btnMultiplicar = document.getElementById("btnMultiplicar");
+
+    function protegerPagina() {
+      if (localStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    function usuarioEhLider() {
+      return nivelUsuario === "lider";
+    }
+
+    function usuarioEhAdminOuSupervisor() {
+      return nivelUsuario === "admin" || nivelUsuario === "supervisor";
+    }
+
+    function tipoMensagemPorCor(cor) {
+      if (cor === "#16a34a") return "sucesso";
+      if (cor === "#2563eb") return "info";
+      if (cor === "#64748b") return "neutro";
+      return "erro";
+    }
+
+    function mostrarMensagem(texto, cor = "#dc2626") {
+      const tipo = tipoMensagemPorCor(cor);
+      campoMsg.textContent = texto;
+      campoMsg.style.color = cor;
+
+      if (campoMsgTopo) {
+        campoMsgTopo.textContent = texto || "Selecione uma célula para visualizar ou editar.";
+        campoMsgTopo.className = `msg-topo ${texto ? tipo : "neutro"}`;
+      }
+
+      if (cor === "#dc2626" && texto) window.alert(texto);
+
+      if (texto && campoMsgTopo) {
+        campoMsgTopo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
+    function sairSistema() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    function normalizarTexto(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+    }
+
+    function membroEhVisitanteOuPendente(membro) {
+      const origem = normalizarTexto(membro.origem_cadastro || membro.origemCadastro || "");
+      const status = normalizarTexto(membro.status || "");
+      return origem === "PRESENCA_VISITANTE" ||
+        status === "VISITANTE" ||
+        status === "VISITANTE ARQUIVADO" ||
+        membro.cadastro_completo === false ||
+        String(membro.cadastro_completo) === "false";
+    }
+
+    function normalizarNomeCelula(valor) {
+      const texto = normalizarTexto(valor);
+      if (!texto) return "";
+      return texto.replace(/^C[EÉ]LULA\s*/i, "").replace(/^CELULA\s*/i, "").trim();
+    }
+
+    function nomeCelulaExibicao(valor) {
+      const base = normalizarNomeCelula(valor);
+      return base ? `CÉLULA ${base}` : "";
+    }
+
+    function celulaPermitidaLider() {
+      return nomeCelulaExibicao(celulaUsuario);
+    }
+
+    function celulaPermitidaParaUsuario(celula) {
+      if (!usuarioEhLider()) return true;
+      return normalizarNomeCelula(celula.nome || celula.nomeExibicao) === normalizarNomeCelula(celulaUsuario);
+    }
+
+    function preencherUsuarioLogado() {
+      campoUsuarioLogado.textContent =
+        `Usuário: ${localStorage.getItem("nomeUsuario") || "Administrador"} | Nível: ${nivelUsuario}${usuarioEhLider() ? ` | Célula: ${celulaPermitidaLider() || "não vinculada"}` : ""}`;
+    }
+
+    function atualizarVisaoUsuario() {
+      if (!tituloVisao || !descricaoVisao || !tagVisao) return;
+
+      if (usuarioEhLider()) {
+        tituloVisao.textContent = "Minha célula";
+        descricaoVisao.textContent = `Você está visualizando somente ${celulaPermitidaLider() || "sua célula vinculada"}.`;
+        tagVisao.textContent = celulaPermitidaLider() || "LÍDER";
+      } else {
+        tituloVisao.textContent = "Gestão geral de células";
+        descricaoVisao.textContent = "Administrador visualiza e gerencia todas as células.";
+        tagVisao.textContent = "ADMIN";
+      }
+    }
+
+    function formatarCep(valor) {
+      const numeros = String(valor || "").replace(/\D/g, "").slice(0, 8);
+      if (numeros.length > 5) return `${numeros.slice(0, 5)}-${numeros.slice(5)}`;
+      return numeros;
+    }
+
+    function formatarWhatsapp(telefone) {
+      const numero = String(telefone || "").replace(/\D/g, "");
+      if (!numero) return "";
+      return numero.startsWith("55") ? numero : `55${numero}`;
+    }
+
+    function whatsappIcon(link) {
+      if (!link) {
+        return `
+          <span class="btn-whatsapp disabled" aria-hidden="true">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M27.997 15.989c0 6.617-5.375 11.981-12.003 11.981a11.95 11.95 0 0 1-6.115-1.676L3 28.157l1.901-6.73a11.926 11.926 0 0 1-1.91-6.438C2.991 8.372 8.366 3 14.994 3c6.628 0 12.003 5.372 12.003 11.989z"/>
+            </svg>
+          </span>
+        `;
+      }
+
+      return `
+        <a class="btn-whatsapp" target="_blank" href="https://wa.me/${link}" aria-label="WhatsApp">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M27.997 15.989c0 6.617-5.375 11.981-12.003 11.981a11.95 11.95 0 0 1-6.115-1.676L3 28.157l1.901-6.73a11.926 11.926 0 0 1-1.91-6.438C2.991 8.372 8.366 3 14.994 3c6.628 0 12.003 5.372 12.003 11.989zm-12.003-9.08c-5.016 0-9.094 4.066-9.094 9.08 0 1.759.504 3.471 1.459 4.944l.232.358-1.126 3.988 4.08-1.068.343.204a9.124 9.124 0 0 0 4.106.98c5.016 0 9.094-4.066 9.094-9.08 0-5.014-4.078-9.406-9.094-9.406zm5.282 11.596c-.289-.145-1.708-.842-1.973-.94-.264-.097-.456-.145-.648.146-.191.29-.744.94-.912 1.133-.168.193-.336.218-.625.073-.289-.145-1.22-.449-2.325-1.434-.86-.768-1.441-1.716-1.61-2.006-.168-.29-.018-.447.127-.591.131-.13.289-.339.433-.509.145-.169.192-.29.289-.484.096-.193.048-.363-.024-.508-.072-.145-.648-1.567-.888-2.146-.233-.56-.469-.484-.648-.493l-.552-.01c-.192 0-.504.073-.768.363-.264.29-1.008.988-1.008 2.41s1.032 2.797 1.176 2.991c.145.193 2.03 3.095 4.917 4.34.687.297 1.223.474 1.641.606.689.219 1.315.188 1.81.114.552-.083 1.708-.697 1.949-1.37.24-.672.24-1.248.168-1.37-.072-.121-.264-.193-.553-.338z"/>
+          </svg>
+        </a>
+      `;
+    }
+
+    function deduplicarCelulas(lista) {
+      const mapa = new Map();
+      (Array.isArray(lista) ? lista : []).forEach((celula) => {
+        const chave = normalizarNomeCelula(celula.nome);
+        if (!chave) return;
+        if (!mapa.has(chave)) {
+          mapa.set(chave, { ...celula, nomeExibicao: nomeCelulaExibicao(celula.nome) });
+        }
+      });
+      return Array.from(mapa.values()).sort((a, b) =>
+        String(a.nomeExibicao || "").localeCompare(String(b.nomeExibicao || ""), "pt-BR")
+      );
+    }
+
+    function ordenarPorNome(lista) {
+      return [...lista].sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+    }
+
+    function obterIdsLideresTreinamento(celula) {
+      try {
+        const raw = celula?.lideres_treinamento || celula?.lideresTreinamento || "[]";
+        if (Array.isArray(raw)) return raw.map(String);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (erro) {
+        return [];
+      }
+    }
+
+    function membrosDaCelula(nomeCelula) {
+      const alvo = normalizarNomeCelula(nomeCelula);
+      return membros
+        .filter((membro) => normalizarNomeCelula(membro.celula) === alvo)
+        .filter((membro) => !membroEhVisitanteOuPendente(membro));
+    }
+
+    function membrosDisponiveis() {
+      return ordenarPorNome(membros.filter((membro) => !String(membro.celula || "").trim()));
+    }
+
+    function obterIdsAnfitrioesJaUsados(celulaIdAtual = "") {
+      const ids = new Set();
+      deduplicarCelulas(celulas).forEach((celula) => {
+        if (String(celula.id) === String(celulaIdAtual)) return;
+        const valor = String(celula.anfitriao || "").trim();
+        if (valor) ids.add(valor);
+      });
+      return ids;
+    }
+
+    function obterIdsLideresJaUsados(celulaIdAtual = "") {
+      const ids = new Set();
+      deduplicarCelulas(celulas).forEach((celula) => {
+        if (String(celula.id) === String(celulaIdAtual)) return;
+        const valor = String(celula.lider_celula || "").trim();
+        if (valor) ids.add(valor);
+      });
+      return ids;
+    }
+
+    function membrosElegiveisParaFuncao() {
+      if (modoMultiplicacao && celulaAtual) return membrosDaCelula(celulaAtual.nome);
+      if (celulaAtual) return membrosDaCelula(celulaAtual.nome);
+      return membrosDisponiveis();
+    }
+
+    function preencherSelectMembrosEspeciais() {
+      const celulaIdAtual = campoCelulaId.value || "";
+      const idsLideresUsados = obterIdsLideresJaUsados(celulaIdAtual);
+      const idsAnfitrioesUsados = obterIdsAnfitrioesJaUsados(celulaIdAtual);
+      const atualLider = modoMultiplicacao ? String(campoLiderCelula.value || "") : String(campoLiderCelula.value || celulaAtual?.lider_celula || "");
+      const atualAnfitriao = modoMultiplicacao ? String(campoAnfitriao.value || "") : String(campoAnfitriao.value || celulaAtual?.anfitriao || "");
+      const base = ordenarPorNome(membrosElegiveisParaFuncao());
+
+      const opcoesAnfitriao = base.filter((membro) => {
+        const id = String(membro.id);
+        return !idsAnfitrioesUsados.has(id) || id === atualAnfitriao;
+      });
+
+      const opcoesLider = base.filter((membro) => {
+        const id = String(membro.id);
+        return !idsLideresUsados.has(id) || id === atualLider;
+      });
+
+      campoAnfitriao.innerHTML =
+        '<option value="">Selecione o anfitrião</option>' +
+        opcoesAnfitriao.map((membro) => `<option value="${membro.id}">${membro.nome || ""}</option>`).join("");
+
+      campoLiderCelula.innerHTML =
+        '<option value="">Selecione o líder</option>' +
+        opcoesLider.map((membro) => `<option value="${membro.id}">${membro.nome || ""}</option>`).join("");
+
+      if (opcoesAnfitriao.some(m => String(m.id) === atualAnfitriao)) campoAnfitriao.value = atualAnfitriao;
+      if (opcoesLider.some(m => String(m.id) === atualLider)) campoLiderCelula.value = atualLider;
+    }
+
+    function preencherEnderecoPorAnfitriao() {
+      const membro = membros.find((m) => String(m.id) === String(campoAnfitriao.value || ""));
+      if (!membro) return;
+      campoCep.value = formatarCep(membro.cep || "");
+      campoRua.value = membro.rua || "";
+      campoNumero.value = membro.numero || "";
+      campoComplemento.value = membro.complemento || "";
+      campoBairro.value = membro.bairro || "";
+      campoCidade.value = membro.cidade || "";
+      campoEstado.value = membro.estado || "";
+      campoGeolocalizacao.value = "";
+      mostrarMensagem("Endereço carregado a partir do cadastro do anfitrião. Atualize a geolocalização antes de salvar.", "#2563eb");
+    }
+
+    function atualizarStatusCelula(celula) {
+      const ativa = celula ? celula.ativo !== false : true;
+      statusCelulaChip.textContent = ativa ? "ATIVA" : "INATIVA";
+      statusCelulaChip.className = `status-celula-chip ${ativa ? "ativa" : "inativa"}`;
+    }
+
+    function atualizarStatusEdicao() {
+      if (modoEdicao && modoMultiplicacao) {
+        campoStatusEdicao.textContent = "Modo atual: MULTIPLICAÇÃO. Selecione os membros da nova célula e clique em Salvar.";
+        campoStatusEdicao.style.background = "#fff7ed";
+        campoStatusEdicao.style.color = "#92400e";
+        return;
+      }
+      if (modoEdicao) {
+        campoStatusEdicao.textContent = "Modo atual: EDIÇÃO LIBERADA. Revise os dados e clique em Salvar.";
+        campoStatusEdicao.style.background = "#ecfdf5";
+        campoStatusEdicao.style.color = "#166534";
+      } else {
+        campoStatusEdicao.textContent = "Modo atual: VISUALIZAÇÃO. Selecione uma célula e clique em Editar.";
+        campoStatusEdicao.style.background = "#eff6ff";
+        campoStatusEdicao.style.color = "#1d4ed8";
+      }
+    }
+
+    function atualizarEstadoBotoes() {
+      const temCelulaSelecionada = !!campoCelulaId.value;
+      const celulaAtiva = celulaAtual ? celulaAtual.ativo !== false : true;
+      campoSeletorCelula.disabled = modoEdicao || usuarioEhLider();
+
+      if (modoEdicao) {
+        btnEditar.disabled = true;
+        btnSalvar.disabled = false;
+        btnGeo.disabled = false;
+        btnCancelar.disabled = false;
+        btnNova.disabled = true;
+        btnInativar.disabled = true;
+        btnAtivar.disabled = true;
+        btnExcluir.disabled = true;
+        btnMultiplicar.disabled = true;
+      } else {
+        btnEditar.disabled = !temCelulaSelecionada || !celulaAtiva;
+        btnSalvar.disabled = true;
+        btnGeo.disabled = true;
+        btnCancelar.disabled = true;
+
+        btnNova.disabled = usuarioEhLider();
+        btnNova.style.display = usuarioEhLider() ? "none" : "inline-block";
+
+        btnExcluir.disabled = usuarioEhLider() || !temCelulaSelecionada;
+        btnExcluir.style.display = usuarioEhLider() ? "none" : "inline-block";
+
+        btnInativar.disabled = usuarioEhLider() || !temCelulaSelecionada || !celulaAtiva;
+        btnAtivar.disabled = usuarioEhLider() || !temCelulaSelecionada || celulaAtiva;
+
+        btnMultiplicar.disabled = !temCelulaSelecionada || !celulaAtiva;
+        btnMultiplicar.style.display = "inline-block";
+      }
+    }
+
+    function setCamposEditaveis(liberado) {
+      modoEdicao = liberado;
+      campoNomeCelula.readOnly = !liberado;
+      campoHoraReuniao.readOnly = !liberado;
+      campoCep.readOnly = !liberado;
+      campoRua.readOnly = !liberado;
+      campoNumero.readOnly = !liberado;
+      campoComplemento.readOnly = !liberado;
+      campoBairro.readOnly = !liberado;
+      campoCidade.readOnly = !liberado;
+      campoEstado.readOnly = !liberado;
+      campoDiaSemana.disabled = !liberado;
+      campoAnfitriao.disabled = !liberado;
+      campoLiderCelula.disabled = !liberado;
+      atualizarStatusEdicao();
+      atualizarEstadoBotoes();
+      renderMembrosDisponiveis();
+      renderLideresTreinamento();
+      renderMembrosMultiplicacao();
+      renderMembrosVinculados(celulaAtual?.nome || "");
+    }
+
+    function preencherSelectCelulas() {
+      const listaCompleta = deduplicarCelulas(celulas);
+      const lista = usuarioEhLider() ? listaCompleta.filter(celulaPermitidaParaUsuario) : listaCompleta;
+
+      if (usuarioEhLider()) {
+        if (!lista.length) {
+          campoSeletorCelula.innerHTML = '<option value="">Célula vinculada não encontrada</option>';
+          campoSeletorCelula.disabled = true;
+          return null;
+        }
+        campoSeletorCelula.innerHTML = lista.map((celula) => `<option value="${celula.id}">${celula.nomeExibicao}</option>`).join("");
+        campoSeletorCelula.value = String(lista[0].id);
+        campoSeletorCelula.disabled = true;
+        return lista[0];
+      }
+
+      const valorAtual = campoSeletorCelula.value;
+      campoSeletorCelula.innerHTML =
+        '<option value="">Selecione a célula</option>' +
+        lista.map((celula) => `<option value="${celula.id}">${celula.nomeExibicao}</option>`).join("");
+      if (lista.some((c) => String(c.id) === String(valorAtual))) campoSeletorCelula.value = valorAtual;
+      return null;
+    }
+
+    function renderResumoCelula(celula) {
+      if (!celula) {
+        campoResumoCelula.innerHTML = '<div class="vazio">Selecione uma célula para ver o resumo.</div>';
+        return;
+      }
+      const nomeLider = membros.find((m) => String(m.id) === String(celula.lider_celula || ""))?.nome || "-";
+      const nomeAnfitriao = membros.find((m) => String(m.id) === String(celula.anfitriao || ""))?.nome || "-";
+      campoResumoCelula.innerHTML = `
+        <div class="item-celula">
+          <h3>${celula.nomeExibicao || nomeCelulaExibicao(celula.nome)}</h3>
+          <p><strong>Dia:</strong> ${celula.dia_semana || "-"}</p>
+          <p><strong>Hora:</strong> ${celula.hora || "-"}</p>
+          <p><strong>Anfitrião:</strong> ${nomeAnfitriao}</p>
+          <p><strong>Líder da célula:</strong> ${nomeLider}</p>
+          <p><strong>Endereço:</strong> ${celula.rua || "-"}, ${celula.numero || "-"} - ${celula.bairro || "-"} - ${celula.cidade || "-"} / ${celula.estado || "-"}</p>
+        </div>`;
+    }
+
+    function obterMembrosRemovidosSelecionados() {
+      return Array.from(document.querySelectorAll(".membro-remover-checkbox:checked")).map((item) => Number(item.value));
+    }
+
+    function renderMembrosVinculados(nomeCelula) {
+      const lista = membrosDaCelula(nomeCelula);
+      contadorMembrosVinculados.textContent = `${lista.length} membro(s)`;
+      if (contadorRemoverVinculados) {
+        contadorRemoverVinculados.style.display = modoEdicao && !modoMultiplicacao ? "inline-flex" : "none";
+        contadorRemoverVinculados.textContent = `${obterMembrosRemovidosSelecionados().length} remover`;
+      }
+
+      if (!lista.length) {
+        campoListaVinculados.innerHTML = '<div class="vazio">Nenhum membro vinculado a esta célula.</div>';
+        return;
+      }
+
+      campoListaVinculados.innerHTML = lista.map((membro) => {
+        const linkZap = formatarWhatsapp(membro.telefone);
+        const isLider = String(celulaAtual?.lider_celula || "") === String(membro.id);
+        const isAnfitriao = String(celulaAtual?.anfitriao || "") === String(membro.id);
+
+        return `
+          <div class="membro-box">
+            <div class="membro-topo">
+              <div class="check-wrap">
+                ${modoEdicao && !modoMultiplicacao ? `<input type="checkbox" class="membro-remover-checkbox" value="${membro.id}" />` : ""}
+                <div>
+                  <h3>${membro.nome || ""}</h3>
+                  <p><strong>Telefone:</strong> ${membro.telefone || "-"}</p>
+                  ${isLider ? "<p><strong>Função:</strong> Líder da célula</p>" : ""}
+                  ${isAnfitriao ? "<p><strong>Função:</strong> Anfitrião</p>" : ""}
+                </div>
+              </div>
+              ${whatsappIcon(linkZap)}
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderLideresTreinamento() {
+      if (!listaLideresTreinamento || !contadorLideresTreinamento) return;
+      if (!celulaAtual) {
+        contadorLideresTreinamento.textContent = "0 selecionado(s)";
+        listaLideresTreinamento.innerHTML = '<div class="vazio">Selecione uma célula para carregar os líderes em treinamento.</div>';
+        return;
+      }
+
+      const selecionadosSalvos = new Set(obterIdsLideresTreinamento(celulaAtual).filter((id) => String(id) !== String(celulaAtual.lider_celula || "")));
+      const lista = membrosDaCelula(celulaAtual.nome).filter((membro) => String(membro.id) !== String(celulaAtual.lider_celula || ""));
+      const selecionadosTela = Array.from(document.querySelectorAll(".lider-treinamento-checkbox:checked")).length;
+      contadorLideresTreinamento.textContent = `${modoEdicao ? selecionadosTela : selecionadosSalvos.size} selecionado(s)`;
+
+      if (!lista.length) {
+        listaLideresTreinamento.innerHTML = '<div class="vazio">Nenhum membro vinculado a esta célula para treinamento.</div>';
+        return;
+      }
+
+      listaLideresTreinamento.innerHTML = lista.map((membro) => {
+        const linkZap = formatarWhatsapp(membro.telefone);
+        const marcado = selecionadosSalvos.has(String(membro.id)) ? "checked" : "";
+        return `
+          <label class="membro-box">
+            <div class="membro-topo">
+              <div class="check-wrap">
+                <input type="checkbox" class="lider-treinamento-checkbox" value="${membro.id}" ${marcado} ${modoEdicao ? "" : "disabled"} />
+                <div>
+                  <h3>${membro.nome || ""}</h3>
+                  <p><strong>Telefone:</strong> ${membro.telefone || "-"}</p>
+                </div>
+              </div>
+              ${whatsappIcon(linkZap)}
+            </div>
+          </label>`;
+      }).join("");
+    }
+
+    function renderMembrosDisponiveis() {
+      const lista = membrosDisponiveis();
+      contadorDisponiveis.textContent = `${lista.length} membro(s)`;
+      if (!lista.length) {
+        campoListaDisponiveis.innerHTML = '<div class="vazio">Nenhum membro sem célula disponível para vínculo.</div>';
+        return;
+      }
+      campoListaDisponiveis.innerHTML = lista.map((membro) => {
+        const linkZap = formatarWhatsapp(membro.telefone);
+        return `
+          <label class="membro-box">
+            <div class="membro-topo">
+              <div class="check-wrap">
+                <input type="checkbox" class="membro-disponivel-checkbox" value="${membro.id}" ${modoEdicao && !modoMultiplicacao ? "" : "disabled"} />
+                <div>
+                  <h3>${membro.nome || ""}</h3>
+                  <p><strong>Telefone:</strong> ${membro.telefone || "-"}</p>
+                </div>
+              </div>
+              ${whatsappIcon(linkZap)}
+            </div>
+          </label>`;
+      }).join("");
+    }
+
+    function renderMembrosMultiplicacao() {
+      if (!listaMultiplicacao || !contadorMultiplicacao || !secaoMultiplicacao) return;
+      if (!modoMultiplicacao || !celulaAtual) {
+        secaoMultiplicacao.style.display = "none";
+        listaMultiplicacao.innerHTML = "";
+        contadorMultiplicacao.textContent = "0 selecionado(s)";
+        return;
+      }
+
+      secaoMultiplicacao.style.display = "block";
+      const lista = membrosDaCelula(celulaAtual.nome);
+      if (!lista.length) {
+        listaMultiplicacao.innerHTML = '<div class="vazio">Nenhum membro disponível para multiplicação.</div>';
+        contadorMultiplicacao.textContent = "0 selecionado(s)";
+        return;
+      }
+
+      const selecionados = Array.from(document.querySelectorAll(".membro-multiplicacao-checkbox:checked")).length;
+      contadorMultiplicacao.textContent = `${selecionados} selecionado(s)`;
+
+      listaMultiplicacao.innerHTML = lista.map((membro) => {
+        const linkZap = formatarWhatsapp(membro.telefone);
+        return `
+          <label class="membro-box">
+            <div class="membro-topo">
+              <div class="check-wrap">
+                <input type="checkbox" class="membro-multiplicacao-checkbox" value="${membro.id}" />
+                <div>
+                  <h3>${membro.nome || ""}</h3>
+                  <p><strong>Telefone:</strong> ${membro.telefone || "-"}</p>
+                </div>
+              </div>
+              ${whatsappIcon(linkZap)}
+            </div>
+          </label>`;
+      }).join("");
+    }
+
+    function obterIdsDisponiveisMarcados() {
+      return Array.from(document.querySelectorAll(".membro-disponivel-checkbox:checked")).map((item) => Number(item.value));
+    }
+
+    function obterIdsMultiplicacaoMarcados() {
+      return Array.from(document.querySelectorAll(".membro-multiplicacao-checkbox:checked")).map((item) => Number(item.value));
+    }
+
+    function obterLideresTreinamentoSelecionados() {
+      return Array.from(document.querySelectorAll(".lider-treinamento-checkbox:checked"))
+        .map((item) => String(item.value))
+        .filter((id) => String(id) !== String(celulaAtual?.lider_celula || ""));
+    }
+
+    function limparFormulario() {
+      campoCelulaId.value = "";
+      campoNomeCelula.value = "";
+      campoDiaSemana.value = "";
+      campoHoraReuniao.value = "";
+      campoAnfitriao.value = "";
+      campoLiderCelula.value = "";
+      campoCep.value = "";
+      campoRua.value = "";
+      campoNumero.value = "";
+      campoComplemento.value = "";
+      campoBairro.value = "";
+      campoCidade.value = "";
+      campoEstado.value = "";
+      campoGeolocalizacao.value = "";
+      celulaAtual = null;
+      modoMultiplicacao = false;
+      campoResumoCelula.innerHTML = '<div class="vazio">Selecione uma célula para ver o resumo.</div>';
+      campoListaVinculados.innerHTML = '<div class="vazio">Nenhum membro vinculado a esta célula.</div>';
+      contadorMembrosVinculados.textContent = "0 membro(s)";
+      if (contadorRemoverVinculados) contadorRemoverVinculados.textContent = "0 remover";
+      atualizarStatusCelula(null);
+      setCamposEditaveis(false);
+      mostrarMensagem("", "#dc2626");
+    }
+
+    function carregarFormularioCelula(celula) {
+      celulaAtual = { ...celula };
+      modoMultiplicacao = false;
+      campoCelulaId.value = celula.id || "";
+      campoNomeCelula.value = celula.nomeExibicao || nomeCelulaExibicao(celula.nome);
+      campoDiaSemana.value = celula.dia_semana || "";
+      campoHoraReuniao.value = celula.hora || "";
+      campoCep.value = formatarCep(celula.cep || "");
+      campoRua.value = celula.rua || "";
+      campoNumero.value = celula.numero || "";
+      campoComplemento.value = celula.complemento || "";
+      campoBairro.value = celula.bairro || "";
+      campoCidade.value = celula.cidade || "";
+      campoEstado.value = celula.estado || "";
+      campoGeolocalizacao.value = celula.geolocalizacao || "";
+      preencherSelectMembrosEspeciais();
+      campoAnfitriao.value = celula.anfitriao || "";
+      campoLiderCelula.value = celula.lider_celula || "";
+      renderResumoCelula(celula);
+      renderMembrosVinculados(celula.nome);
+      renderLideresTreinamento();
+      renderMembrosMultiplicacao();
+      atualizarStatusCelula(celula);
+      setCamposEditaveis(false);
+      mostrarMensagem("", "#dc2626");
+    }
+
+    async function buscarCep() {
+      const cep = String(campoCep.value || "").replace(/\D/g, "");
+      if (cep.length !== 8) return;
+      try {
+        const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const dados = await resposta.json();
+        if (dados.erro) return;
+        campoRua.value = (dados.logradouro || "").toUpperCase();
+        campoBairro.value = (dados.bairro || "").toUpperCase();
+        campoCidade.value = (dados.localidade || "").toUpperCase();
+        campoEstado.value = (dados.uf || "").toUpperCase();
+        campoGeolocalizacao.value = "";
+      } catch (erro) {
+        console.error("Erro ao buscar CEP:", erro);
+      }
+    }
+
+    function enderecoCompletoParaMapa() {
+      return [
+        campoRua.value.trim(),
+        campoNumero.value.trim(),
+        campoBairro.value.trim(),
+        campoCidade.value.trim(),
+        campoEstado.value.trim(),
+        campoCep.value.trim(),
+        "Brasil"
+      ].filter(Boolean).join(", ");
+    }
+
+    async function atualizarGeolocalizacao() {
+      if (!modoEdicao) return mostrarMensagem("Clique em Editar antes de atualizar a geolocalização.");
+
+      if (!campoRua.value || !campoNumero.value || !campoBairro.value || !campoCidade.value || !campoEstado.value) {
+        return mostrarMensagem("Preencha endereço completo antes de atualizar a geolocalização.");
+      }
+
+      const enderecoMapa = enderecoCompletoParaMapa();
+      const geoAnterior = campoGeolocalizacao.value.trim();
+
+      try {
+        mostrarMensagem("Gerando geolocalização...", "#2563eb");
+
+        const resposta = await fetch(API_GEO, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cep: campoCep.value.trim(),
+            rua: campoRua.value.trim(),
+            numero: campoNumero.value.trim(),
+            bairro: campoBairro.value.trim(),
+            cidade: campoCidade.value.trim(),
+            estado: campoEstado.value.trim()
+          })
+        });
+
+        const dados = await resposta.json().catch(() => ({}));
+
+        if (resposta.ok && dados.ok && dados.geolocalizacao) {
+          campoGeolocalizacao.value = dados.geolocalizacao;
+          mostrarMensagem("Geolocalização atualizada com sucesso.", "#16a34a");
+          return;
+        }
+
+        campoGeolocalizacao.value = `MAPA: ${enderecoMapa}`;
+        mostrarMensagem("Coordenada automática não encontrada. Referência de endereço gerada para mapa.", "#16a34a");
+      } catch (erro) {
+        console.error(erro);
+        campoGeolocalizacao.value = geoAnterior || `MAPA: ${enderecoMapa}`;
+        mostrarMensagem("Coordenada automática não encontrada. Referência de endereço gerada para mapa.", "#16a34a");
+      }
+    }
+
+
+    function limparAlertasCampos() {
+      [
+        campoNomeCelula, campoDiaSemana, campoHoraReuniao, campoAnfitriao, campoLiderCelula,
+        campoCep, campoRua, campoNumero, campoBairro, campoCidade, campoEstado, campoGeolocalizacao, btnGeo
+      ].forEach((campo) => campo?.classList?.remove("campo-alerta"));
+    }
+
+    function alertarCampo(campo, mensagem, botaoAlternativo = null) {
+      limparAlertasCampos();
+      mostrarMensagem(mensagem);
+
+      const alvo = botaoAlternativo || campo;
+      alvo?.classList?.add("campo-alerta");
+      alvo?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+
+      setTimeout(() => {
+        if (botaoAlternativo) {
+          botaoAlternativo.focus?.();
+        } else {
+          campo?.focus?.();
+        }
+      }, 200);
+
+      return false;
+    }
+
+    function validarCamposObrigatorios() {
+      const campos = [
+        [campoNomeCelula, "Informe o nome da célula."],
+        [campoDiaSemana, "Informe o dia da semana."],
+        [campoHoraReuniao, "Informe a hora da reunião."],
+        [campoAnfitriao, "Selecione o anfitrião."],
+        [campoLiderCelula, "Selecione o líder da célula."],
+        [campoCep, "Informe o CEP."],
+        [campoRua, "Informe a rua."],
+        [campoNumero, "Informe o número."],
+        [campoBairro, "Informe o bairro."],
+        [campoCidade, "Informe a cidade."],
+        [campoEstado, "Informe o estado."]
+      ];
+
+      for (const [campo, mensagem] of campos) {
+        if (!String(campo.value || "").trim()) {
+          return alertarCampo(campo, mensagem);
+        }
+      }
+
+      if (!String(campoGeolocalizacao.value || "").trim()) {
+        return alertarCampo(campoGeolocalizacao, "Atualize a geolocalização antes de salvar.", btnGeo);
+      }
+
+      if (modoMultiplicacao && obterIdsMultiplicacaoMarcados().length === 0) {
+        return alertarCampo(listaMultiplicacao, "Selecione ao menos um membro para a nova célula.");
+      }
+
+      limparAlertasCampos();
+      return true;
+    }
+
+    function validarRemocaoMembros() {
+      const removidos = obterMembrosRemovidosSelecionados().map(String);
+      if (!removidos.length) return true;
+
+      if (removidos.includes(String(campoLiderCelula.value || ""))) {
+        mostrarMensagem("Não é possível remover o líder da célula sem definir outro líder.");
+        return false;
+      }
+
+      if (removidos.includes(String(campoAnfitriao.value || ""))) {
+        mostrarMensagem("Não é possível remover o anfitrião sem definir outro anfitrião.");
+        return false;
+      }
+
+      return true;
+    }
+
+
+    function validarMultiplicacaoFuncoesOrigem() {
+      if (!modoMultiplicacao || !celulaAtual) return true;
+
+      const selecionados = obterIdsMultiplicacaoMarcados().map(String);
+      const liderOrigem = String(celulaAtual.lider_celula || "");
+      const anfitriaoOrigem = String(celulaAtual.anfitriao || "");
+
+      const moverLider = liderOrigem && selecionados.includes(liderOrigem);
+      const moverAnfitriao = anfitriaoOrigem && selecionados.includes(anfitriaoOrigem);
+
+      if (moverLider || moverAnfitriao) {
+        const partes = [];
+        if (moverLider) partes.push("líder");
+        if (moverAnfitriao) partes.push("anfitrião");
+
+        mostrarMensagem(
+          `Você selecionou para a nova célula o ${partes.join(" e ")} da célula original. Antes de multiplicar, edite a célula original e defina novo ${partes.join(" e novo ")} para ela. Depois volte em Multiplicar.`,
+          "#dc2626"
+        );
+        return false;
+      }
+
+      return true;
+    }
+
+
+    async function salvarRemocoesMembros() {
+      const removidos = obterMembrosRemovidosSelecionados();
+      if (!campoCelulaId.value || removidos.length === 0) return true;
+
+      const resposta = await fetch(`${API_CELULAS}/${campoCelulaId.value}/remover-membros`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ membrosRemovidos: removidos })
+      });
+
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) throw new Error(dados.erro || "Erro ao remover membros da célula.");
+      return true;
+    }
+
+    async function salvarEdicao() {
+      const id = campoCelulaId.value.trim();
+      if (!modoEdicao) return mostrarMensagem("Clique em Editar antes de salvar.");
+      if (!validarCamposObrigatorios()) return;
+      if (!validarRemocaoMembros()) return;
+      if (!validarMultiplicacaoFuncoesOrigem()) return;
+
+      const metodo = modoMultiplicacao && id ? "POST" : (id ? "PUT" : "POST");
+      const url = modoMultiplicacao && id ? `${API_CELULAS}/${id}/multiplicar` : (id ? `${API_CELULAS}/${id}` : API_CELULAS);
+      const payload = {
+        nomeCelula: campoNomeCelula.value.trim(),
+        diaSemana: campoDiaSemana.value,
+        horaReuniao: campoHoraReuniao.value,
+        anfitriao: campoAnfitriao.value,
+        liderCelula: campoLiderCelula.value,
+        lideresTreinamento: obterLideresTreinamentoSelecionados(),
+        cep: campoCep.value.trim(),
+        rua: campoRua.value.trim(),
+        numero: campoNumero.value.trim(),
+        complemento: campoComplemento.value.trim(),
+        bairro: campoBairro.value.trim(),
+        cidade: campoCidade.value.trim(),
+        estado: campoEstado.value.trim(),
+        geolocalizacao: campoGeolocalizacao.value.trim(),
+        membrosSelecionados: modoMultiplicacao ? obterIdsMultiplicacaoMarcados() : obterIdsDisponiveisMarcados(),
+        membrosRemovidos: modoMultiplicacao ? [] : obterMembrosRemovidosSelecionados()
+      };
+
+      try {
+        mostrarMensagem("Salvando...", "#2563eb");
+
+        if (!modoMultiplicacao) {
+          await salvarRemocoesMembros();
+        }
+
+        const resposta = await fetch(url, {
+          method: metodo,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao salvar célula.");
+        await carregarDados();
+        const idFinal = dados.celulaId || id || "";
+        const lista = deduplicarCelulas(celulas);
+        const celulaRecarregada = lista.find((item) => String(item.id) === String(idFinal));
+        if (celulaRecarregada) {
+          campoSeletorCelula.value = String(celulaRecarregada.id);
+          carregarFormularioCelula(celulaRecarregada);
+        }
+        modoMultiplicacao = false;
+        mostrarMensagem(metodo === "POST" && id ? "Célula multiplicada com sucesso." : (id ? "Célula atualizada com sucesso." : "Célula criada com sucesso."), "#16a34a");
+      } catch (erro) {
+        mostrarMensagem(erro.message || "Erro ao salvar célula.");
+      }
+    }
+
+    async function carregarDados() {
+      try {
+        const [resMembros, resCelulas] = await Promise.all([
+          fetch(API_MEMBROS, { cache: "no-store" }),
+          fetch(API_CELULAS, { cache: "no-store" })
+        ]);
+        if (!resMembros.ok || !resCelulas.ok) throw new Error("Erro ao carregar dados da tela de células.");
+        membros = await resMembros.json();
+        celulas = await resCelulas.json();
+
+        atualizarVisaoUsuario();
+        const celulaLider = preencherSelectCelulas();
+        preencherSelectMembrosEspeciais();
+        renderMembrosDisponiveis();
+
+        if (usuarioEhLider() && celulaLider) {
+          carregarFormularioCelula(celulaLider);
+        } else {
+          atualizarEstadoBotoes();
+        }
+      } catch (erro) {
+        mostrarMensagem("Erro ao carregar dados da tela de células.");
+      }
+    }
+
+    document.getElementById("btnSair").addEventListener("click", sairSistema);
+
+    btnEditar.addEventListener("click", () => {
+      if (!campoCelulaId.value) return mostrarMensagem("Selecione uma célula antes de editar.");
+      if (celulaAtual && celulaAtual.ativo === false) return mostrarMensagem("Esta célula está inativa. Ative a célula antes de editar.");
+      modoMultiplicacao = false;
+      preencherSelectMembrosEspeciais();
+      if (modoMultiplicacao) {
+        campoAnfitriao.value = "";
+        campoLiderCelula.value = "";
+      }
+      setCamposEditaveis(true);
+      mostrarMensagem("Edição liberada. Faça os ajustes e clique em Salvar.", "#2563eb");
+    });
+
+    btnSalvar.addEventListener("click", salvarEdicao);
+    btnGeo.addEventListener("click", atualizarGeolocalizacao);
+
+    btnCancelar.addEventListener("click", () => {
+      modoMultiplicacao = false;
+      if (celulaAtual) {
+        carregarFormularioCelula(celulaAtual);
+        mostrarMensagem("Edição cancelada. Dados atuais restaurados.", "#64748b");
+      } else {
+        limparFormulario();
+        mostrarMensagem("Edição cancelada.", "#64748b");
+      }
+    });
+
+    btnNova.addEventListener("click", () => {
+      if (usuarioEhLider()) return mostrarMensagem("Líder não possui permissão para criar nova célula.");
+      campoSeletorCelula.value = "";
+      limparFormulario();
+      celulaAtual = null;
+      modoMultiplicacao = false;
+      atualizarStatusCelula({ ativo: true });
+      campoNomeCelula.value = "CÉLULA ";
+      preencherSelectMembrosEspeciais();
+      setCamposEditaveis(true);
+      mostrarMensagem("Modo nova célula liberado. Preencha os dados e salve.", "#2563eb");
+    });
+
+    btnMultiplicar.addEventListener("click", () => {
+      if (!campoCelulaId.value || !celulaAtual) return mostrarMensagem("Selecione uma célula antes de multiplicar.");
+      if (celulaAtual.ativo === false) return mostrarMensagem("Ative a célula antes de multiplicar.");
+
+      modoMultiplicacao = true;
+      const nomeOriginal = celulaAtual.nomeExibicao || nomeCelulaExibicao(celulaAtual.nome);
+      campoNomeCelula.value = `${nomeOriginal} - NOVA`;
+      campoDiaSemana.value = "";
+      campoHoraReuniao.value = "";
+      campoAnfitriao.value = "";
+      campoLiderCelula.value = "";
+      campoCep.value = "";
+      campoRua.value = "";
+      campoNumero.value = "";
+      campoComplemento.value = "";
+      campoBairro.value = "";
+      campoCidade.value = "";
+      campoEstado.value = "";
+      campoGeolocalizacao.value = "";
+      preencherSelectMembrosEspeciais();
+      setCamposEditaveis(true);
+      renderMembrosMultiplicacao();
+      mostrarMensagem("Modo multiplicação liberado. Escolha os membros da nova célula e clique em Salvar.", "#2563eb");
+    });
+
+    btnInativar.addEventListener("click", async () => {
+      if (!campoCelulaId.value) return;
+      const confirmou = window.confirm("Deseja realmente inativar esta célula?");
+      if (!confirmou) return;
+      try {
+        const resposta = await fetch(`${API_CELULAS}/${campoCelulaId.value}/inativar`, { method: "POST" });
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao inativar célula.");
+        mostrarMensagem(dados.mensagem || "Célula inativada com sucesso.", "#16a34a");
+        await carregarDados();
+      } catch (erro) {
+        mostrarMensagem(erro.message || "Erro ao inativar célula.");
+      }
+    });
+
+    btnAtivar.addEventListener("click", async () => {
+      if (!campoCelulaId.value) return;
+      try {
+        const resposta = await fetch(`${API_CELULAS}/${campoCelulaId.value}/ativar`, { method: "POST" });
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao ativar célula.");
+        mostrarMensagem(dados.mensagem || "Célula ativada com sucesso.", "#16a34a");
+        await carregarDados();
+      } catch (erro) {
+        mostrarMensagem(erro.message || "Erro ao ativar célula.");
+      }
+    });
+
+    btnExcluir.addEventListener("click", async () => {
+      if (!campoCelulaId.value) return;
+      const confirmou = window.confirm("Deseja realmente excluir esta célula?");
+      if (!confirmou) return;
+      try {
+        const resposta = await fetch(`${API_CELULAS}/${campoCelulaId.value}`, { method: "DELETE" });
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao excluir célula.");
+        mostrarMensagem("Célula excluída com sucesso.", "#16a34a");
+        await carregarDados();
+        limparFormulario();
+      } catch (erro) {
+        mostrarMensagem(erro.message || "Erro ao excluir célula.");
+      }
+    });
+
+    campoSeletorCelula.addEventListener("change", () => {
+      if (usuarioEhLider()) {
+        campoSeletorCelula.value = campoCelulaId.value || campoSeletorCelula.value || "";
+        return;
+      }
+      if (modoEdicao) {
+        campoSeletorCelula.value = campoCelulaId.value || "";
+        return;
+      }
+      const id = campoSeletorCelula.value;
+      if (!id) return limparFormulario();
+      const lista = deduplicarCelulas(celulas);
+      const celula = lista.find((item) => String(item.id) === String(id));
+      if (celula) carregarFormularioCelula(celula);
+    });
+
+    campoAnfitriao.addEventListener("change", () => {
+      if (modoEdicao) preencherEnderecoPorAnfitriao();
+    });
+
+    campoCep.addEventListener("input", () => {
+      campoCep.value = formatarCep(campoCep.value);
+      campoGeolocalizacao.value = "";
+    });
+
+    campoCep.addEventListener("blur", () => {
+      if (modoEdicao) buscarCep();
+    });
+
+    if (listaLideresTreinamento) {
+      listaLideresTreinamento.addEventListener("change", () => {
+        contadorLideresTreinamento.textContent = `${obterLideresTreinamentoSelecionados().length} selecionado(s)`;
+      });
+    }
+
+    if (listaMultiplicacao) {
+      listaMultiplicacao.addEventListener("change", () => {
+        contadorMultiplicacao.textContent = `${obterIdsMultiplicacaoMarcados().length} selecionado(s)`;
+
+        if (modoMultiplicacao && celulaAtual) {
+          const selecionados = obterIdsMultiplicacaoMarcados().map(String);
+          const liderOrigem = String(celulaAtual.lider_celula || "");
+          const anfitriaoOrigem = String(celulaAtual.anfitriao || "");
+
+          if ((liderOrigem && selecionados.includes(liderOrigem)) || (anfitriaoOrigem && selecionados.includes(anfitriaoOrigem))) {
+            mostrarMensagem("Atenção: líder/anfitrião da célula original não pode ser transferido sem substituição prévia na célula original.", "#dc2626");
+          }
+        }
+      });
+    }
+
+    campoListaVinculados.addEventListener("change", () => {
+      if (contadorRemoverVinculados) contadorRemoverVinculados.textContent = `${obterMembrosRemovidosSelecionados().length} remover`;
+    });
+
+
+    [
+      campoNomeCelula, campoDiaSemana, campoHoraReuniao, campoAnfitriao, campoLiderCelula,
+      campoCep, campoRua, campoNumero, campoBairro, campoCidade, campoEstado, campoGeolocalizacao
+    ].forEach((campo) => {
+      campo?.addEventListener?.("input", () => campo.classList.remove("campo-alerta"));
+      campo?.addEventListener?.("change", () => campo.classList.remove("campo-alerta"));
+    });
+
+    if (protegerPagina()) {
+      preencherUsuarioLogado();
+      atualizarVisaoUsuario();
+      atualizarStatusEdicao();
+      atualizarEstadoBotoes();
+      carregarDados();
+    }
+  </script>
+<script src="menu-modulos.js"></script>
+</body>
+</html>

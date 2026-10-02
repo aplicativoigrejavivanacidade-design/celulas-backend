@@ -1,4 +1,3 @@
-<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,11 +7,29 @@
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --gray: #64748b;
+      --gray-dark: #475569;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #1f2937;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .layout {
@@ -22,60 +39,66 @@
 
     .sidebar {
       width: 250px;
-      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
       color: white;
       padding: 24px 18px;
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
+      height: 100%;
     }
 
     .logo {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin: 0;
     }
 
     .logo-sub {
-      font-size: 14px;
+      margin: 6px 0 28px;
+      font-size: 13px;
       opacity: 0.9;
-      margin-bottom: 28px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .menu a {
-      text-decoration: none;
-      color: white;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      transition: 0.2s;
       display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
 
     .menu a:hover,
     .menu a.ativo {
-      background: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .content {
       margin-left: 250px;
-      flex: 1;
       padding: 30px;
+      width: calc(100% - 250px);
     }
 
     .header {
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
     }
 
     .header h1 {
@@ -85,480 +108,1272 @@
 
     .header p {
       margin: 0;
-      color: #4b5563;
+      color: var(--muted);
+    }
+
+    .usuario-logado {
+      margin-top: 10px !important;
+      font-size: 14px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: 400px 1fr;
+      grid-template-columns: 1fr 1.15fr;
       gap: 20px;
+      align-items: start;
     }
 
     .card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
     .card h2 {
-      margin-top: 0;
+      margin: 0 0 16px;
       font-size: 22px;
     }
 
     label {
       display: block;
-      margin-top: 14px;
+      margin-top: 12px;
       margin-bottom: 6px;
       font-weight: bold;
       font-size: 14px;
     }
 
-    input, select, textarea, button {
+    input,
+    select {
       width: 100%;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
       font-size: 15px;
       font-family: inherit;
+      background: #fff;
     }
 
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    input:focus, select:focus, textarea:focus {
+    input:focus,
+    select:focus {
       outline: none;
-      border-color: #2563eb;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    input[type="text"] {
+      text-transform: uppercase;
+    }
+
+    input[readonly] {
+      background: #f8fafc;
+      color: #475569;
+      cursor: not-allowed;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
     }
 
     button {
-      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 10px;
       border: none;
-      cursor: pointer;
       font-weight: bold;
-      transition: 0.2s;
+      cursor: pointer;
+      font-size: 14px;
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .btn-success {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--green-dark);
+    }
+
+    .btn-danger {
+      background: var(--red);
       color: white;
     }
 
     .btn-secondary {
-      background: #f59e0b;
+      background: var(--gray);
       color: white;
     }
 
-    .btn-danger {
-      background: #dc2626;
-      color: white;
-      width: auto;
-      padding: 10px 14px;
-      margin-top: 0;
+    .btn-secondary:hover {
+      background: var(--gray-dark);
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
-    .actions button {
-      flex: 1;
-    }
-
-    .status-msg {
+    .status-edicao {
       margin-top: 14px;
-      font-size: 14px;
-      min-height: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      background: #eff6ff;
+      color: #1d4ed8;
     }
 
-    .lista-topo {
+    .msg {
+      margin-top: 14px;
+      font-weight: bold;
+      min-height: 20px;
+      font-size: 14px;
+    }
+
+    .msg-topo {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid transparent;
+    }
+
+    .msg-topo.erro {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .msg-topo.sucesso {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .msg-topo.info {
+      display: block;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .msg-topo.neutro {
+      display: block;
+      background: #f8fafc;
+      color: #475569;
+      border-color: var(--line);
+    }
+
+    .campo-obrigatorio::after {
+      content: " *";
+      color: var(--red);
+      font-weight: bold;
+    }
+
+    .campo-funcao {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 44px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fafc;
+      align-items: center;
+    }
+
+    .tag-funcao {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #e0ecff;
+      color: var(--blue-dark);
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .filtros {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .membro-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fafbfd;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .membro-item:hover,
+    .membro-item.ativo {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    }
+
+    .membro-item.locked {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .membro-item h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .membro-item p {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .membro-topo {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 12px;
     }
 
-    .contador {
-      background: #eff6ff;
-      color: #1d4ed8;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-weight: bold;
-      font-size: 13px;
-    }
-
-    .membro {
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 16px;
+    .telefone-wrap {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 12px;
-      background: #fafafa;
+      align-items: center;
+      gap: 10px;
     }
 
-    .membro-info h3 {
-      margin: 0 0 6px;
-      font-size: 18px;
+    .telefone-wrap input {
+      flex: 1;
     }
 
-    .membro-info p {
-      margin: 4px 0;
-      color: #4b5563;
-      font-size: 14px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 6px 10px;
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
       border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 8px;
+      background: #25D366;
+      text-decoration: none;
+      flex: 0 0 auto;
+      border: none;
+      box-shadow: 0 4px 10px rgba(37, 211, 102, 0.25);
     }
 
-    .ativo { background: #dcfce7; color: #166534; }
-    .visitante { background: #fef3c7; color: #92400e; }
-    .afastado { background: #fee2e2; color: #991b1b; }
-
-    .membro-botoes {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .btn-whatsapp svg {
+      width: 22px;
+      height: 22px;
+      fill: #ffffff;
     }
 
-    .membro-botoes button {
-      width: 100%;
-      margin: 0;
-    }
-
-    .btn-edit {
-      background: #2563eb;
-      color: white;
-      padding: 10px 14px;
-      border-radius: 10px;
+    .btn-whatsapp.disabled {
+      background: #cbd5e1;
+      pointer-events: none;
+      opacity: 0.65;
+      cursor: not-allowed;
+      box-shadow: none;
     }
 
     .vazio {
+      color: var(--muted);
+      font-style: italic;
       text-align: center;
-      color: #6b7280;
-      padding: 30px 10px;
-      border: 2px dashed #d1d5db;
-      border-radius: 16px;
-      background: #fcfcfc;
+      padding: 20px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    @media (max-width: 1150px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 900px) {
-      .sidebar {
-        position: relative;
-        width: 100%;
-        bottom: auto;
-      }
-
       .layout {
         flex-direction: column;
       }
 
-      .content {
-        margin-left: 0;
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
       }
 
-      .grid {
+      .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .grid-2,
+      .filtros {
         grid-template-columns: 1fr;
       }
 
-      .membro {
+      .membro-topo,
+      .telefone-wrap {
         flex-direction: column;
-      }
-
-      .membro-botoes {
-        width: 100%;
-      }
-
-      .btn-danger, .btn-edit {
-        width: 100%;
+        align-items: flex-start;
       }
     }
   </style>
+<link rel="stylesheet" href="menu-modulos.css">
 </head>
-<script>
-  <script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
-  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('nomeUsuario');
-    localStorage.removeItem('nivelUsuario');
-    window.location.href = 'login.html';
-  }
-
-  const campoUsuario = document.getElementById('usuarioLogado');
-  if (campoUsuario) {
-    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
-  }
-
-  function verificarPermissao(pagina) {
-    const permissoes = {
-      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
-      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
-      lider: ['painel', 'membros', 'presenca']
-    };
-
-    const permitidas = permissoes[nivelUsuario] || [];
-
-    if (!permitidas.includes(pagina)) {
-      alert('Você não tem permissão para acessar esta área.');
-      window.location.href = 'painel.html';
-    }
-  }
-
-  function aplicarPermissoesMenu() {
-    const menuUsuarios = document.getElementById('menuUsuarios');
-    const menuRelatorios = document.getElementById('menuRelatorios');
-
-    if (nivelUsuario !== 'admin' && menuUsuarios) {
-      menuUsuarios.style.display = 'none';
-    }
-
-    if (nivelUsuario === 'lider' && menuRelatorios) {
-      menuRelatorios.style.display = 'none';
-    }
-  }
-
-  aplicarPermissoesMenu();
-</script>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">+Células</div>
-      <div class="logo-sub">Gestão de células</div>
+      <h2 class="logo">+Células</h2>
+      <div class="logo-sub">Cadastro de membros</div>
 
-      <nav class="menu">
+      <div class="menu">
         <a href="painel.html">Painel</a>
-        <a href="cadastro.html">Membros</a>
+        <a href="cadastro.html" class="ativo">Membros</a>
         <a href="presenca.html">Presença</a>
-        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
-        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
-<script>
-  verificarPermissao('membros');
-</script>
-      </nav>
-<div style="margin-top: 20px;">
-  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
-    Sair
-  </button>
-</div>
+        <a href="celulas.html">Células</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="usuarios.html">Usuários</a>
+      </div>
+
+      <button class="btn-sair" id="btnSair" type="button">Sair</button>
     </aside>
 
     <main class="content">
       <div class="header">
         <h1>Cadastro de membros</h1>
-        <p>Cadastre, edite e acompanhe os membros da célula</p>
+        <p>O campo célula é apenas consulta e deve ser gerenciado somente pela tela de Células</p>
+        <p id="usuarioLogado" class="usuario-logado"></p>
       </div>
 
       <div class="grid">
         <div class="card">
-          <h2 id="titulo-form">Novo membro</h2>
+          <h2>Membros cadastrados</h2>
 
-          <input type="hidden" id="membroId" />
+          <div class="filtros">
+            <div>
+              <label for="filtroNome">Pesquisar por nome</label>
+              <input id="filtroNome" type="text" placeholder="Digite o nome" />
+            </div>
 
-          <label for="nome">Nome completo</label>
-          <input type="text" id="nome" placeholder="Digite o nome do membro" />
+            <div>
+              <label for="filtroStatus">Filtrar por status</label>
+              <select id="filtroStatus">
+                <option value="">Todos</option>
+                <option value="ATIVO">ATIVO</option>
+                <option value="VISITANTE">VISITANTE</option>
+                <option value="AFASTADO">AFASTADO</option>
+              </select>
+            </div>
 
-          <label for="telefone">Telefone</label>
-          <input type="text" id="telefone" placeholder="Digite o telefone" />
-
-          <label for="celula">Célula</label>
-          <input type="text" id="celula" placeholder="Ex.: Célula Centro" />
-
-          <label for="nascimento">Data de nascimento</label>
-          <input type="date" id="nascimento" />
-
-          <label for="status">Status</label>
-          <select id="status">
-            <option value="ativo">Ativo</option>
-            <option value="visitante">Visitante</option>
-            <option value="afastado">Afastado</option>
-          </select>
-
-          <label for="observacoes">Observações</label>
-          <textarea id="observacoes" placeholder="Anotações importantes"></textarea>
-
-          <div class="actions">
-            <button class="btn-primary" onclick="salvarMembro()">Salvar</button>
-            <button class="btn-secondary" onclick="limparFormulario()" type="button">Limpar</button>
+            <div>
+              <label for="filtroCelula">Filtrar por célula</label>
+              <select id="filtroCelula">
+                <option value="">Todas</option>
+              </select>
+            </div>
           </div>
 
-          <div class="status-msg" id="mensagem"></div>
+          <div id="listaMembros"></div>
         </div>
 
         <div class="card">
-          <div class="lista-topo">
-            <h2 style="margin: 0;">Membros cadastrados</h2>
-            <div class="contador" id="contador">0 membros</div>
+          <h2>Dados do membro</h2>
+
+          <div id="msgTopo" class="msg-topo neutro">Selecione um membro ou clique em Novo para iniciar.</div>
+
+          <input id="membroId" type="hidden" />
+
+          <div class="status-edicao" id="statusEdicao">
+            Modo Atual: Visualização. Selecione um membro e clique em Editar.
           </div>
 
-          <div id="lista"></div>
+          <div class="acoes">
+            <button class="btn-secondary" id="btnNovo" type="button">Novo</button>
+            <button class="btn-primary" id="btnEditar" type="button" disabled>Editar</button>
+            <button class="btn-secondary" id="btnCancelar" type="button" disabled>Cancelar</button>
+            <button class="btn-success" id="btnSalvar" type="button" disabled>Salvar</button>
+            <button class="btn-danger" id="btnExcluir" type="button" disabled>Excluir</button>
+          </div>
+
+          <label for="nome" class="campo-obrigatorio">Nome completo</label>
+          <input id="nome" type="text" placeholder="Nome completo" readonly />
+
+          <div class="grid-2">
+            <div>
+              <label for="telefone" class="campo-obrigatorio">Telefone</label>
+              <div class="telefone-wrap">
+                <input id="telefone" type="text" placeholder="Telefone" readonly />
+                <span id="whatsappCampoTelefone"></span>
+              </div>
+            </div>
+
+            <div>
+              <label for="nascimento" class="campo-obrigatorio">Data de nascimento</label>
+              <input id="nascimento" type="date" max="9999-12-31" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="email" class="campo-obrigatorio">E-mail</label>
+              <input id="email" type="email" placeholder="email@exemplo.com" readonly />
+            </div>
+
+            <div>
+              <label for="documento" class="campo-obrigatorio">Documento</label>
+              <input id="documento" type="text" placeholder="CPF ou documento" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="status" class="campo-obrigatorio">Status</label>
+              <select id="status" disabled>
+                <option value="">Selecione</option>
+                <option value="ATIVO">ATIVO</option>
+                <option value="VISITANTE">VISITANTE</option>
+                <option value="AFASTADO">AFASTADO</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="celula">Célula</label>
+              <input id="celula" type="text" readonly />
+            </div>
+          </div>
+
+          <label>Função na célula</label>
+          <div class="campo-funcao" id="funcoesMembro">
+            <span class="tag-funcao">Sem função vinculada</span>
+          </div>
+
+          <label for="cep" class="campo-obrigatorio">CEP</label>
+          <input id="cep" type="text" placeholder="00000-000" readonly />
+
+          <label for="rua" class="campo-obrigatorio">Rua</label>
+          <input id="rua" type="text" placeholder="Rua" readonly />
+
+          <div class="grid-2">
+            <div>
+              <label for="numero" class="campo-obrigatorio">Número</label>
+              <input id="numero" type="text" placeholder="Número" readonly />
+            </div>
+
+            <div>
+              <label for="complemento">Complemento</label>
+              <input id="complemento" type="text" placeholder="Complemento" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="bairro" class="campo-obrigatorio">Bairro</label>
+              <input id="bairro" type="text" placeholder="Bairro" readonly />
+            </div>
+
+            <div>
+              <label for="cidade" class="campo-obrigatorio">Cidade</label>
+              <input id="cidade" type="text" placeholder="Cidade" readonly />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="estado" class="campo-obrigatorio">Estado</label>
+              <input id="estado" type="text" placeholder="UF" readonly />
+            </div>
+
+            <div>
+              <label for="observacoes">Observações</label>
+              <input id="observacoes" type="text" placeholder="Observações" readonly />
+            </div>
+          </div>
+
+<div id="msg" class="msg"></div>
         </div>
       </div>
     </main>
   </div>
 
   <script>
-    const apiUrl = 'https://celulas-backend.onrender.com:3000/membros';
+    const API_BASE = "";
+    const API_MEMBROS = API_BASE + "/membros";
+    const API_CELULAS = API_BASE + "/celulas";
 
-    async function carregarMembros() {
-      const resposta = await fetch(apiUrl);
-      const membros = await resposta.json();
+    let membros = [];
+    let celulas = [];
+    let membroSelecionadoId = "";
+    let modoEdicao = false;
+    let membroAtual = null;
 
-      const lista = document.getElementById('lista');
-      const contador = document.getElementById('contador');
+    const campoId = document.getElementById("membroId");
+    const campoNome = document.getElementById("nome");
+    const campoTelefone = document.getElementById("telefone");
+    const campoNascimento = document.getElementById("nascimento");
+    const campoEmail = document.getElementById("email");
+    const campoDocumento = document.getElementById("documento");
+    const campoStatus = document.getElementById("status");
+    const campoCelula = document.getElementById("celula");
+    const campoCep = document.getElementById("cep");
+    const campoRua = document.getElementById("rua");
+    const campoNumero = document.getElementById("numero");
+    const campoComplemento = document.getElementById("complemento");
+    const campoBairro = document.getElementById("bairro");
+    const campoCidade = document.getElementById("cidade");
+    const campoEstado = document.getElementById("estado");
+    const campoObservacoes = document.getElementById("observacoes");
+    const campoLista = document.getElementById("listaMembros");
+    const campoMsg = document.getElementById("msg");
+    const campoMsgTopo = document.getElementById("msgTopo");
+    const campoUsuario = document.getElementById("usuarioLogado");
+    const campoStatusEdicao = document.getElementById("statusEdicao");
+    const campoFiltroNome = document.getElementById("filtroNome");
+    const campoFiltroStatus = document.getElementById("filtroStatus");
+    const campoFiltroCelula = document.getElementById("filtroCelula");
+    const campoWhatsappTelefone = document.getElementById("whatsappCampoTelefone");
+    const campoFuncoesMembro = document.getElementById("funcoesMembro");
 
-      contador.textContent = `${membros.length} membro(s)`;
+    const btnEditar = document.getElementById("btnEditar");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const btnNovo = document.getElementById("btnNovo");
+    const btnExcluir = document.getElementById("btnExcluir");
 
-      if (membros.length === 0) {
-        lista.innerHTML = '<div class="vazio">Nenhum membro cadastrado ainda.</div>';
-        return;
-      }
+    const nivelUsuario = String(localStorage.getItem("nivelUsuario") || "").toLowerCase();
+    const celulaUsuario = String(localStorage.getItem("celulaUsuario") || "").trim();
 
-      lista.innerHTML = membros.map((membro) => `
-        <div class="membro">
-          <div class="membro-info">
-            <h3>${membro.nome}</h3>
-            <p><strong>Telefone:</strong> ${membro.telefone || '-'}</p>
-            <p><strong>Célula:</strong> ${membro.celula || '-'}</p>
-            <p><strong>Nascimento:</strong> ${membro.nascimento || '-'}</p>
-            <p><strong>Observações:</strong> ${membro.observacoes || '-'}</p>
-            <p><strong>ID:</strong> ${membro.id}</p>
-            <span class="badge ${membro.status}">${membro.status}</span>
-          </div>
-          <div class="membro-botoes">
-            <button class="btn-edit" onclick="editarMembro(${membro.id})">Editar</button>
-            <button class="btn-danger" onclick="excluirMembro(${membro.id})">Excluir</button>
-          </div>
-        </div>
-      `).join('');
+    function usuarioEhLider() {
+      return nivelUsuario === "lider";
     }
 
-    async function salvarMembro() {
-      const id = document.getElementById('membroId').value;
-      const nome = document.getElementById('nome').value.trim();
-      const telefone = document.getElementById('telefone').value.trim();
-      const celula = document.getElementById('celula').value.trim();
-      const nascimento = document.getElementById('nascimento').value;
-      const status = document.getElementById('status').value;
-      const observacoes = document.getElementById('observacoes').value.trim();
-      const mensagem = document.getElementById('mensagem');
+    function normalizarCelula(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+    }
 
-      if (!nome) {
-        mensagem.textContent = 'Digite o nome do membro.';
-        mensagem.style.color = '#dc2626';
-        return;
+    function membroPermitidoParaUsuario(membro) {
+      if (!usuarioEhLider()) return true;
+
+      return normalizarCelula(membro.celula) === normalizarCelula(celulaUsuario);
+    }
+
+
+    function protegerPagina() {
+      if (localStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    function preencherUsuario() {
+      campoUsuario.textContent =
+        `Usuário: ${localStorage.getItem("nomeUsuario") || "Administrador"} | Nível: ${localStorage.getItem("nivelUsuario") || "admin"}${usuarioEhLider() ? ` | Célula: ${celulaUsuario}` : ""}`;
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    function tipoMensagemPorCor(cor) {
+      if (cor === "#16a34a") return "sucesso";
+      if (cor === "#2563eb") return "info";
+      if (cor === "#64748b") return "neutro";
+      return "erro";
+    }
+
+    function mostrarPopup(texto, tipo = "erro") {
+      if (!texto) return;
+      if (tipo === "erro") window.alert(texto);
+    }
+
+    function mostrarMensagem(texto, cor = "#dc2626", popup = false) {
+      const tipo = tipoMensagemPorCor(cor);
+
+      campoMsg.textContent = texto;
+      campoMsg.style.color = cor;
+
+      if (campoMsgTopo) {
+        campoMsgTopo.textContent = texto || "Selecione um membro ou clique em Novo para iniciar.";
+        campoMsgTopo.className = `msg-topo ${texto ? tipo : "neutro"}`;
       }
 
-      const dados = { nome, telefone, celula, nascimento, status, observacoes };
+      if (popup || tipo === "erro") {
+        mostrarPopup(texto, tipo);
+      }
 
-      let resposta;
+      if (texto && campoMsgTopo) {
+        campoMsgTopo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
 
-      if (id) {
-        resposta = await fetch(`${apiUrl}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
-        });
+    function limparMensagem() {
+      campoMsg.textContent = "";
+      if (campoMsgTopo) {
+        campoMsgTopo.textContent = "Selecione um membro ou clique em Novo para iniciar.";
+        campoMsgTopo.className = "msg-topo neutro";
+      }
+    }
+
+    function normalizarTexto(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+    }
+
+    function formatarCep(valor) {
+      const numeros = String(valor || "").replace(/\D/g, "").slice(0, 8);
+      if (numeros.length > 5) return `${numeros.slice(0, 5)}-${numeros.slice(5)}`;
+      return numeros;
+    }
+
+    function formatarWhatsapp(telefone) {
+      const numero = String(telefone || "").replace(/\D/g, "");
+      if (!numero) return "";
+      return numero.startsWith("55") ? numero : `55${numero}`;
+    }
+
+    function whatsappIcon(link) {
+      if (!link) {
+        return `
+          <span class="btn-whatsapp disabled" aria-hidden="true">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M27.997 15.989c0 6.617-5.375 11.981-12.003 11.981a11.95 11.95 0 0 1-6.115-1.676L3 28.157l1.901-6.73a11.926 11.926 0 0 1-1.91-6.438C2.991 8.372 8.366 3 14.994 3c6.628 0 12.003 5.372 12.003 11.989z"/>
+            </svg>
+          </span>
+        `;
+      }
+
+      return `
+        <a class="btn-whatsapp" target="_blank" href="https://wa.me/${link}" aria-label="WhatsApp">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M27.997 15.989c0 6.617-5.375 11.981-12.003 11.981a11.95 11.95 0 0 1-6.115-1.676L3 28.157l1.901-6.73a11.926 11.926 0 0 1-1.91-6.438C2.991 8.372 8.366 3 14.994 3c6.628 0 12.003 5.372 12.003 11.989zm-12.003-9.08c-5.016 0-9.094 4.066-9.094 9.08 0 1.759.504 3.471 1.459 4.944l.232.358-1.126 3.988 4.08-1.068.343.204a9.124 9.124 0 0 0 4.106.98c5.016 0 9.094-4.066 9.094-9.08 0-5.014-4.078-9.406-9.094-9.406zm5.282 11.596c-.289-.145-1.708-.842-1.973-.94-.264-.097-.456-.145-.648.146-.191.29-.744.94-.912 1.133-.168.193-.336.218-.625.073-.289-.145-1.22-.449-2.325-1.434-.86-.768-1.441-1.716-1.61-2.006-.168-.29-.018-.447.127-.591.131-.13.289-.339.433-.509.145-.169.192-.29.289-.484.096-.193.048-.363-.024-.508-.072-.145-.648-1.567-.888-2.146-.233-.56-.469-.484-.648-.493l-.552-.01c-.192 0-.504.073-.768.363-.264.29-1.008.988-1.008 2.41s1.032 2.797 1.176 2.991c.145.193 2.03 3.095 4.917 4.34.687.297 1.223.474 1.641.606.689.219 1.315.188 1.81.114.552-.083 1.708-.697 1.949-1.37.24-.672.24-1.248.168-1.37-.072-.121-.264-.193-.553-.338z"/>
+          </svg>
+        </a>
+      `;
+    }
+
+    function atualizarWhatsappCampoTelefone() {
+      const linkZap = formatarWhatsapp(campoTelefone.value);
+      campoWhatsappTelefone.innerHTML = whatsappIcon(linkZap);
+    }
+
+    function atualizarEstadoBotoes() {
+      const temMembroSelecionado = !!campoId.value;
+
+      if (modoEdicao) {
+        btnEditar.disabled = true;
+        btnSalvar.disabled = false;
+        btnCancelar.disabled = false;
+        btnNovo.disabled = true;
+        btnExcluir.disabled = true;
+        btnExcluir.style.display = usuarioEhLider() ? "none" : "inline-block";
+        campoFiltroNome.disabled = true;
+        campoFiltroStatus.disabled = true;
+        campoFiltroCelula.disabled = true;
       } else {
-        resposta = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
-        });
+        btnEditar.disabled = !temMembroSelecionado;
+        btnSalvar.disabled = true;
+        btnCancelar.disabled = true;
+        btnNovo.disabled = false;
+        btnExcluir.disabled = usuarioEhLider() || !temMembroSelecionado;
+        btnExcluir.style.display = usuarioEhLider() ? "none" : "inline-block";
+        campoFiltroNome.disabled = false;
+        campoFiltroStatus.disabled = false;
+        campoFiltroCelula.disabled = usuarioEhLider();
       }
+    }
 
-      if (resposta.ok) {
-        mensagem.textContent = id ? 'Membro atualizado com sucesso.' : 'Membro cadastrado com sucesso.';
-        mensagem.style.color = '#16a34a';
-        limparFormulario(false);
-        carregarMembros();
+    function setCamposEditaveis(liberado) {
+      modoEdicao = liberado;
+
+      campoNome.readOnly = !liberado;
+      campoTelefone.readOnly = !liberado;
+      campoNascimento.readOnly = !liberado;
+      campoEmail.readOnly = !liberado;
+      campoDocumento.readOnly = !liberado;
+      campoCep.readOnly = !liberado;
+      campoRua.readOnly = !liberado;
+      campoNumero.readOnly = !liberado;
+      campoComplemento.readOnly = !liberado;
+      campoBairro.readOnly = !liberado;
+      campoCidade.readOnly = !liberado;
+      campoEstado.readOnly = !liberado;
+      campoObservacoes.readOnly = !liberado;
+      campoStatus.disabled = !liberado;
+
+      if (modoEdicao) {
+        campoStatusEdicao.textContent = "Modo Atual: Edição Liberada. Revise os dados e clique em Salvar.";
+        campoStatusEdicao.style.background = "#ecfdf5";
+        campoStatusEdicao.style.color = "#166534";
       } else {
-        mensagem.textContent = 'Erro ao salvar membro.';
-        mensagem.style.color = '#dc2626';
+        campoStatusEdicao.textContent = "Modo Atual: Visualização. Selecione um membro e clique em Editar.";
+        campoStatusEdicao.style.background = "#eff6ff";
+        campoStatusEdicao.style.color = "#1d4ed8";
       }
+
+      atualizarWhatsappCampoTelefone();
+      atualizarEstadoBotoes();
+      renderLista();
     }
 
-    async function editarMembro(id) {
-      const resposta = await fetch(apiUrl);
-      const membros = await resposta.json();
-      const membro = membros.find((m) => m.id === id);
-
-      if (!membro) return;
-
-      document.getElementById('membroId').value = membro.id;
-      document.getElementById('nome').value = membro.nome || '';
-      document.getElementById('telefone').value = membro.telefone || '';
-      document.getElementById('celula').value = membro.celula || '';
-      document.getElementById('nascimento').value = membro.nascimento || '';
-      document.getElementById('status').value = membro.status || 'ativo';
-      document.getElementById('observacoes').value = membro.observacoes || '';
-      document.getElementById('titulo-form').textContent = 'Editar membro';
-      document.getElementById('mensagem').textContent = 'Modo de edição ativado.';
-      document.getElementById('mensagem').style.color = '#2563eb';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    function ordenarMembros(lista) {
+      return [...lista].sort((a, b) =>
+        String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR")
+      );
     }
 
-    async function excluirMembro(id) {
-      const confirmar = confirm('Deseja excluir este membro?');
-      if (!confirmar) return;
+    function preencherFiltroCelula() {
+      const mapa = new Map();
 
-      const resposta = await fetch(`${apiUrl}/${id}`, {
-        method: 'DELETE'
+      membros.forEach((membro) => {
+        const celula = String(membro.celula || "").trim();
+        if (!celula) return;
+        const chave = normalizarTexto(celula);
+        if (!mapa.has(chave)) mapa.set(chave, celula);
       });
 
-      if (resposta.ok) {
-        carregarMembros();
+      const atuais = Array.from(mapa.values()).sort((a, b) =>
+        String(a).localeCompare(String(b), "pt-BR")
+      );
+
+      if (usuarioEhLider()) {
+        const celulaPermitida = celulaUsuario;
+        const celulaTravada = celulaPermitida || "Célula do líder";
+        campoFiltroCelula.innerHTML = `<option value="${celulaTravada}">${celulaTravada}</option>`;
+        campoFiltroCelula.value = celulaTravada;
+        campoFiltroCelula.disabled = true;
+        return;
+      }
+
+      const valorAtual = campoFiltroCelula.value;
+
+      campoFiltroCelula.innerHTML =
+        '<option value="">Todas</option>' +
+        atuais.map((celula) => `<option value="${celula}">${celula}</option>`).join("");
+
+      if (atuais.includes(valorAtual)) {
+        campoFiltroCelula.value = valorAtual;
+      }
+    }
+
+    function membrosFiltrados() {
+      const nome = normalizarTexto(campoFiltroNome.value);
+      const status = normalizarTexto(campoFiltroStatus.value);
+      const celula = usuarioEhLider() ? normalizarTexto(celulaUsuario) : normalizarTexto(campoFiltroCelula.value);
+
+      return ordenarMembros(membros).filter((membro) => {
+        const nomeOk = !nome || normalizarTexto(membro.nome).includes(nome);
+        const statusOk = !status || normalizarTexto(membro.status) === status;
+        const celulaOk = !celula || normalizarTexto(membro.celula) === celula;
+        const permissaoOk = membroPermitidoParaUsuario(membro);
+
+        return nomeOk && statusOk && celulaOk && permissaoOk;
+      });
+    }
+
+    function limparFormulario() {
+      campoId.value = "";
+      campoNome.value = "";
+      campoTelefone.value = "";
+      campoNascimento.value = "";
+      campoEmail.value = "";
+      campoDocumento.value = "";
+      campoStatus.value = "";
+      campoCelula.value = "";
+      renderFuncoesMembro(null);
+      campoCep.value = "";
+      campoRua.value = "";
+      campoNumero.value = "";
+      campoComplemento.value = "";
+      campoBairro.value = "";
+      campoCidade.value = "";
+      campoEstado.value = "";
+      campoObservacoes.value = "";
+      membroSelecionadoId = "";
+      membroAtual = null;
+      setCamposEditaveis(false);
+      limparMensagem();
+      renderLista();
+    }
+
+    function preencherFormulario(membro) {
+      campoId.value = membro.id || "";
+      campoNome.value = membro.nome || "";
+      campoTelefone.value = membro.telefone || "";
+      campoNascimento.value = String(membro.nascimento || "").slice(0, 10);
+      campoEmail.value = membro.email || "";
+      campoDocumento.value = membro.documento || "";
+      campoStatus.value = membro.status || "";
+      campoCelula.value = membro.celula || "";
+      campoCep.value = membro.cep || "";
+      campoRua.value = membro.rua || "";
+      campoNumero.value = membro.numero || "";
+      campoComplemento.value = membro.complemento || "";
+      campoBairro.value = membro.bairro || "";
+      campoCidade.value = membro.cidade || "";
+      campoEstado.value = membro.estado || "";
+      campoObservacoes.value = membro.observacoes || "";
+      membroSelecionadoId = String(membro.id || "");
+      membroAtual = { ...membro };
+      setCamposEditaveis(false);
+      atualizarWhatsappCampoTelefone();
+      renderFuncoesMembro(membro);
+      limparMensagem();
+      renderLista();
+    }
+
+    function renderLista() {
+      const lista = membrosFiltrados();
+
+      if (!lista.length) {
+        campoLista.innerHTML = '<div class="vazio">Nenhum Membro Encontrado.</div>';
+        return;
+      }
+
+      campoLista.innerHTML = lista.map((membro) => {
+        const linkZap = formatarWhatsapp(membro.telefone);
+        const ativo = String(membro.id) === membroSelecionadoId;
+        const travado = modoEdicao && !ativo;
+
+        return `
+          <div class="membro-item ${ativo ? "ativo" : ""} ${travado ? "locked" : ""}" data-id="${membro.id}">
+            <div class="membro-topo">
+              <div>
+                <h3>${membro.nome || ""}</h3>
+                <p><strong>Telefone:</strong> ${membro.telefone || "-"}</p>
+                <p><strong>Status:</strong> ${membro.status || "-"}</p>
+                <p><strong>Célula:</strong> ${membro.celula || "Sem Célula"}</p>
+              </div>
+              ${whatsappIcon(linkZap)}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function buscarCep() {
+      const cep = String(campoCep.value || "").replace(/\D/g, "");
+      if (cep.length !== 8) return;
+
+      try {
+        const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const dados = await resposta.json();
+
+        if (dados.erro) return;
+
+        campoRua.value = (dados.logradouro || "").toUpperCase();
+        campoBairro.value = (dados.bairro || "").toUpperCase();
+        campoCidade.value = (dados.localidade || "").toUpperCase();
+        campoEstado.value = (dados.uf || "").toUpperCase();
+      } catch (erro) {
+        console.error("Erro ao buscar CEP:", erro);
+      }
+    }
+
+    function corrigirNascimento() {
+      const valor = String(campoNascimento.value || "");
+      if (!valor) return;
+      const partes = valor.split("-");
+      if (partes.length !== 3) return;
+      partes[0] = partes[0].slice(0, 4);
+      campoNascimento.value = `${partes[0]}-${partes[1]}-${partes[2]}`;
+    }
+
+
+    function obterIdsLideresTreinamento(celula) {
+      try {
+        const raw = celula?.lideres_treinamento || celula?.lideresTreinamento || "[]";
+        if (Array.isArray(raw)) return raw.map(String);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (erro) {
+        return [];
+      }
+    }
+
+    function renderFuncoesMembro(membro) {
+      if (!campoFuncoesMembro) return;
+
+      if (!membro || !membro.id) {
+        campoFuncoesMembro.innerHTML = '<span class="tag-funcao">Sem função vinculada</span>';
+        return;
+      }
+
+      const funcoes = [];
+
+      celulas.forEach((celula) => {
+        if (String(celula.anfitriao || "") === String(membro.id)) funcoes.push("Anfitrião");
+        if (String(celula.lider_celula || "") === String(membro.id)) funcoes.push("Líder");
+        if (obterIdsLideresTreinamento(celula).includes(String(membro.id))) funcoes.push("Líder em treinamento");
+      });
+
+      if (!funcoes.length) {
+        campoFuncoesMembro.innerHTML = '<span class="tag-funcao">Membro</span>';
+        return;
+      }
+
+      campoFuncoesMembro.innerHTML = [...new Set(funcoes)]
+        .map(funcao => `<span class="tag-funcao">${funcao}</span>`)
+        .join("");
+    }
+
+    function validarEmail() {
+      const email = String(campoEmail.value || "").trim();
+      const padrao = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!padrao.test(email)) {
+        mostrarMensagem("Informe um e-mail válido.");
+        campoEmail.focus();
+        return false;
+      }
+
+      return true;
+    }
+
+    function validarDocumento() {
+      const documento = String(campoDocumento.value || "").replace(/\D/g, "");
+
+      if (documento.length < 5) {
+        mostrarMensagem("Informe um documento válido.");
+        campoDocumento.focus();
+        return false;
+      }
+
+      return true;
+    }
+
+    function validarTelefone() {
+      const numero = String(campoTelefone.value || "").replace(/\D/g, "");
+      if (numero.length < 10 || numero.length > 11) {
+        mostrarMensagem("Informe um telefone completo com DDD.");
+        return false;
+      }
+      return true;
+    }
+
+    function validarNascimento() {
+      const valor = String(campoNascimento.value || "").trim();
+      if (!valor) {
+        mostrarMensagem("Informe a data de nascimento completa.");
+        campoNascimento.focus();
+        return false;
+      }
+
+      const partes = valor.split("-");
+      if (partes.length !== 3 || partes[0].length !== 4 || partes[1].length !== 2 || partes[2].length !== 2) {
+        mostrarMensagem("Informe a data de nascimento no formato correto.");
+        campoNascimento.focus();
+        return false;
+      }
+
+      const data = new Date(`${valor}T12:00:00`);
+      const hoje = new Date();
+
+      if (Number.isNaN(data.getTime()) || data > hoje) {
+        mostrarMensagem("Informe uma data de nascimento válida.");
+        campoNascimento.focus();
+        return false;
+      }
+
+      return true;
+    }
+
+    function validarFormulario() {
+      if (!String(campoNome.value || "").trim()) {
+        mostrarMensagem("Informe o Nome Completo.");
+        return false;
+      }
+      if (!validarTelefone()) return false;
+      if (!validarEmail()) return false;
+      if (!validarDocumento()) return false;
+      if (!validarNascimento()) return false;
+
+      const obrigatorios = [
+        [campoStatus, "Selecione o status."],
+        [campoCep, "Informe o CEP."],
+        [campoRua, "Informe a rua."],
+        [campoNumero, "Informe o número."],
+        [campoBairro, "Informe o bairro."],
+        [campoCidade, "Informe a cidade."],
+        [campoEstado, "Informe o estado."]
+      ];
+
+      for (const [campo, mensagem] of obrigatorios) {
+        if (!String(campo.value || "").trim()) {
+          mostrarMensagem(mensagem);
+          campo.focus();
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function payloadMembro() {
+      corrigirNascimento();
+
+      return {
+        nome: campoNome.value.trim(),
+        telefone: campoTelefone.value.trim(),
+        email: campoEmail.value.trim(),
+        documento: campoDocumento.value.trim(),
+        cadastroCompleto: true,
+        origemCadastro: "CADASTRO",
+        dataCadastro: "",
+        celula: usuarioEhLider() ? celulaUsuario : campoCelula.value.trim(),
+        nascimento: campoNascimento.value,
+        status: campoStatus.value,
+        cep: campoCep.value.trim(),
+        rua: campoRua.value.trim(),
+        numero: campoNumero.value.trim(),
+        complemento: campoComplemento.value.trim(),
+        bairro: campoBairro.value.trim(),
+        cidade: campoCidade.value.trim(),
+        estado: campoEstado.value.trim(),
+        observacoes: campoObservacoes.value.trim()
+      };
+    }
+
+    async function carregarMembros() {
+      try {
+        const [resposta, respostaCelulas] = await Promise.all([
+          fetch(API_MEMBROS, { cache: "no-store" }),
+          fetch(API_CELULAS, { cache: "no-store" })
+        ]);
+
+        if (!resposta.ok) throw new Error("Erro ao carregar membros.");
+
+        membros = await resposta.json();
+        celulas = respostaCelulas.ok ? await respostaCelulas.json() : [];
+        preencherFiltroCelula();
+        renderLista();
+        atualizarEstadoBotoes();
+      } catch (erro) {
+        console.error(erro);
+        mostrarMensagem("Erro ao carregar membros.");
+      }
+    }
+
+    async function salvarNovoMembro() {
+      if (!validarFormulario()) return;
+
+      try {
+        const resposta = await fetch(API_MEMBROS, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadMembro())
+        });
+
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao salvar membro.");
+
+        mostrarMensagem("Membro salvo com sucesso.", "#16a34a");
+        limparFormulario();
+        await carregarMembros();
+      } catch (erro) {
+        console.error(erro);
+        mostrarMensagem(erro.message || "Erro ao salvar membro.");
+      }
+    }
+
+    async function atualizarMembro() {
+      const id = campoId.value.trim();
+      if (!id) {
+        mostrarMensagem("Selecione um membro para atualizar.");
+        return;
+      }
+
+      if (!validarFormulario()) return;
+
+      try {
+        const resposta = await fetch(`${API_MEMBROS}/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadMembro())
+        });
+
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao atualizar membro.");
+
+        mostrarMensagem("Membro atualizado com sucesso.", "#16a34a");
+        await carregarMembros();
+
+        const atualizado = membros.find((m) => String(m.id) === String(id));
+        if (atualizado) preencherFormulario(atualizado);
+      } catch (erro) {
+        console.error(erro);
+        mostrarMensagem(erro.message || "Erro ao atualizar membro.");
+      }
+    }
+
+    async function excluirMembro() {
+      if (usuarioEhLider()) {
+        mostrarMensagem("Líder não possui permissão para excluir membros.");
+        return;
+      }
+
+      const id = campoId.value.trim();
+      if (!id) {
+        mostrarMensagem("Selecione um membro para excluir.");
+        return;
+      }
+
+      const confirmou = window.confirm("Deseja realmente excluir este membro?");
+      if (!confirmou) return;
+
+      try {
+        const resposta = await fetch(`${API_MEMBROS}/${id}`, {
+          method: "DELETE"
+        });
+
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) throw new Error(dados.erro || "Erro ao excluir membro.");
+
+        mostrarMensagem("Membro excluído com sucesso.", "#16a34a");
+        limparFormulario();
+        await carregarMembros();
+      } catch (erro) {
+        console.error(erro);
+        mostrarMensagem(erro.message || "Erro ao excluir membro.");
+      }
+    }
+
+    document.getElementById("btnSair").addEventListener("click", sair);
+
+    btnEditar.addEventListener("click", () => {
+      if (!campoId.value) {
+        mostrarMensagem("Selecione um membro antes de editar.");
+        return;
+      }
+
+      setCamposEditaveis(true);
+      mostrarMensagem("Edição liberada. Revise os dados e clique em Salvar.", "#2563eb");
+    });
+
+    btnSalvar.addEventListener("click", () => {
+      if (campoId.value) {
+        atualizarMembro();
       } else {
-        alert('Erro ao excluir membro.');
+        salvarNovoMembro();
       }
-    }
+    });
 
-    function limparFormulario(limparMensagem = true) {
-      document.getElementById('membroId').value = '';
-      document.getElementById('nome').value = '';
-      document.getElementById('telefone').value = '';
-      document.getElementById('celula').value = '';
-      document.getElementById('nascimento').value = '';
-      document.getElementById('status').value = 'ativo';
-      document.getElementById('observacoes').value = '';
-      document.getElementById('titulo-form').textContent = 'Novo membro';
-
-      if (limparMensagem) {
-        document.getElementById('mensagem').textContent = '';
+    btnCancelar.addEventListener("click", () => {
+      if (membroAtual) {
+        preencherFormulario(membroAtual);
+        mostrarMensagem("Edição cancelada. Dados atuais restaurados.", "#64748b");
+      } else {
+        limparFormulario();
+        mostrarMensagem("Edição cancelada.", "#64748b");
       }
-    }
+    });
 
-    carregarMembros();
+    btnNovo.addEventListener("click", () => {
+      limparFormulario();
+      campoStatus.value = "ATIVO";
+      if (usuarioEhLider()) {
+        campoCelula.value = celulaUsuario;
+      }
+      setCamposEditaveis(true);
+      mostrarMensagem("Modo novo cadastro liberado. Campos obrigatórios marcados com *.", "#2563eb");
+    });
+
+    btnExcluir.addEventListener("click", excluirMembro);
+
+    campoCep.addEventListener("input", () => {
+      campoCep.value = formatarCep(campoCep.value);
+    });
+
+    campoCep.addEventListener("blur", () => {
+      if (modoEdicao) buscarCep();
+    });
+
+    campoNascimento.addEventListener("change", corrigirNascimento);
+    campoNascimento.addEventListener("blur", corrigirNascimento);
+
+    campoTelefone.addEventListener("input", atualizarWhatsappCampoTelefone);
+
+    campoEmail.addEventListener("blur", () => {
+      campoEmail.value = String(campoEmail.value || "").trim().toLowerCase();
+    });
+
+    campoDocumento.addEventListener("input", () => {
+      campoDocumento.value = String(campoDocumento.value || "").replace(/[^0-9A-Za-z.-]/g, "").toUpperCase();
+    });
+
+    campoFiltroNome.addEventListener("input", () => {
+      if (!modoEdicao) renderLista();
+    });
+    campoFiltroStatus.addEventListener("change", () => {
+      if (!modoEdicao) renderLista();
+    });
+    campoFiltroCelula.addEventListener("change", () => {
+      if (!modoEdicao) renderLista();
+    });
+
+    campoLista.addEventListener("click", (evento) => {
+      const item = evento.target.closest(".membro-item");
+      if (!item) return;
+
+      if (modoEdicao) {
+        const idAtual = String(campoId.value || "");
+        if (String(item.dataset.id) !== idAtual) {
+          mostrarMensagem("Cancele a edição ou salve as alterações antes de selecionar outro membro.");
+          return;
+        }
+      }
+
+      const id = item.dataset.id;
+      const membro = membros.find((m) => String(m.id) === String(id));
+      if (membro) preencherFormulario(membro);
+    });
+
+    if (protegerPagina()) {
+      preencherUsuario();
+      setCamposEditaveis(false);
+      atualizarWhatsappCampoTelefone();
+      atualizarEstadoBotoes();
+      mostrarMensagem("Tela de membros carregada.", "#64748b");
+      carregarMembros();
+    }
   </script>
+<script src="menu-modulos.js"></script>
 </body>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-  }
-</script>
 </html>

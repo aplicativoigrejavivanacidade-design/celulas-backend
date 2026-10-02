@@ -11,6 +11,12 @@ const optional = (v,max=1000) => v==null||v===''?'':texto(v,max);
 const fail = (status,message) => Object.assign(new Error(message),{status});
 function criarFinanceiro(pool) {
  const router=express.Router(), sessions=new Map(), attempts=new Map();
+ function criarSessao(usuarioId) {
+  for(const [k,v] of sessions) if(v.expires<Date.now()) sessions.delete(k);
+  const token=crypto.randomBytes(32).toString('hex');
+  sessions.set(token,{id:usuarioId,expires:Date.now()+3600000});
+  return token;
+ }
  const run=fn=>(req,res,next)=>Promise.resolve(fn(req,res)).catch(next);
  async function auditoria(db,user,acao,entidade,entidadeId,detalhes={}) {
   await db.query('INSERT INTO fin_auditoria(usuario_id,acao,entidade,entidade_id,detalhes) VALUES($1,$2,$3,$4,$5)',[user.id,acao,entidade,entidadeId,JSON.stringify(detalhes)]);
@@ -45,7 +51,7 @@ function criarFinanceiro(pool) {
   const r=await pool.query('SELECT id,nome,nivel FROM usuarios WHERE usuario=$1 AND senha=$2',[usuario,senha]);
   if(!r.rows[0]){const n=a&&a.until>Date.now()?a.n+1:1;attempts.set(key,{n,until:Date.now()+900000,lock:n>=5?Date.now()+900000:0});throw fail(401,'Usuário ou senha inválidos.');}
   const u=r.rows[0];if(D.normalizarPerfil(u.nivel)!=='admin'&&!(await pool.query('SELECT 1 FROM fin_acessos WHERE usuario_id=$1 AND ativo=TRUE LIMIT 1',[u.id])).rowCount)throw fail(403,'Acesso financeiro não concedido.');
-  attempts.delete(key);const token=crypto.randomBytes(32).toString('hex');sessions.set(token,{id:u.id,expires:Date.now()+3600000});
+  attempts.delete(key);const token=criarSessao(u.id);
   for(const [k,v] of sessions)if(v.expires<Date.now())sessions.delete(k);
   for(const [k,v] of attempts)if(v.until<Date.now()&&v.lock<Date.now())attempts.delete(k);
   res.set('Cache-Control','no-store');res.json({token,usuario:{...u,admin:D.normalizarPerfil(u.nivel)==='admin'}});
@@ -86,6 +92,6 @@ function criarFinanceiro(pool) {
  router.post('/api/liquidacoes/:id/estornar',run(async(req,res)=>{const motivo=texto(req.body.motivo,500);await tx(async c=>{const l=(await c.query('SELECT l.*,k.unidade_id FROM fin_liquidacoes l JOIN fin_titulos t ON t.id=l.titulo_id JOIN fin_contratos k ON k.id=t.contrato_id WHERE l.id=$1',[id(req.params.id)])).rows[0];if(!l)throw fail(404,'Liquidação não encontrada.');await permitir(req,'estornar',l.unidade_id);const conta=(await c.query('SELECT unidade_id FROM fin_contas WHERE id=$1',[l.conta_id])).rows[0];await permitir(req,'estornar',conta.unidade_id);await c.query('SELECT id FROM fin_titulos WHERE id=$1 FOR UPDATE',[l.titulo_id]);const r=await c.query('UPDATE fin_liquidacoes SET estornado_em=NOW(),estornado_por=$1,motivo_estorno=$2 WHERE id=$3 AND estornado_em IS NULL RETURNING id',[req.user.id,motivo,l.id]);if(!r.rowCount)throw fail(409,'Esta liquidação já foi estornada.');await auditoria(c,req.user,'estornar','liquidacao',l.id,{motivo});});res.json({ok:true});}));
  router.use((req,res)=>res.status(404).json({erro:'Recurso financeiro não encontrado.'}));
  router.use((e,req,res,next)=>{if(e.code==='23505')return res.status(409).json({erro:'Registro já existente. Atualize a lista antes de repetir.'});if(e.code==='23503')return res.status(400).json({erro:'Cadastro vinculado não encontrado.'});const status=e.status||(e.message&&/inválid|Informe|Preencha|Valor|Parcelamento|Liquidação/.test(e.message)?400:500);if(status===500)console.error('Financeiro:',e.message);res.status(status).json({erro:status===500?'Erro interno no financeiro.':e.message});});
- return {router,iniciar:()=>pool.query(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'))};
+ return {router,criarSessao,iniciar:()=>pool.query(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'))};
 }
 module.exports={criarFinanceiro};

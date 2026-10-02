@@ -1,0 +1,13 @@
+
+.sidebar{overflow-y:auto;box-sizing:border-box;height:100vh}
+.menu details{margin:0 0 6px;border-radius:10px}
+.menu summary{list-style:none;padding:12px;color:white;font-weight:bold;cursor:pointer;border-radius:10px;font-size:15px}
+.menu summary::-webkit-details-marker{display:none}
+.menu summary::after{content:'▸';float:right}
+.menu details[open]>summary::after{content:'▾'}
+.menu details[open]>summary,.menu summary:hover{background:rgba(255,255,255,.12)}
+.menu details a{font-size:14px;padding:10px 12px 10px 24px;margin:3px 0;font-weight:normal}
+.menu .pendente{display:block;padding:9px 12px 9px 24px;font-size:13px;opacity:.7}
+.menu .pendente small{display:block;font-size:10px;margin-top:3px}
+.menu .ativo{background:rgba(255,255,255,.16);font-weight:bold}
+@media(max-width:900px){.sidebar{height:auto;position:relative}.menu{display:block}}

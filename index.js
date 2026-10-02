@@ -16,6 +16,11 @@ app.use('/financeiro', (req, res, next) => {
   if (req.originalUrl === '/financeiro') return res.redirect('/financeiro/');
   return moduloFinanceiro.router(req, res, next);
 });
+app.use((req, res, next) => {
+  if (/\.(?:js|sql|json|md|zip)$/i.test(req.path) && !['/menu-modulos.js'].includes(req.path)) return res.sendStatus(404);
+  if (/^\/(?:test|node_modules|arquivos old)(?:\/|$)/.test(req.path)) return res.sendStatus(404);
+  next();
+});
 app.use(express.static(__dirname));
 
 const pool = new Pool({
@@ -539,7 +544,8 @@ app.post("/login", async (req, res) => {
 
     return res.json({
       sucesso: true,
-      usuario: result.rows[0]
+      usuario: (({senha, ...usuario}) => usuario)(result.rows[0]),
+      ...(moduloFinanceiro ? {token: moduloFinanceiro.criarSessao(result.rows[0].id)} : {})
     });
   } catch (erro) {
     console.error("Erro no login:", erro.message);

@@ -1,4 +1,3 @@
-<p id="usuarioLogado" style="margin-top:10px;color:#6b7280;"></p>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,11 +7,30 @@
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --red-dark: #b91c1c;
+      --gray: #64748b;
+      --gray-dark: #475569;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #1f2937;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .layout {
@@ -22,60 +40,80 @@
 
     .sidebar {
       width: 250px;
-      background: linear-gradient(180deg, #1d4ed8, #16a34a);
+      background: linear-gradient(180deg, var(--blue-dark), var(--green));
       color: white;
       padding: 24px 18px;
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
+      height: 100%;
     }
 
     .logo {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin: 0;
     }
 
     .logo-sub {
-      font-size: 14px;
+      margin: 6px 0 28px;
+      font-size: 13px;
       opacity: 0.9;
-      margin-bottom: 28px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .menu a {
-      text-decoration: none;
-      color: white;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      transition: 0.2s;
       display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
 
     .menu a:hover,
     .menu a.ativo {
-      background: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .btn-sair {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--red);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .versao-sistema {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.72);
+      user-select: none;
+    }
+
+    .versao-sistema strong {
+      color: rgba(255,255,255,0.92);
+      font-weight: 700;
     }
 
     .content {
       margin-left: 250px;
-      flex: 1;
       padding: 30px;
+      width: calc(100% - 250px);
     }
 
     .header {
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
     }
 
     .header h1 {
@@ -85,69 +123,284 @@
 
     .header p {
       margin: 0;
-      color: #4b5563;
+      color: var(--muted);
     }
 
-    .topo {
+    .usuario-logado {
+      margin-top: 10px !important;
+      font-size: 14px;
+    }
+
+    .grid-topo {
       display: grid;
-      grid-template-columns: 240px 1fr 180px;
-      gap: 16px;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 20px;
       margin-bottom: 20px;
+      align-items: start;
     }
 
     .card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
     label {
       display: block;
-      margin-bottom: 8px;
+      margin-top: 12px;
+      margin-bottom: 6px;
       font-weight: bold;
       font-size: 14px;
     }
 
-    input, button {
+    input,
+    select {
       width: 100%;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
       font-size: 15px;
       font-family: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    .acoes-topo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .filtro-periodo-presenca {
+      display: grid;
+      grid-template-columns: 160px 160px minmax(180px, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .botoes-filtro-data {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .botoes-filtro-data button {
+      white-space: nowrap;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .botao-bloqueado {
+      cursor: not-allowed !important;
+      opacity: 0.58;
+      position: relative;
+    }
+
+    .botao-bloqueado:hover::after {
+      content: "🚫";
+      position: absolute;
+      top: -12px;
+      right: -8px;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    @media (max-width: 1180px) {
+      .filtro-periodo-presenca {
+        grid-template-columns: 150px 150px minmax(170px, 1fr);
+      }
+
+      .botoes-filtro-data {
+        grid-column: 1 / -1;
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .filtro-periodo-presenca {
+        grid-template-columns: 1fr;
+      }
+
+      .botoes-filtro-data {
+        grid-column: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
     }
 
     button {
+      padding: 12px 14px;
+      border-radius: 10px;
       border: none;
-      cursor: pointer;
       font-weight: bold;
-      transition: 0.2s;
+      cursor: pointer;
+      font-size: 14px;
     }
 
     .btn-success {
-      background: #16a34a;
-      color: white;
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: var(--green-dark);
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: var(--red-dark);
+    }
+
+    .btn-secondary {
+      background: var(--gray);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-dark);
+    }
+
+    .mensagem {
+      margin-top: 14px;
+      font-weight: bold;
+      min-height: 20px;
+      font-size: 14px;
+    }
+
+    .msg-topo {
+      display: block;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: #475569;
+    }
+
+    .msg-topo.erro { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .msg-topo.sucesso { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .msg-topo.info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .msg-topo.neutro { background: #f8fafc; color: #475569; border-color: var(--line); }
+
+    .campo-obrigatorio::after {
+      content: " *";
+      color: var(--red);
+      font-weight: bold;
+    }
+
+    .acoes-topo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .visitante-box {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fcfdff;
+      display: none;
+    }
+
+    .visitante-box.ativo {
+      display: block;
+    }
+
+    .lista-grid.compacta {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .lista-grid.compacta .membro-check {
+      padding: 12px;
+    }
+
+    .lista-grid.compacta .membro-info h3 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .lista-grid.compacta .membro-info p {
+      font-size: 12px;
     }
 
     .resumo {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
 
     .badge {
-      padding: 8px 12px;
-      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 12px;
       font-weight: bold;
-      font-size: 13px;
+      font-size: 14px;
+      text-align: center;
     }
 
     .badge-total {
-      background: #e0f2fe;
-      color: #075985;
+      background: #e0ecff;
+      color: var(--blue-dark);
     }
 
     .badge-presente {
@@ -160,364 +413,2000 @@
       color: #991b1b;
     }
 
-    .lista {
+    .badge-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .lista-grid {
       display: grid;
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
-    .membro {
-      background: white;
-      border-radius: 16px;
+    .membro-check {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fafbfd;
       padding: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
+      transition: 0.2s;
     }
 
-    .membro h3 {
-      margin: 0 0 6px;
+    .membro-check.marcado {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.10);
+      background: #f3fff7;
+    }
+
+    .membro-check.bloqueado {
+      opacity: 0.75;
+    }
+
+    .membro-check-topo {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .membro-check input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      flex: 0 0 auto;
+      cursor: pointer;
+    }
+
+    .membro-check input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+    }
+
+    .membro-info h3 {
+      margin: 0 0 8px;
       font-size: 18px;
     }
 
-    .membro p {
-      margin: 0;
+    .membro-info p {
+      margin: 0 0 4px;
       color: #4b5563;
-      font-size: 14px;
+      font-size: 13px;
     }
 
-    .acoes {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin-left: 6px;
+      border-radius: 50%;
+      background: #25D366;
+      color: #ffffff;
+      text-decoration: none;
+      vertical-align: middle;
+      box-shadow: 0 2px 6px rgba(37, 211, 102, 0.28);
     }
 
-    .btn-status {
-      width: auto;
-      min-width: 110px;
-      padding: 10px 14px;
+    .btn-whatsapp svg {
+      width: 18px;
+      height: 18px;
+      fill: #ffffff;
+      display: block;
     }
 
-    .ativo-presente {
-      background: #16a34a;
-      color: white;
+    .tag-status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 12px;
     }
 
-    .ativo-ausente {
-      background: #dc2626;
-      color: white;
+    .tag-presente {
+      background: #dcfce7;
+      color: #166534;
     }
 
-    .status-atual {
+    .tag-ausente {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .tag-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .historico-lista {
+      display: grid;
+      gap: 10px;
+    }
+
+    .historico-item {
+      border: 1px solid var(--line);
+      padding: 12px;
+      border-radius: 12px;
+      background: #fafbfd;
+    }
+
+    .historico-item h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .historico-item p {
+      margin: 0;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .info-edicao {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
       font-size: 13px;
       font-weight: bold;
-      margin-top: 8px;
-    }
-
-    .mensagem {
-      margin-top: 16px;
-      font-size: 14px;
-      min-height: 20px;
+      background: #eff6ff;
+      color: #1d4ed8;
     }
 
     .vazio {
-      background: white;
-      border-radius: 16px;
-      padding: 30px;
+      color: var(--muted);
+      font-style: italic;
       text-align: center;
-      color: #6b7280;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+      padding: 20px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    @media (max-width: 1200px) {
+      .grid-topo {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .lista-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 900px) {
-      .sidebar {
-        position: relative;
-        width: 100%;
-        bottom: auto;
-      }
-
       .layout {
         flex-direction: column;
       }
 
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+
       .content {
         margin-left: 0;
+        width: 100%;
+        padding: 20px;
       }
 
-      .topo {
+      .grid-2,
+      .resumo {
         grid-template-columns: 1fr;
       }
+    }
+  
+    .reunioes-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
 
-      .membro {
-        flex-direction: column;
-        align-items: stretch;
-      }
+    .reuniao-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fafbfd;
+      padding: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-      .acoes {
-        width: 100%;
-      }
+    .reuniao-item:hover {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    }
 
-      .btn-status {
-        width: 100%;
+    .reuniao-item.ativa {
+      border-color: var(--green);
+      background: #f3fff7;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.10);
+    }
+
+    .reuniao-item h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .reuniao-item p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .reunioes-grid {
+        grid-template-columns: 1fr;
       }
     }
+
+  
+    .visitantes-anteriores-box {
+      display: none;
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      background: #fff7ed;
+    }
+
+    .visitantes-anteriores-box.ativo {
+      display: block;
+    }
+
+    .visitantes-anteriores-lista {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .visitante-anterior-item {
+      border: 1px solid #fed7aa;
+      background: #fffbeb;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .visitante-anterior-item h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+    }
+
+    .visitante-anterior-item p {
+      margin: 0;
+      font-size: 12px;
+      color: #78350f;
+    }
+
+    @media (max-width: 900px) {
+      .visitantes-anteriores-lista {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    /* ===== POPUP PADRÃO +CÉLULAS ===== */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.46);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+      backdrop-filter: blur(2px);
+    }
+
+    .popup-overlay.ativo { display: flex; }
+
+    .popup-card {
+      width: min(470px, 100%);
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 55px rgba(15, 23, 42, 0.22);
+    }
+
+    .popup-cabecalho {
+      padding: 18px 22px;
+      color: #fff;
+      background: linear-gradient(90deg, var(--blue-dark), var(--green));
+    }
+
+    .popup-card.erro .popup-cabecalho {
+      background: linear-gradient(90deg, var(--red-dark), var(--red));
+    }
+
+    .popup-card.atencao .popup-cabecalho {
+      background: linear-gradient(90deg, #d97706, var(--amber));
+    }
+
+    .popup-card.sucesso .popup-cabecalho {
+      background: linear-gradient(90deg, var(--green-dark), var(--green));
+    }
+
+    .popup-card h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .popup-corpo { padding: 22px; }
+
+    .popup-card p {
+      margin: 0;
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .popup-acoes {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .popup-acoes button { min-width: 100px; }
+
+    .oculto { display: none !important; }
+
   </style>
+<link rel="stylesheet" href="menu-modulos.css">
 </head>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Administrador';
-  const nivelUsuario = localStorage.getItem('nivelUsuario') || 'lider';
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('nomeUsuario');
-    localStorage.removeItem('nivelUsuario');
-    window.location.href = 'login.html';
-  }
-
-  const campoUsuario = document.getElementById('usuarioLogado');
-  if (campoUsuario) {
-    campoUsuario.textContent = `Usuário logado: ${nomeUsuario} • Nível: ${nivelUsuario}`;
-  }
-
-  function verificarPermissao(pagina) {
-    const permissoes = {
-      admin: ['painel', 'membros', 'presenca', 'relatorios', 'usuarios'],
-      supervisor: ['painel', 'membros', 'presenca', 'relatorios'],
-      lider: ['painel', 'membros', 'presenca']
-    };
-
-    const permitidas = permissoes[nivelUsuario] || [];
-
-    if (!permitidas.includes(pagina)) {
-      alert('Você não tem permissão para acessar esta área.');
-      window.location.href = 'painel.html';
-    }
-  }
-
-  function aplicarPermissoesMenu() {
-    const menuUsuarios = document.getElementById('menuUsuarios');
-    const menuRelatorios = document.getElementById('menuRelatorios');
-
-    if (nivelUsuario !== 'admin' && menuUsuarios) {
-      menuUsuarios.style.display = 'none';
-    }
-
-    if (nivelUsuario === 'lider' && menuRelatorios) {
-      menuRelatorios.style.display = 'none';
-    }
-  }
-
-  aplicarPermissoesMenu();
-</script>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">+Células</div>
+      <h2 class="logo">+Células</h2>
       <div class="logo-sub">Gestão de células</div>
 
-      <nav class="menu">
+      <div class="menu">
         <a href="painel.html">Painel</a>
         <a href="cadastro.html">Membros</a>
-        <a href="presenca.html">Presença</a>
-        <a href="relatorios.html" id="menuRelatorios">Relatórios</a>
-        <a href="usuarios.html" id="menuUsuarios">Usuários</a>
-<script>
-  verificarPermissao('painel');
-</script>
-      </nav>
-<div style="margin-top: 20px;">
-  <button onclick="sair()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#dc2626;color:white;font-weight:bold;cursor:pointer;">
-    Sair
-  </button>
-</div>
+        <a href="presenca.html" class="ativo">Presença</a>
+        <a href="celulas.html">Células</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="usuarios.html">Usuários</a>
+      </div>
+
+      <button class="btn-sair" id="btnSair" type="button">Sair</button>
+
+      <div class="versao-sistema" title="Identificação da versão publicada">
+        <strong>Sistema v1.0</strong> • Presença v1.17
+      </div>
     </aside>
 
     <main class="content">
       <div class="header">
-        <h1>Controle de presença</h1>
-        <p>Marque presença e ausência dos membros por data</p>
+        <h1>Presença</h1>
+        <p>Consulte períodos e inclua a presença da reunião da célula.</p>
+        <p id="usuarioLogado" class="usuario-logado"></p>
       </div>
 
-      <div class="topo">
-        <div class="card">
-          <label for="dataReuniao">Data da reunião</label>
-          <input type="date" id="dataReuniao" />
-        </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h2>Filtro de consulta</h2>
+        <div id="msgTopo" class="msg-topo neutro">Use o filtro para consultar presenças ou clique em Incluir para lançar a reunião.</div>
 
-        <div class="card">
-          <label>Resumo da chamada</label>
-          <div class="resumo">
-            <span class="badge badge-total" id="totalMembros">0 membros</span>
-            <span class="badge badge-presente" id="totalPresentes">0 presentes</span>
-            <span class="badge badge-ausente" id="totalAusentes">0 ausentes</span>
+        <div class="filtro-periodo-presenca">
+          <div>
+            <label for="dataInicialFiltro" class="campo-obrigatorio">Data inicial</label>
+            <input type="date" id="dataInicialFiltro" />
+          </div>
+
+          <div>
+            <label for="dataFinalFiltro" class="campo-obrigatorio">Data final</label>
+            <input type="date" id="dataFinalFiltro" />
+          </div>
+
+          <div>
+            <label for="filtroCelulaConsulta">Célula</label>
+            <select id="filtroCelulaConsulta">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div class="botoes-filtro-data">
+            <button class="btn-primary" id="btnHoje" type="button">Hoje</button>
+            <button class="btn-success" id="btn7dias" type="button">7 dias</button>
+            <button class="btn-secondary" id="btn30dias" type="button" style="background:#f59e0b;">30 dias</button>
+            <button class="btn-primary" id="btnFiltrar" type="button">Filtrar</button>
+            <button class="btn-secondary" id="btnLimparFiltro" type="button">Limpar</button>
           </div>
         </div>
+      </div>
 
-        <div class="card">
-          <label>&nbsp;</label>
-          <button class="btn-success" onclick="salvarPresencas()">Salvar presença</button>
+      <div class="card oculto" id="cardReunioesRegistradas" style="margin-bottom:20px;">
+        <h2>Reuniões registradas</h2>
+        <div id="listaReunioesRegistradas" class="reunioes-grid">
+          <div class="vazio">Use o filtro acima para carregar as reuniões registradas.</div>
         </div>
       </div>
 
-      <div class="mensagem" id="mensagem"></div>
-      <div class="lista" id="listaMembros"></div>
+      <div class="grid-topo">
+        <div class="card">
+          <h2>Presença da reunião</h2>
+
+          <div class="acoes-topo">
+            <button class="btn-primary" id="btnIncluir" type="button">Incluir</button>
+            <button class="btn-primary" id="btnEditar" type="button" disabled>Editar</button>
+            <button class="btn-secondary" id="btnCancelar" type="button" disabled>Cancelar</button>
+            <button class="btn-success" id="btnSalvar" type="button" disabled>Salvar</button>
+            <button class="btn-danger" id="btnExcluirPresenca" type="button" disabled>Excluir</button>
+            <button class="btn-secondary" id="btnVisitante" type="button" disabled>Visitante</button>
+            <button class="btn-secondary" id="btnMarcarTodos" type="button" disabled>Marcar todos presentes</button>
+            <button class="btn-danger" id="btnDesmarcarTodos" type="button" disabled>Marcar todos ausentes</button>
+            <button class="btn-secondary" id="btnLimpar" type="button" disabled>Limpar seleção</button>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="dataReuniao" class="campo-obrigatorio">Data da reunião</label>
+              <input type="date" id="dataReuniao" disabled />
+            </div>
+
+            <div>
+              <label for="celulaSelecionada" class="campo-obrigatorio">Célula</label>
+              <select id="celulaSelecionada" disabled>
+                <option value="">Carregando células...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="visitantes-anteriores-box" id="boxVisitantesAnteriores">
+            <h3 style="margin:0;">Selecionar visitantes anteriores</h3>
+            <p style="margin:6px 0 0;color:#92400e;font-size:13px;">
+              Marque somente os visitantes que participaram desta reunião. Todos começam desmarcados e visitante não marcado não será salvo como ausente.
+            </p>
+            <div class="visitantes-anteriores-lista" id="listaVisitantesAnteriores"></div>
+          </div>
+
+          <div class="info-edicao" id="infoEdicao">
+            Modo atual: CONSULTA
+          </div>
+
+          <div class="visitante-box" id="boxVisitante">
+            <h3 style="margin:0 0 10px;">Cadastrar visitante</h3>
+            <div class="grid-2">
+              <div>
+                <label for="visitanteNome" class="campo-obrigatorio">Nome</label>
+                <input id="visitanteNome" type="text" placeholder="Nome do visitante" />
+              </div>
+              <div>
+                <label for="visitanteTelefone" class="campo-obrigatorio">Telefone</label>
+                <input id="visitanteTelefone" type="text" placeholder="(DDD) 99999-9999" maxlength="15" inputmode="numeric" />
+              </div>
+            </div>
+            <div id="filaVisitantes" class="vazio" style="display:none;margin-top:12px;"></div>
+            <div class="acoes-topo" style="margin-top:12px;">
+              <button class="btn-primary" id="btnAdicionarVisitante" type="button">Adicionar visitante</button>
+              <button class="btn-success" id="btnSalvarVisitante" type="button">Salvar visitantes</button>
+              <button class="btn-secondary" id="btnCancelarVisitante" type="button">Cancelar visitantes</button>
+            </div>
+          </div>
+
+          <div class="mensagem" id="mensagem"></div>
+        </div>
+
+        <div class="card">
+          <h2>Resumo da Reunião</h2>
+          <div class="resumo">
+            <span class="badge badge-total" id="totalMembros">0 membro(s)</span>
+            <span class="badge badge-presente" id="totalPresentes">0 presente(s)</span>
+            <span class="badge badge-ausente" id="totalAusentes">0 ausente(s)</span>
+            <span class="badge badge-pendente" id="totalPendentes">0 pendente(s)</span>
+            <span class="badge" id="totalVisitantes" style="display:none;background:#fff7ed;color:#9a3412;">0 visitante(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <h2>Membros da Célula</h2>
+        <div class="lista-grid compacta" id="listaMembros"></div>
+      </div>
+
+      <div class="card oculto" id="cardVisitantesReuniao" style="margin-bottom: 20px;">
+        <h2>Visitantes da Reunião</h2>
+        <div class="lista-grid compacta" id="listaVisitantesReuniao"></div>
+      </div>
     </main>
   </div>
 
+
+  <div class="popup-overlay" id="popupSistema" role="dialog" aria-modal="true" aria-labelledby="popupTitulo">
+    <div class="popup-card info" id="popupCard">
+      <div class="popup-cabecalho">
+        <h3 id="popupTitulo">Informação</h3>
+      </div>
+      <div class="popup-corpo">
+        <p id="popupTexto"></p>
+        <div class="popup-acoes">
+          <button class="btn-secondary" id="popupCancelar" type="button" style="display:none;">Cancelar</button>
+          <button class="btn-primary" id="popupConfirmar" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const apiMembros = 'https://celulas-backend.onrender.com:3000/membros';
-    const apiPresencas = 'https://celulas-backend.onrender.com:3000/presencas';
+    document.addEventListener("DOMContentLoaded", () => {
+      const API_BASE = "";
+      const apiMembros = `${API_BASE}/membros`;
+      const apiPresencas = `${API_BASE}/presencas`;
+      const apiUsuarios = `${API_BASE}/usuarios`;
 
-    let membros = [];
-    let presencas = {};
+      if (localStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html";
+        return;
+      }
 
-    function definirDataHoje() {
-      const hoje = new Date();
-      const ano = hoje.getFullYear();
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      document.getElementById('dataReuniao').value = `${ano}-${mes}-${dia}`;
-    }
+      const nomeUsuario = localStorage.getItem("nomeUsuario") || "Administrador";
+      const nivelUsuario = String(localStorage.getItem("nivelUsuario") || "admin").toLowerCase();
+      let celulaUsuario = localStorage.getItem("celulaUsuario") || "";
+      const loginUsuario = localStorage.getItem("usuario") || "";
 
-    async function carregarMembros() {
-      const resposta = await fetch(apiMembros);
-      membros = await resposta.json();
+      let todosMembros = [];
+      let membrosFiltrados = [];
+      let presencas = {};
+      let modo = "consulta";
+      let reuniaoSelecionada = null;
+      let reunioesRegistradas = [];
+      let visitantesAnterioresLiberados = false;
+      let idsVisitantesAnterioresPermitidos = new Set();
+      let dataOriginalEdicao = "";
+      let visitantesPendentesCadastro = [];
+      let consultaVisitantesContexto = "";
 
-      if (!Array.isArray(membros) || membros.length === 0) {
-        document.getElementById('listaMembros').innerHTML =
-          '<div class="vazio">Nenhum membro cadastrado. Cadastre membros primeiro.</div>';
+      const campoUsuario = document.getElementById("usuarioLogado");
+      const campoLista = document.getElementById("listaMembros");
+      const campoMensagem = document.getElementById("mensagem");
+      const campoMsgTopo = document.getElementById("msgTopo");
+      const campoDataInicial = document.getElementById("dataInicialFiltro");
+      const campoDataFinal = document.getElementById("dataFinalFiltro");
+      const campoFiltroCelula = document.getElementById("filtroCelulaConsulta");
+      const campoData = document.getElementById("dataReuniao");
+      const campoCelula = document.getElementById("celulaSelecionada");
+      const campoInfoEdicao = document.getElementById("infoEdicao");
+      const boxVisitante = document.getElementById("boxVisitante");
+      const campoVisitanteNome = document.getElementById("visitanteNome");
+      const campoVisitanteTelefone = document.getElementById("visitanteTelefone");
+      const listaReunioes = document.getElementById("listaReunioesRegistradas");
+      const cardReunioes = document.getElementById("cardReunioesRegistradas");
+      const boxVisitantesAnteriores = document.getElementById("boxVisitantesAnteriores");
+      const listaVisitantesAnteriores = document.getElementById("listaVisitantesAnteriores");
+      const cardVisitantesReuniao = document.getElementById("cardVisitantesReuniao");
+      const listaVisitantesReuniao = document.getElementById("listaVisitantesReuniao");
+      const filaVisitantes = document.getElementById("filaVisitantes");
+      const popupSistema = document.getElementById("popupSistema");
+      const popupCard = document.getElementById("popupCard");
+      const popupTitulo = document.getElementById("popupTitulo");
+      const popupTexto = document.getElementById("popupTexto");
+      const popupConfirmar = document.getElementById("popupConfirmar");
+      const popupCancelar = document.getElementById("popupCancelar");
+
+
+      function sair() {
+        localStorage.clear();
+        window.location.href = "login.html";
+      }
+
+      function normalizarTexto(valor) {
+        return String(valor || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toUpperCase();
+      }
+
+      function normalizarNomeCelula(valor) {
+        return normalizarTexto(valor)
+          .replace(/^C[EÉ]LULA\s*/i, "")
+          .replace(/^CELULA\s*/i, "")
+          .trim();
+      }
+
+      function nomeCelulaExibicao(valor) {
+        const base = normalizarNomeCelula(valor);
+        return base ? `CÉLULA ${base}` : "";
+      }
+
+      function usuarioEhLider() {
+        return nivelUsuario === "lider" || nivelUsuario === "líder";
+      }
+
+      function usuarioEhAdmin() {
+        return nivelUsuario === "admin" || nivelUsuario === "administrador";
+      }
+
+      function celulaPermitidaParaUsuario() {
+        if (!usuarioEhLider()) return "";
+        return nomeCelulaExibicao(celulaUsuario);
+      }
+
+      function tipoMensagemPorCor(cor) {
+        if (cor === "#16a34a") return "sucesso";
+        if (cor === "#2563eb") return "info";
+        if (cor === "#64748b") return "neutro";
+        return "erro";
+      }
+
+      function abrirPopup(texto, tipo = "info", titulo = "", confirmar = false) {
+        return new Promise((resolve) => {
+          const titulos = {
+            erro: "Atenção",
+            sucesso: "Sucesso",
+            info: "Informação",
+            atencao: "Atenção"
+          };
+
+          popupCard.className = `popup-card ${tipo}`;
+          popupTitulo.textContent = titulo || titulos[tipo] || "Informação";
+          popupTexto.textContent = texto || "";
+          popupCancelar.style.display = confirmar ? "inline-block" : "none";
+          popupConfirmar.textContent = confirmar ? "Confirmar" : "OK";
+          popupSistema.classList.add("ativo");
+
+          const finalizar = (valor) => {
+            popupSistema.classList.remove("ativo");
+            popupConfirmar.onclick = null;
+            popupCancelar.onclick = null;
+            resolve(valor);
+          };
+
+          popupConfirmar.onclick = () => finalizar(true);
+          popupCancelar.onclick = () => finalizar(false);
+        });
+      }
+
+      function mostrarMensagem(texto, cor = "#dc2626", exibirPopup = true) {
+        campoMensagem.textContent = texto;
+        campoMensagem.style.color = cor;
+
+        if (campoMsgTopo) {
+          campoMsgTopo.textContent = texto || "Escolha Hoje, 7 dias, 30 dias ou informe um período e clique em Filtrar.";
+          campoMsgTopo.className = `msg-topo ${texto ? tipoMensagemPorCor(cor) : "neutro"}`;
+        }
+
+        if (texto && exibirPopup) {
+          const tipo = cor === "#16a34a" ? "sucesso" :
+                       cor === "#2563eb" ? "info" :
+                       cor === "#64748b" ? "info" : "erro";
+          abrirPopup(texto, tipo);
+        }
+      }
+
+      function hojeISO() {
+        const hoje = new Date();
+        return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+      }
+
+      function deslocarDias(dataIso, dias) {
+        const d = new Date(`${dataIso}T12:00:00`);
+        d.setDate(d.getDate() + dias);
+        return d.toISOString().slice(0, 10);
+      }
+
+      function limparDetalhesReuniaoConsultada() {
+        reuniaoSelecionada = null;
+        dataOriginalEdicao = "";
+        presencas = {};
+        membrosFiltrados = [];
+        visitantesAnterioresLiberados = false;
+        idsVisitantesAnterioresPermitidos = new Set();
+        visitantesPendentesCadastro = [];
+        consultaVisitantesContexto = "";
+        campoData.value = "";
+        campoCelula.value = usuarioEhLider() ? celulaPermitidaParaUsuario() : "";
+        boxVisitante.classList.remove("ativo");
+        campoVisitanteNome.value = "";
+        campoVisitanteTelefone.value = "";
+        renderizarFilaVisitantes();
+        renderizarControleVisitantesAnteriores();
+        campoLista.innerHTML = '<div class="vazio">Selecione uma reunião registrada para visualizar os dados.</div>';
+        if (cardVisitantesReuniao) cardVisitantesReuniao.classList.add("oculto");
+        if (listaVisitantesReuniao) listaVisitantesReuniao.innerHTML = "";
         atualizarResumo();
-        return;
+        atualizarModo();
       }
 
-      renderizarMembros();
-      atualizarResumo();
-      await carregarPresencasDaData();
-    }
+      async function definirPeriodo(dias) {
+        const fim = hojeISO();
+        const inicio = deslocarDias(fim, -(dias - 1));
+        campoDataInicial.value = inicio;
+        campoDataFinal.value = fim;
+        limparDetalhesReuniaoConsultada();
+        const ok = await carregarReunioesRegistradas();
+        if (ok) mostrarMensagem("Filtro aplicado com sucesso.", "#16a34a", false);
+      }
 
-    function renderizarMembros() {
-      const lista = document.getElementById('listaMembros');
+      function dataReuniaoAtual() {
+        return campoData.value || "";
+      }
 
-      lista.innerHTML = membros.map((membro) => {
-        const status = presencas[membro.id] || 'ausente';
+      function obterDataCadastroMembro(membro) {
+        const valor = String(
+          membro.data_cadastro || membro.dataCadastro || membro.criado_em || membro.criadoEm ||
+          membro.created_at || membro.createdAt || ""
+        ).slice(0, 10);
+        return /^\d{4}-\d{2}-\d{2}$/.test(valor) ? valor : "";
+      }
 
+      function obterDataArquivamentoVisitante(membro) {
+        const valor = String(membro.data_arquivamento || membro.dataArquivamento || "").slice(0, 10);
+        return /^\d{4}-\d{2}-\d{2}$/.test(valor) ? valor : "";
+      }
+
+      function visitanteElegivelNaData(membro, dataReuniao) {
+        if (!membroEhVisitante(membro) || !dataReuniao) return false;
+        const inicio = obterDataCadastroMembro(membro);
+        const fim = obterDataArquivamentoVisitante(membro);
+        if (inicio && dataReuniao < inicio) return false;
+        if (fim && dataReuniao >= fim) return false;
+        return true;
+      }
+
+      function diasEntreHoje(dataIso) {
+        if (!dataIso) return 0;
+        const a = new Date(`${dataIso}T12:00:00`);
+        const b = new Date(`${hojeISO()}T12:00:00`);
+        return Math.floor((b - a) / 86400000);
+      }
+
+      async function validarPrazoOperacao(dataIso, operacao = "alterar") {
+        if (!dataIso) return false;
+        if (dataIso > hojeISO()) {
+          await abrirPopup("Não é permitido lançar, editar ou excluir reuniões em data futura.", "erro", "Data futura");
+          return false;
+        }
+        const dias = diasEntreHoje(dataIso);
+        if (dias <= 20) return true;
+        if (!usuarioEhAdmin()) {
+          await abrirPopup(`O prazo de 20 dias para ${operacao} esta reunião foi encerrado. Solicite a correção a um administrador.`, "atencao", "Período encerrado");
+          return false;
+        }
+        return abrirPopup(
+          `Esta reunião ocorreu há ${dias} dias e está fora do prazo normal de 20 dias. A alteração modificará dados históricos utilizados em relatórios e no painel. Deseja continuar?`,
+          "atencao",
+          "Alteração de período encerrado",
+          true
+        );
+      }
+
+      function membroEhVisitante(membro) {
+        const origem = normalizarTexto(membro.origem_cadastro || membro.origemCadastro || "");
+        const status = normalizarTexto(membro.status || "");
+        return origem === "PRESENCA_VISITANTE" ||
+          membro.cadastro_completo === false ||
+          String(membro.cadastro_completo) === "false" ||
+          status === "VISITANTE" ||
+          status === "VISITANTE ARQUIVADO";
+      }
+
+      function membroEhVisitantePendente(membro) {
+        const status = normalizarTexto(membro.status || "");
+        return membroEhVisitante(membro) && status !== "VISITANTE ARQUIVADO";
+      }
+
+      function membroPodeEntrarNaPresenca(membro) {
+        const dataReuniao = dataReuniaoAtual();
+        const dataCadastro = obterDataCadastroMembro(membro);
+
+        if (!membroEhVisitante(membro)) return true;
+
+        // Em CONSULTA, visitante só pode aparecer se estiver efetivamente gravado
+        // na presença da reunião selecionada. Isso evita que um visitante cadastrado
+        // durante uma edição cancelada apareça indevidamente na reunião original.
+        if (modo === "consulta") {
+          return Object.prototype.hasOwnProperty.call(presencas, Number(membro.id));
+        }
+
+        // Em inclusão/edição, visitante com registro histórico precisa reaparecer.
+        if (Object.prototype.hasOwnProperty.call(presencas, Number(membro.id))) return true;
+
+        // O arquivamento vale a partir da data registrada, sem apagar a elegibilidade histórica.
+        if (!visitanteElegivelNaData(membro, dataReuniao)) return false;
+
+        if (!visitantesAnterioresLiberados) {
+          return dataCadastro === dataReuniao;
+        }
+
+        if (!dataCadastro || !dataReuniao) return true;
+        if (dataCadastro > dataReuniao) return false;
+
+        if (dataCadastro < dataReuniao) {
+          return idsVisitantesAnterioresPermitidos.has(String(membro.id));
+        }
+
+        return true;
+      }
+
+      async function garantirCelulaDoUsuario() {
+        if (!usuarioEhLider()) return true;
+        if (celulaPermitidaParaUsuario()) return true;
+
+        try {
+          const resposta = await fetch(apiUsuarios, { cache: "no-store" });
+          const lista = resposta.ok ? await resposta.json() : [];
+          const usuarioAtual = (Array.isArray(lista) ? lista : []).find((item) =>
+            String(item.usuario || "").toLowerCase() === String(loginUsuario || "").toLowerCase()
+          );
+          celulaUsuario = usuarioAtual?.celula || "";
+          localStorage.setItem("celulaUsuario", celulaUsuario || "");
+          return !!celulaPermitidaParaUsuario();
+        } catch {
+          return false;
+        }
+      }
+
+      function aplicarTravaCelulaLider() {
+        if (!usuarioEhLider()) return true;
+        const celulaPermitida = celulaPermitidaParaUsuario();
+
+        if (!celulaPermitida) {
+          campoCelula.innerHTML = '<option value="">Líder sem célula vinculada</option>';
+          campoCelula.disabled = true;
+          mostrarMensagem("Seu usuário líder não possui célula vinculada. Solicite ajuste ao administrador.");
+          return false;
+        }
+
+        campoCelula.innerHTML = `<option value="${celulaPermitida}">${celulaPermitida}</option>`;
+        campoCelula.value = celulaPermitida;
+        campoCelula.disabled = true;
+
+        if (campoFiltroCelula) {
+          campoFiltroCelula.innerHTML = `<option value="${celulaPermitida}">${celulaPermitida}</option>`;
+          campoFiltroCelula.value = celulaPermitida;
+          campoFiltroCelula.disabled = true;
+        }
+
+        return true;
+      }
+
+      function textoStatus(status) {
+        if (status === "presente") return "PRESENTE";
+        if (status === "ausente") return "AUSENTE";
+        return "PENDENTE";
+      }
+
+      function classeStatus(status) {
+        if (status === "presente") return "tag-status tag-presente";
+        if (status === "ausente") return "tag-status tag-ausente";
+        return "tag-status tag-pendente";
+      }
+
+      function formatarWhatsapp(numero) {
+        const limpo = String(numero || "").replace(/\D/g, "");
+        if (!limpo) return "";
+        return limpo.startsWith("55") ? limpo : `55${limpo}`;
+      }
+
+      function iconeWhatsapp(numero) {
+        const telefone = formatarWhatsapp(numero);
+        if (!telefone) return "";
         return `
-          <div class="membro">
-            <div>
-              <h3>${membro.nome}</h3>
-              <p><strong>Célula:</strong> ${membro.celula || '-'}</p>
-              <p><strong>Telefone:</strong> ${membro.telefone || '-'}</p>
-              <div class="status-atual">Status atual: ${status}</div>
-            </div>
+          <a class="btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/${telefone}" aria-label="Abrir WhatsApp" title="Abrir WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479s1.065 2.875 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.625.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.981.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 7.001c-.003 5.45-4.437 9.878-9.885 9.878m8.413-18.297A11.815 11.815 0 0 0 12.055 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.056 24l6.305-1.654a11.882 11.882 0 0 0 5.69 1.448h.005c6.558 0 11.893-5.335 11.896-11.893a11.821 11.821 0 0 0-3.488-8.413Z"/>
+            </svg>
+          </a>`;
+      }
 
-            <div class="acoes">
-              <button
-                class="btn-status ${status === 'presente' ? 'ativo-presente' : ''}"
-                onclick="marcarStatus(${membro.id}, 'presente')"
-              >
-                Presente
-              </button>
+      function configurarBotao(id, liberado) {
+        const botao = document.getElementById(id);
+        if (!botao) return;
+        botao.disabled = !liberado;
+        botao.classList.toggle("botao-bloqueado", !liberado);
+      }
 
-              <button
-                class="btn-status ${status === 'ausente' ? 'ativo-ausente' : ''}"
-                onclick="marcarStatus(${membro.id}, 'ausente')"
-              >
-                Ausente
-              </button>
+      function visitanteAbertoComDadosPendentes() {
+        if (!boxVisitante || !boxVisitante.classList.contains("ativo")) return false;
+        return !!String(campoVisitanteNome.value || "").trim() || !!String(campoVisitanteTelefone.value || "").trim();
+      }
+
+      function validarVisitanteAberto() {
+        if (visitanteAbertoComDadosPendentes()) {
+          mostrarMensagem("Salve ou cancele o visitante antes de continuar.");
+          return false;
+        }
+        return true;
+      }
+
+      function atualizarModo() {
+        if (modo === "consulta") {
+          campoInfoEdicao.textContent = "Modo atual: CONSULTA. Clique em Incluir para lançar nova presença ou selecione uma reunião registrada para editar.";
+          campoInfoEdicao.style.background = "#f8fafc";
+          campoInfoEdicao.style.color = "#475569";
+        } else if (modo === "inclusao") {
+          campoInfoEdicao.textContent = "Modo atual: INCLUSÃO DE PRESENÇA";
+          campoInfoEdicao.style.background = "#eff6ff";
+          campoInfoEdicao.style.color = "#1d4ed8";
+        } else {
+          campoInfoEdicao.textContent = "Modo atual: EDIÇÃO LIBERADA";
+          campoInfoEdicao.style.background = "#eff6ff";
+          campoInfoEdicao.style.color = "#1d4ed8";
+        }
+        atualizarEstadoBotoes();
+      }
+
+      function atualizarEstadoBotoes() {
+        const temCelula = !!celulaAlvoLancamento();
+        const temMembros = membrosFiltrados.length > 0;
+        const liberado = modo === "inclusao" || modo === "edicao";
+        const visitanteTravando = visitanteAbertoComDadosPendentes();
+
+        // Incluir deve estar disponível mesmo antes de qualquer consulta histórica.
+        configurarBotao("btnIncluir", modo === "consulta" && !visitanteTravando);
+        configurarBotao("btnEditar", !!reuniaoSelecionada && temCelula && temMembros && modo === "consulta" && !visitanteTravando);
+        configurarBotao("btnCancelar", modo !== "consulta");
+        configurarBotao("btnSalvar", liberado && temCelula && temMembros && !visitanteTravando);
+        configurarBotao("btnVisitante", liberado && temCelula && !!campoData.value);
+        configurarBotao("btnMarcarTodos", liberado && temCelula && temMembros && !visitanteTravando);
+        configurarBotao("btnDesmarcarTodos", liberado && temCelula && temMembros && !visitanteTravando);
+        configurarBotao("btnLimpar", liberado && temCelula && temMembros && !visitanteTravando);
+        configurarBotao("btnExcluirPresenca", usuarioEhAdmin() && !!reuniaoSelecionada && modo === "consulta" && !visitanteTravando);
+
+        campoData.disabled = !(modo === "inclusao" || modo === "edicao");
+        campoCelula.disabled = usuarioEhLider() || modo !== "inclusao";
+      }
+
+      function atualizarResumo() {
+        const membros = membrosFiltrados.filter((m) => !membroEhVisitante(m));
+        const visitantes = membrosFiltrados.filter((m) => membroEhVisitante(m));
+
+        const total = membros.length;
+        const presentes = membros.filter((m) => presencas[m.id] === "presente").length;
+        const ausentes = membros.filter((m) => presencas[m.id] === "ausente").length;
+        const pendentes = total - presentes - ausentes;
+        const visitantesPresentes = visitantes.filter((m) => presencas[m.id] === "presente").length;
+
+        document.getElementById("totalMembros").textContent = `${total} membro(s)`;
+        document.getElementById("totalPresentes").textContent = `${presentes} presente(s)`;
+        document.getElementById("totalAusentes").textContent = `${ausentes} ausente(s)`;
+        document.getElementById("totalPendentes").textContent = `${pendentes} pendente(s)`;
+        const badgeVisitantes = document.getElementById("totalVisitantes");
+        badgeVisitantes.textContent = `${visitantesPresentes} visitante(s)`;
+        badgeVisitantes.style.display = visitantesPresentes > 0 ? "inline-flex" : "none";
+        atualizarEstadoBotoes();
+      }
+
+      function obterCelulasUnicas() {
+        const mapa = new Map();
+        todosMembros.forEach((membro) => {
+          const bruto = String(membro.celula || "").trim();
+          const chave = normalizarNomeCelula(bruto);
+          if (!chave) return;
+          if (!mapa.has(chave)) mapa.set(chave, nomeCelulaExibicao(bruto));
+        });
+        return Array.from(mapa.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      }
+
+      function preencherSelectCelulas() {
+        const celulas = obterCelulasUnicas();
+
+        if (usuarioEhLider()) {
+          aplicarTravaCelulaLider();
+          return;
+        }
+
+        const atual = campoCelula.value;
+        campoCelula.innerHTML = '<option value="">Selecione a célula</option>' + celulas.map((c) => `<option value="${c}">${c}</option>`).join("");
+        if (celulas.includes(atual)) campoCelula.value = atual;
+
+        if (campoFiltroCelula) {
+          const atualFiltro = campoFiltroCelula.value;
+          campoFiltroCelula.disabled = false;
+          campoFiltroCelula.innerHTML = '<option value="">Todas</option>' + celulas.map((c) => `<option value="${c}">${c}</option>`).join("");
+          if (celulas.includes(atualFiltro)) campoFiltroCelula.value = atualFiltro;
+        }
+      }
+
+      function celulaFiltroAtual() {
+        if (usuarioEhLider()) return celulaPermitidaParaUsuario();
+        return campoFiltroCelula ? campoFiltroCelula.value : "";
+      }
+
+      function celulaAlvoLancamento() {
+        if (usuarioEhLider()) return celulaPermitidaParaUsuario();
+        return campoCelula.value || celulaFiltroAtual();
+      }
+
+      function filtrarMembrosPorCelula() {
+        const alvo = normalizarNomeCelula(celulaAlvoLancamento());
+        membrosFiltrados = alvo
+          ? todosMembros.filter((membro) => (modo === "consulta" ? normalizarNomeCelula(membro._celulaPresencaAtual || membro.celula) : normalizarNomeCelula(membro.celula)) === alvo && membroPodeEntrarNaPresenca(membro))
+          : [];
+        renderizarMembros();
+        atualizarResumo();
+      }
+
+      function cartaoPessoa(membro, bloqueado) {
+        const status = presencas[membro.id] || "";
+        const marcado = status === "presente" ? "checked" : "";
+        return `<div class="membro-check ${status === "presente" ? "marcado" : ""} ${modo === "consulta" ? "bloqueado" : ""}">
+          <label class="membro-check-topo">
+            <input type="checkbox" class="check-presenca" data-id="${membro.id}" ${marcado} ${bloqueado}>
+            <div class="membro-info">
+              <h3>${membro.nome || ""}</h3>
+              <p><strong>Telefone:</strong> ${membro.telefone || "-"} ${iconeWhatsapp(membro.telefone)}</p>
+              <span class="${classeStatus(status)}">${textoStatus(status)}</span>
             </div>
+          </label>
+        </div>`;
+      }
+
+      function renderizarMembros() {
+        const alvo = celulaAlvoLancamento();
+        if (!alvo) {
+          campoLista.innerHTML = '<div class="vazio">Selecione uma célula para carregar os membros.</div>';
+          if (cardVisitantesReuniao) cardVisitantesReuniao.classList.add("oculto");
+          return;
+        }
+
+        const membros = membrosFiltrados.filter((m) => !membroEhVisitante(m));
+        const visitantes = membrosFiltrados.filter((m) => membroEhVisitante(m));
+        const bloqueado = modo === "consulta" ? "disabled" : "";
+
+        if (!membros.length) {
+          campoLista.innerHTML = '<div class="vazio">Nenhum membro elegível para esta célula/data.</div>';
+        } else {
+          campoLista.innerHTML = [...membros]
+            .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"))
+            .map((membro) => cartaoPessoa(membro, bloqueado)).join("");
+        }
+
+        if (cardVisitantesReuniao && listaVisitantesReuniao) {
+          if (!visitantes.length) {
+            cardVisitantesReuniao.classList.add("oculto");
+            listaVisitantesReuniao.innerHTML = "";
+          } else {
+            cardVisitantesReuniao.classList.remove("oculto");
+            listaVisitantesReuniao.innerHTML = [...visitantes]
+              .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"))
+              .map((membro) => cartaoPessoa(membro, bloqueado)).join("");
+          }
+        }
+      }
+
+      async function carregarPresencasData() {
+        presencas = {};
+        if (!campoData.value) {
+          filtrarMembrosPorCelula();
+          return;
+        }
+        try {
+          const resposta = await fetch(`${apiPresencas}/${campoData.value}`, { cache: "no-store" });
+          if (!resposta.ok) throw new Error("Erro ao carregar presença.");
+          const dados = await resposta.json();
+          // v1.11: limpa o vínculo temporário da consulta anterior.
+          todosMembros.forEach((m) => { delete m._celulaPresencaAtual; });
+
+          (Array.isArray(dados) ? dados : []).forEach((item) => {
+            const id = Number(item.membroId);
+            const celulaHistorica = item.celulaPresenca || item.celula || "";
+
+            // Se a API devolveu a célula gravada na presença, somente os registros
+            // daquela reunião entram na consulta atual. Isso evita misturar células
+            // que tiveram reunião na mesma data.
+            if (campoCelula.value && celulaHistorica &&
+                normalizarNomeCelula(celulaHistorica) !== normalizarNomeCelula(campoCelula.value)) return;
+
+            presencas[id] = item.status;
+
+            // v1.11: a presença histórica é a fonte da verdade para a consulta.
+            // Se o visitante foi arquivado depois, ele continua sendo reconstruído
+            // com os dados gravados/retornados pela API para aparecer na reunião antiga.
+            const existente = todosMembros.find((m) => Number(m.id) === id);
+            if (existente) {
+              // O cadastro atual pode estar arquivado ou ter mudado depois da reunião.
+              // Guardamos a célula histórica separadamente para renderizar a consulta
+              // sem alterar permanentemente o cadastro atual da pessoa.
+              existente._celulaPresencaAtual = celulaHistorica || existente.celula || "";
+            } else if (item.nome) {
+              todosMembros.push({
+                id,
+                nome: item.nome,
+                telefone: item.telefone || "",
+                celula: celulaHistorica || campoCelula.value || "",
+                _celulaPresencaAtual: celulaHistorica || campoCelula.value || "",
+                status: item.statusMembro || "VISITANTE ARQUIVADO",
+                origem_cadastro: item.origemCadastro || "PRESENCA_VISITANTE",
+                cadastro_completo: item.cadastroCompleto ?? false,
+                data_cadastro: item.dataCadastro || "",
+                data_arquivamento: item.dataArquivamento || ""
+              });
+            }
+          });
+          filtrarMembrosPorCelula();
+        } catch (erro) {
+          mostrarMensagem("Erro ao carregar presença da data selecionada.");
+        }
+      }
+
+      async function carregarMembros() {
+        try {
+          campoLista.innerHTML = '<div class="vazio">Carregando membros...</div>';
+          const resposta = await fetch(apiMembros, { cache: "no-store" });
+          if (!resposta.ok) throw new Error("Erro ao carregar membros.");
+          todosMembros = await resposta.json();
+          await garantirCelulaDoUsuario();
+          preencherSelectCelulas();
+          if (!usuarioEhLider() && !campoCelula.value && celulaFiltroAtual()) campoCelula.value = celulaFiltroAtual();
+          await carregarPresencasData();
+          filtrarMembrosPorCelula();
+          // A consulta histórica só ocorre por ação explícita do usuário.
+        } catch (erro) {
+          campoLista.innerHTML = '<div class="vazio">Erro ao carregar membros.</div>';
+          mostrarMensagem("Erro ao carregar membros.");
+        }
+      }
+
+      function registrosPorCelula(data, registros, celulaNome) {
+        const alvo = normalizarNomeCelula(celulaNome || "");
+        const registrosDaCelula = (Array.isArray(registros) ? registros : []).filter((r) => {
+          const celulaHistorica = r.celulaPresenca || r.celula || "";
+          if (celulaHistorica) return !alvo || normalizarNomeCelula(celulaHistorica) === alvo;
+          const membro = todosMembros.find((m) => Number(m.id) === Number(r.membroId));
+          return !alvo || normalizarNomeCelula(membro?.celula || "") === alvo;
+        });
+        const presentes = registrosDaCelula.filter((r) => r.status === "presente").length;
+        return { data, celula: celulaNome || "GERAL", total: registrosDaCelula.length, presentes };
+      }
+
+      async function carregarReunioesRegistradas(exibirPopupVazio = true) {
+        reuniaoSelecionada = null;
+        reunioesRegistradas = [];
+        if (!listaReunioes) return false;
+        if (cardReunioes) cardReunioes.classList.remove("oculto");
+        listaReunioes.innerHTML = '<div class="vazio">Carregando reuniões registradas...</div>';
+
+        const inicio = campoDataInicial.value;
+        const fim = campoDataFinal.value || inicio;
+        const filtroCelula = celulaFiltroAtual();
+
+        if (!inicio || !fim) {
+          listaReunioes.innerHTML = '<div class="vazio">Informe o período para consultar.</div>';
+          atualizarEstadoBotoes();
+          return false;
+        }
+
+        if (inicio > fim) {
+          listaReunioes.innerHTML = '<div class="vazio">A data inicial não pode ser maior que a data final.</div>';
+          atualizarEstadoBotoes();
+          return false;
+        }
+
+        try {
+          // v1.14: uma única consulta ao backend para todo o período.
+          // Mantém exatamente a mesma apresentação e regras da v1.13,
+          // eliminando uma requisição HTTP para cada dia pesquisado.
+          const parametros = new URLSearchParams({ inicio, fim });
+          if (filtroCelula) parametros.set("celula", filtroCelula);
+
+          const resposta = await fetch(`${apiPresencas}/periodo/consulta?${parametros.toString()}`, { cache: "no-store" });
+          const registros = await resposta.json().catch(() => []);
+          if (!resposta.ok) {
+            throw new Error(registros?.erro || "Erro ao carregar reuniões registradas.");
+          }
+
+          const grupos = new Map();
+          (Array.isArray(registros) ? registros : []).forEach((registro) => {
+            const celulaRegistro = registro.celulaPresenca || registro.celula || "";
+            const membro = todosMembros.find((m) => Number(m.id) === Number(registro.membroId));
+            const celulaReuniao = nomeCelulaExibicao(celulaRegistro || membro?.celula || "");
+            if (!celulaReuniao) return;
+            if (filtroCelula && normalizarNomeCelula(celulaReuniao) !== normalizarNomeCelula(filtroCelula)) return;
+
+            const chave = `${registro.data}|${normalizarNomeCelula(celulaReuniao)}`;
+            if (!grupos.has(chave)) grupos.set(chave, { data: registro.data, celula: celulaReuniao, total: 0, presentes: 0 });
+            const grupo = grupos.get(chave);
+            grupo.total += 1;
+            if (registro.status === "presente") grupo.presentes += 1;
+          });
+
+          reunioesRegistradas = Array.from(grupos.values()).sort((a, b) =>
+            b.data.localeCompare(a.data) || a.celula.localeCompare(b.celula, "pt-BR")
+          );
+          renderizarReunioesRegistradas();
+
+          if (!reunioesRegistradas.length && exibirPopupVazio) {
+            await abrirPopup(
+              "Não existem reuniões registradas para o período e célula selecionados.",
+              "info",
+              "Nenhum registro encontrado"
+            );
+          }
+          return true;
+        } catch (erro) {
+          console.error("Erro ao carregar reuniões registradas:", erro);
+          listaReunioes.innerHTML = '<div class="vazio">Erro ao carregar reuniões registradas.</div>';
+          atualizarEstadoBotoes();
+          return false;
+        }
+      }
+
+
+      function renderizarReunioesRegistradas() {
+        if (!listaReunioes) return;
+        if (!reunioesRegistradas.length) {
+          listaReunioes.innerHTML = '<div class="vazio">Nenhuma reunião registrada no período/célula aplicado.</div>';
+          atualizarEstadoBotoes();
+          return;
+        }
+        listaReunioes.innerHTML = reunioesRegistradas.map((r, index) => `
+          <div class="reuniao-item ${reuniaoSelecionada?.data === r.data && normalizarNomeCelula(reuniaoSelecionada?.celula) === normalizarNomeCelula(r.celula) ? "ativa" : ""}" data-index="${index}">
+            <h3>${r.data.split("-").reverse().join("/")}</h3>
+            <p><strong>Célula:</strong> ${r.celula}</p>
+            <p><strong>Presentes:</strong> ${r.presentes}/${r.total}</p>
           </div>
-        `;
-      }).join('');
-    }
-
-    function marcarStatus(membroId, status) {
-      presencas[membroId] = status;
-      renderizarMembros();
-      atualizarResumo();
-    }
-
-    function atualizarResumo() {
-      const total = membros.length;
-      const presentes = Object.values(presencas).filter((status) => status === 'presente').length;
-      const ausentes = total - presentes;
-
-      document.getElementById('totalMembros').textContent = `${total} membro(s)`;
-      document.getElementById('totalPresentes').textContent = `${presentes} presente(s)`;
-      document.getElementById('totalAusentes').textContent = `${ausentes} ausente(s)`;
-    }
-
-    async function carregarPresencasDaData() {
-      const data = document.getElementById('dataReuniao').value;
-      if (!data) return;
-
-      const resposta = await fetch(`${apiPresencas}/${data}`);
-      const registros = await resposta.json();
-
-      presencas = {};
-
-      membros.forEach((membro) => {
-        presencas[membro.id] = 'ausente';
-      });
-
-      registros.forEach((registro) => {
-        presencas[registro.membroId] = registro.status;
-      });
-
-      renderizarMembros();
-      atualizarResumo();
-    }
-
-    async function salvarPresencas() {
-      const data = document.getElementById('dataReuniao').value;
-      const mensagem = document.getElementById('mensagem');
-
-      if (!data) {
-        mensagem.textContent = 'Selecione a data da reunião.';
-        mensagem.style.color = '#dc2626';
-        return;
+        `).join("");
+        atualizarEstadoBotoes();
       }
 
-      const registros = membros.map((membro) => ({
-        membroId: membro.id,
-        status: presencas[membro.id] || 'ausente'
-      }));
+      async function selecionarReuniaoRegistrada(index) {
+        const item = reunioesRegistradas[Number(index)];
+        if (!item) return;
 
-      const resposta = await fetch(apiPresencas, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, registros })
+        reuniaoSelecionada = item;
+        dataOriginalEdicao = item.data;
+        campoData.value = item.data;
+        campoCelula.value = item.celula;
+        modo = "consulta";
+        visitantesAnterioresLiberados = true;
+
+        await carregarPresencasData();
+
+        idsVisitantesAnterioresPermitidos = new Set(
+          todosMembros
+            .filter((m) =>
+              membroEhVisitante(m) &&
+              normalizarNomeCelula(m.celula) === normalizarNomeCelula(item.celula) &&
+              Object.prototype.hasOwnProperty.call(presencas, Number(m.id))
+            )
+            .map((m) => String(m.id))
+        );
+
+        filtrarMembrosPorCelula();
+        renderizarControleVisitantesAnteriores();
+        renderizarReunioesRegistradas();
+        atualizarModo();
+        mostrarMensagem("Reunião carregada para consulta.", "#64748b", false);
+      }
+
+
+      function obterVisitantesAnterioresElegiveis() {
+        const celulaAtual = celulaAlvoLancamento();
+        const dataReuniao = dataReuniaoAtual();
+
+        return todosMembros
+          .filter((m) => {
+            if (!membroEhVisitante(m)) return false;
+            const dataCadastro = obterDataCadastroMembro(m);
+            return dataCadastro &&
+              dataCadastro < dataReuniao &&
+              visitanteElegivelNaData(m, dataReuniao) &&
+              normalizarNomeCelula(m.celula) === normalizarNomeCelula(celulaAtual);
+          })
+          .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+      }
+
+      function renderizarControleVisitantesAnteriores() {
+        if (!boxVisitantesAnteriores || !listaVisitantesAnteriores) return;
+
+        const visitantes = obterVisitantesAnterioresElegiveis();
+
+        if (modo === "consulta" || !visitantesAnterioresLiberados || visitantes.length === 0) {
+          boxVisitantesAnteriores.classList.remove("ativo");
+          listaVisitantesAnteriores.innerHTML = "";
+          return;
+        }
+
+        boxVisitantesAnteriores.classList.add("ativo");
+        listaVisitantesAnteriores.innerHTML = visitantes.map((membro) => {
+          const id = String(membro.id);
+          const dataCadastro = obterDataCadastroMembro(membro) || "-";
+          const marcado = idsVisitantesAnterioresPermitidos.has(id) ? "checked" : "";
+
+          return `
+            <label class="visitante-anterior-item">
+              <input type="checkbox" class="check-visitante-anterior" value="${id}" ${marcado}>
+              <div>
+                <h4>${membro.nome || ""}</h4>
+                <p>Cadastro: ${dataCadastro.split("-").reverse().join("/")}</p>
+                <p>Marque se participou desta reunião.</p>
+                <button class="btn-danger btn-arquivar-visitante" type="button" data-id="${id}" style="margin-top:8px;padding:6px 10px;font-size:12px;">Arquivar visitante</button>
+              </div>
+            </label>
+          `;
+        }).join("");
+      }
+
+      async function verificarVisitantesAnterioresSePossivel() {
+        if (modo !== "inclusao" || !campoData.value || !celulaAlvoLancamento()) return;
+        const contexto = `${campoData.value}|${normalizarNomeCelula(celulaAlvoLancamento())}`;
+        if (consultaVisitantesContexto === contexto) return;
+        consultaVisitantesContexto = contexto;
+        await perguntarVisitantesAnteriores();
+      }
+
+      function perguntarVisitantesAnteriores() {
+        idsVisitantesAnterioresPermitidos = new Set();
+
+        const visitantes = obterVisitantesAnterioresElegiveis();
+
+        if (visitantes.length === 0) {
+          visitantesAnterioresLiberados = false;
+          renderizarControleVisitantesAnteriores();
+          return;
+        }
+
+        // Visitantes anteriores são apresentados explicitamente na tela.
+        // O popup confirma se o usuário deseja carregá-los.
+        return abrirPopup(
+          `Existem ${visitantes.length} visitante(s) anterior(es) nesta célula. Deseja carregar visitantes anteriores para escolher quais participaram desta reunião?`,
+          "atencao",
+          "Visitantes anteriores",
+          true
+        ).then((confirmou) => {
+          visitantesAnterioresLiberados = confirmou;
+
+          if (visitantesAnterioresLiberados) {
+            // v1.16: carregar a lista NÃO significa marcar presença.
+            // Todos os visitantes anteriores começam desmarcados.
+            idsVisitantesAnterioresPermitidos = new Set();
+            visitantes.forEach((m) => {
+              delete presencas[Number(m.id)];
+            });
+          }
+
+          renderizarControleVisitantesAnteriores();
+          filtrarMembrosPorCelula();
+        });
+
+      }
+
+      async function prepararLancamento(tipo) {
+        if (!validarVisitanteAberto()) return;
+        if (tipo === "inclusao") {
+          modo = "inclusao";
+          reuniaoSelecionada = null;
+          dataOriginalEdicao = "";
+          presencas = {};
+          campoData.value = "";
+          if (!usuarioEhLider()) campoCelula.value = "";
+          visitantesAnterioresLiberados = false;
+          idsVisitantesAnterioresPermitidos = new Set();
+          visitantesPendentesCadastro = [];
+          consultaVisitantesContexto = "";
+          renderizarFilaVisitantes();
+          filtrarMembrosPorCelula();
+          renderizarControleVisitantesAnteriores();
+          mostrarMensagem("Inclusão liberada. Selecione a célula, marque os presentes e clique em Salvar.", "#2563eb", false);
+        } else {
+          if (!reuniaoSelecionada) return mostrarMensagem("Selecione uma reunião registrada antes de editar.");
+          modo = "edicao";
+          visitantesAnterioresLiberados = true;
+          idsVisitantesAnterioresPermitidos = new Set();
+          renderizarControleVisitantesAnteriores();
+          mostrarMensagem("Edição liberada. Você pode alterar a data da reunião e salvar novamente.", "#2563eb", false);
+        }
+        atualizarModo();
+        filtrarMembrosPorCelula();
+      }
+
+      function marcarTodosComo(valorPresente) {
+        if (!validarVisitanteAberto()) return;
+        if (modo === "consulta") return mostrarMensagem("Clique em Incluir ou Editar antes de alterar presença.");
+        membrosFiltrados.forEach((membro) => {
+          presencas[Number(membro.id)] = valorPresente ? "presente" : "ausente";
+        });
+        renderizarMembros();
+        atualizarResumo();
+      }
+
+      async function existeReuniaoParaDataECelula(data, celula) {
+        const resposta = await fetch(`${apiPresencas}/${data}`, { cache: "no-store" });
+        if (!resposta.ok) {
+          if (resposta.status === 404) return false;
+          throw new Error("Não foi possível verificar se já existe reunião nesta data.");
+        }
+        const registros = await resposta.json();
+        if (!Array.isArray(registros) || !registros.length) return false;
+        return registros.some((registro) => {
+          const celulaHistorica = registro.celulaPresenca || registro.celula || "";
+          if (celulaHistorica) return normalizarNomeCelula(celulaHistorica) === normalizarNomeCelula(celula);
+          const pessoa = todosMembros.find((m) => Number(m.id) === Number(registro.membroId));
+          return pessoa && normalizarNomeCelula(pessoa.celula) === normalizarNomeCelula(celula);
+        });
+      }
+
+      async function salvarPresencas() {
+        if (!validarVisitanteAberto()) return;
+        if (modo === "consulta") return mostrarMensagem("Clique em Incluir ou Editar antes de salvar.");
+        if (!campoData.value) return mostrarMensagem("Informe a data da reunião.");
+        if (!celulaAlvoLancamento()) return mostrarMensagem("Selecione a célula.");
+        if (!membrosFiltrados.length) return mostrarMensagem("Não há membros para salvar nesta célula/data.");
+        if (!(await validarPrazoOperacao(campoData.value, modo === "inclusao" ? "incluir" : "editar"))) return;
+
+        const registros = membrosFiltrados.map((membro) => ({
+          membroId: membro.id,
+          status: presencas[membro.id] === "presente" ? "presente" : "ausente"
+        }));
+
+        try {
+          const dataDestino = campoData.value;
+          const celulaDestino = celulaAlvoLancamento();
+          const mudouDataNaEdicao = modo === "edicao" && dataOriginalEdicao && dataDestino !== dataOriginalEdicao;
+          if (modo === "inclusao" || mudouDataNaEdicao) {
+            const jaExiste = await existeReuniaoParaDataECelula(dataDestino, celulaDestino);
+            if (jaExiste) {
+              await abrirPopup(
+                `Já existe uma reunião registrada para ${dataDestino.split("-").reverse().join("/")} na ${nomeCelulaExibicao(celulaDestino)}. Selecione essa reunião no histórico e use Editar para corrigir o registro existente.`,
+                "atencao",
+                "Reunião já registrada"
+              );
+
+              // A tentativa de inclusão termina aqui. Volta ao modo CONSULTA para
+              // não deixar Cancelar habilitado nem dados de uma reunião não gravada.
+              modo = "consulta";
+              reuniaoSelecionada = null;
+              dataOriginalEdicao = "";
+              presencas = {};
+              membrosFiltrados = [];
+              visitantesAnterioresLiberados = false;
+              idsVisitantesAnterioresPermitidos = new Set();
+              visitantesPendentesCadastro = [];
+              consultaVisitantesContexto = "";
+              campoData.value = "";
+              campoCelula.value = usuarioEhLider() ? celulaPermitidaParaUsuario() : "";
+              boxVisitante.classList.remove("ativo");
+              campoVisitanteNome.value = "";
+              campoVisitanteTelefone.value = "";
+              renderizarFilaVisitantes();
+              renderizarControleVisitantesAnteriores();
+              campoLista.innerHTML = '<div class="vazio">Use o filtro acima e selecione a reunião existente para visualizar ou editar os dados.</div>';
+              if (cardVisitantesReuniao) cardVisitantesReuniao.classList.add("oculto");
+              if (listaVisitantesReuniao) listaVisitantesReuniao.innerHTML = "";
+              atualizarResumo();
+              atualizarModo();
+              return;
+            }
+          }
+
+          mostrarMensagem("Salvando presença...", "#2563eb", false);
+          const resposta = await fetch(apiPresencas, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              data: campoData.value,
+              dataOriginal: dataOriginalEdicao || campoData.value,
+              celula: celulaAlvoLancamento(),
+              nivelUsuario,
+              registros
+            })
+          });
+          const dados = await resposta.json().catch(() => ({}));
+          if (!resposta.ok) throw new Error(dados.erro || "Erro ao salvar presença.");
+
+          const dataSalva = campoData.value;
+          const celulaSalva = nomeCelulaExibicao(celulaAlvoLancamento());
+
+          modo = "consulta";
+          dataOriginalEdicao = dataSalva;
+          visitantesAnterioresLiberados = false;
+          idsVisitantesAnterioresPermitidos = new Set();
+          renderizarControleVisitantesAnteriores();
+          boxVisitante.classList.remove("ativo");
+          campoDataFinal.value = dataSalva;
+
+          // A reunião recém-salva continua selecionada. Assim o líder pode corrigir
+          // imediatamente um lançamento sem precisar fazer uma nova consulta.
+          reuniaoSelecionada = {
+            data: dataSalva,
+            celula: celulaSalva,
+            total: membrosFiltrados.length,
+            presentes: registros.filter((r) => r.status === "presente").length
+          };
+
+          await carregarPresencasData();
+          filtrarMembrosPorCelula();
+
+          if (campoDataInicial.value && campoDataFinal.value) {
+            await carregarReunioesRegistradas(false);
+            const indiceSalvo = reunioesRegistradas.findIndex((r) =>
+              r.data === dataSalva &&
+              normalizarNomeCelula(r.celula) === normalizarNomeCelula(celulaSalva)
+            );
+            if (indiceSalvo >= 0) {
+              await selecionarReuniaoRegistrada(indiceSalvo);
+            } else {
+              reuniaoSelecionada = { data: dataSalva, celula: celulaSalva };
+              dataOriginalEdicao = dataSalva;
+              campoData.value = dataSalva;
+              campoCelula.value = celulaSalva;
+              filtrarMembrosPorCelula();
+              atualizarModo();
+            }
+          } else {
+            atualizarModo();
+          }
+          mostrarMensagem("Presença salva com sucesso.", "#16a34a");
+        } catch (erro) {
+          mostrarMensagem(erro.message || "Erro ao salvar presença.");
+        }
+      }
+
+      async function excluirPresenca() {
+        if (!usuarioEhAdmin()) return mostrarMensagem("Somente administrador pode excluir presença.");
+        if (!reuniaoSelecionada || !reuniaoSelecionada.data || !reuniaoSelecionada.celula) {
+          return mostrarMensagem("Selecione uma reunião registrada antes de excluir.");
+        }
+
+        if (!(await validarPrazoOperacao(reuniaoSelecionada.data, "excluir"))) return;
+
+        const dataExibicao = reuniaoSelecionada.data.split("-").reverse().join("/");
+        const celulaExibicao = nomeCelulaExibicao(reuniaoSelecionada.celula);
+        const impacto = `Você está prestes a excluir a reunião de ${dataExibicao} — ${celulaExibicao}.\n\nEsta presença alimenta relatórios e painel. Ao excluir, esses indicadores deixarão de considerar somente esta reunião.\n\nDeseja realmente excluir esta reunião?`;
+        const confirmou = await abrirPopup(impacto, "atencao", "Confirmar exclusão", true);
+        if (!confirmou) return;
+
+        try {
+          const resposta = await fetch(`${apiPresencas}/reuniao/segura`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nivelUsuario,
+              data: reuniaoSelecionada.data,
+              celula: reuniaoSelecionada.celula
+            })
+          });
+          const dados = await resposta.json().catch(() => ({}));
+          if (!resposta.ok) throw new Error(dados.erro || "Erro ao excluir presença.");
+
+          reuniaoSelecionada = null;
+          dataOriginalEdicao = "";
+          presencas = {};
+          membrosFiltrados = [];
+          visitantesAnterioresLiberados = false;
+          idsVisitantesAnterioresPermitidos = new Set();
+          campoData.value = "";
+          campoCelula.value = usuarioEhLider() ? celulaPermitidaParaUsuario() : "";
+          renderizarControleVisitantesAnteriores();
+          renderizarMembros();
+          atualizarResumo();
+          await carregarReunioesRegistradas(false);
+          atualizarModo();
+          mostrarMensagem(dados.mensagem || "Reunião excluída com sucesso. Os dados excluídos deixarão de aparecer nos relatórios e no painel.", "#16a34a");
+        } catch (erro) {
+          mostrarMensagem(erro.message || "Erro ao excluir presença.");
+        }
+      }
+
+
+      async function arquivarVisitante(id) {
+        const visitante = todosMembros.find((m) => String(m.id) === String(id));
+        const nomeVisitante = visitante?.nome || "este visitante";
+
+        const confirmou = await abrirPopup(
+          `Arquivar ${nomeVisitante}?\n\nSomente este visitante será arquivado. Ele deixará de aparecer como visitante ativo, mas todo o histórico de presenças será preservado.`,
+          "atencao",
+          "Arquivar visitante",
+          true
+        );
+        if (!confirmou) return;
+
+        // v1.16: trava somente os controles desta lista enquanto a ação individual é processada.
+        const controles = listaVisitantesAnteriores
+          ? Array.from(listaVisitantesAnteriores.querySelectorAll("input, button"))
+          : [];
+        controles.forEach((controle) => { controle.disabled = true; });
+
+        try {
+          const dataArquivamento = campoData.value || hojeISO();
+          const resposta = await fetch(`${apiMembros}/visitante/${id}/arquivar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dataArquivamento })
+          });
+
+          const dados = await resposta.json().catch(() => ({}));
+          if (!resposta.ok) {
+            throw new Error(dados.erro || `Erro ao arquivar ${nomeVisitante}.`);
+          }
+
+          // Remove somente o visitante arquivado da seleção da reunião atual.
+          idsVisitantesAnterioresPermitidos.delete(String(id));
+          delete presencas[Number(id)];
+
+          // v1.17: remove somente o visitante arquivado da sessão atual.
+          // Não recarrega todosMembros aqui, pois em reunião histórica ele ainda é
+          // elegível pela regra temporal e voltaria a aparecer imediatamente.
+          todosMembros = todosMembros.filter((m) => String(m.id) !== String(id));
+          // Preserva os demais visitantes e suas marcações na sessão atual.
+          // Preserva os demais visitantes e suas marcações na sessão atual.
+          // Preserva os demais visitantes e suas marcações na sessão atual.
+          // Preserva os demais visitantes e suas marcações na sessão atual.
+          visitantesAnterioresLiberados = true;
+
+          renderizarControleVisitantesAnteriores();
+          filtrarMembrosPorCelula();
+          atualizarResumo();
+          mostrarMensagem(dados.mensagem || `${nomeVisitante} foi arquivado com sucesso.`, "#16a34a");
+        } catch (erro) {
+          renderizarControleVisitantesAnteriores();
+          mostrarMensagem(erro.message || `Erro ao arquivar ${nomeVisitante}.`);
+        }
+      }
+
+      function renderizarFilaVisitantes() {
+        if (!filaVisitantes) return;
+        if (!visitantesPendentesCadastro.length) {
+          filaVisitantes.style.display = "none";
+          filaVisitantes.innerHTML = "";
+          return;
+        }
+        filaVisitantes.style.display = "block";
+        filaVisitantes.innerHTML = `<strong>Visitantes para cadastrar:</strong><br>${visitantesPendentesCadastro.map((v, i) => `${i + 1}. ${v.nome} — ${v.telefone}`).join("<br>")}`;
+      }
+
+      function formatarTelefoneEntrada(valor) {
+        let d = String(valor || "").replace(/\D/g, "").slice(0, 11);
+        if (d.length <= 2) return d ? `(${d}` : "";
+        const ddd = d.slice(0, 2);
+        const n = d.slice(2);
+        if (n.length <= 4) return `(${ddd}) ${n}`;
+        if (n.length <= 8) return `(${ddd}) ${n.slice(0, 4)}-${n.slice(4)}`;
+        return `(${ddd}) ${n.slice(0, 5)}-${n.slice(5)}`;
+      }
+
+      function telefoneValido(valor) {
+        const d = String(valor || "").replace(/\D/g, "");
+        return d.length === 10 || d.length === 11;
+      }
+
+      function adicionarVisitanteNaFila() {
+        const nome = normalizarTexto(campoVisitanteNome.value);
+        const telefone = String(campoVisitanteTelefone.value || "").trim();
+        if (!campoData.value) return mostrarMensagem("Informe a data da reunião antes de cadastrar visitantes.");
+        if (!celulaAlvoLancamento()) return mostrarMensagem("Selecione a célula antes de cadastrar visitante.");
+        if (!nome) return mostrarMensagem("Informe o nome do visitante.");
+        if (!telefone) return mostrarMensagem("Informe o telefone do visitante.");
+        if (!telefoneValido(telefone)) return mostrarMensagem("Informe um telefone válido com DDD, no padrão (DDD) 99999-9999.");
+        const digitos = telefone.replace(/\D/g, "");
+        const duplicadoFila = visitantesPendentesCadastro.some((v) => String(v.telefone || "").replace(/\D/g, "") === digitos);
+        const duplicadoBase = todosMembros.some((m) => String(m.telefone || "").replace(/\D/g, "") === digitos);
+        if (duplicadoFila || duplicadoBase) return mostrarMensagem("Este telefone já está cadastrado ou já foi adicionado à lista de visitantes.");
+        visitantesPendentesCadastro.push({ nome, telefone: formatarTelefoneEntrada(telefone) });
+        campoVisitanteNome.value = "";
+        campoVisitanteTelefone.value = "";
+        renderizarFilaVisitantes();
+        atualizarEstadoBotoes();
+        campoVisitanteNome.focus();
+      }
+
+      async function cadastrarVisitante() {
+        // Se houver dados digitados, inclui o último visitante na fila antes de salvar todos.
+        if (String(campoVisitanteNome.value || "").trim() || String(campoVisitanteTelefone.value || "").trim()) {
+          const antes = visitantesPendentesCadastro.length;
+          adicionarVisitanteNaFila();
+          if (visitantesPendentesCadastro.length === antes) return;
+        }
+        if (!visitantesPendentesCadastro.length) return mostrarMensagem("Adicione pelo menos um visitante antes de salvar.");
+        if (!campoData.value) return mostrarMensagem("Informe a data da reunião antes de cadastrar visitantes.");
+        const celula = celulaAlvoLancamento();
+        if (!celula) return mostrarMensagem("Selecione a célula antes de cadastrar visitante.");
+
+        // Preserva integralmente a marcação já feita nos membros enquanto a lista é recarregada.
+        const presencasAntes = { ...presencas };
+        const cadastrados = [];
+        try {
+          for (const visitante of visitantesPendentesCadastro) {
+            const resposta = await fetch(`${apiMembros}/visitante`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                nome: visitante.nome,
+                telefone: visitante.telefone,
+                celula,
+                dataCadastro: campoData.value,
+                observacoes: `VISITANTE CADASTRADO PELA PRESENÇA EM ${campoData.value}`
+              })
+            });
+            const dados = await resposta.json().catch(() => ({}));
+            if (!resposta.ok) throw new Error(dados.erro || `Erro ao cadastrar ${visitante.nome}.`);
+            cadastrados.push(visitante.nome);
+          }
+
+          const respostaMembros = await fetch(apiMembros, { cache: "no-store" });
+          if (!respostaMembros.ok) throw new Error("Visitantes cadastrados, mas houve erro ao atualizar a lista de membros.");
+          todosMembros = await respostaMembros.json();
+          preencherSelectCelulas();
+          presencas = { ...presencasAntes };
+
+          // Os visitantes recém-cadastrados entram como presentes na reunião atual.
+          const nomes = new Set(cadastrados.map(normalizarTexto));
+          todosMembros.forEach((m) => {
+            if (membroEhVisitante(m) && normalizarNomeCelula(m.celula) === normalizarNomeCelula(celula) &&
+                obterDataCadastroMembro(m) === campoData.value && nomes.has(normalizarTexto(m.nome))) {
+              presencas[Number(m.id)] = "presente";
+            }
+          });
+
+          visitantesPendentesCadastro = [];
+          campoVisitanteNome.value = "";
+          campoVisitanteTelefone.value = "";
+          boxVisitante.classList.remove("ativo");
+          renderizarFilaVisitantes();
+          filtrarMembrosPorCelula();
+          mostrarMensagem(`${cadastrados.length} visitante(s) cadastrado(s) como cadastro pendente. Complete os dados depois na tela Membros.`, "#16a34a");
+        } catch (erro) {
+          presencas = presencasAntes;
+          mostrarMensagem(erro.message || "Erro ao cadastrar visitante.");
+        }
+      }
+
+      function limparFiltroConsulta() {
+        // Volta a tela para o mesmo estado inicial, independentemente de ter vindo
+        // de uma consulta, inclusão ou edição de reunião.
+        modo = "consulta";
+        campoDataInicial.value = "";
+        campoDataFinal.value = "";
+        if (campoFiltroCelula && !usuarioEhLider()) campoFiltroCelula.value = "";
+
+        reuniaoSelecionada = null;
+        reunioesRegistradas = [];
+        dataOriginalEdicao = "";
+        presencas = {};
+        membrosFiltrados = [];
+        visitantesAnterioresLiberados = false;
+        idsVisitantesAnterioresPermitidos = new Set();
+        visitantesPendentesCadastro = [];
+        consultaVisitantesContexto = "";
+
+        campoData.value = "";
+        campoCelula.value = usuarioEhLider() ? celulaPermitidaParaUsuario() : "";
+
+        // Limpa também qualquer conteúdo operacional que tenha ficado da reunião anterior.
+        boxVisitante.classList.remove("ativo");
+        campoVisitanteNome.value = "";
+        campoVisitanteTelefone.value = "";
+        renderizarFilaVisitantes();
+        renderizarControleVisitantesAnteriores();
+
+        campoLista.innerHTML = '<div class="vazio">Clique em Incluir para lançar uma nova reunião ou use o filtro acima para consultar o histórico.</div>';
+        document.getElementById("totalMembros").textContent = "0 membro(s)";
+        document.getElementById("totalPresentes").textContent = "0 presente(s)";
+        document.getElementById("totalAusentes").textContent = "0 ausente(s)";
+        document.getElementById("totalPendentes").textContent = "0 pendente(s)";
+        const totalVisitantes = document.getElementById("totalVisitantes");
+        if (totalVisitantes) { totalVisitantes.textContent = "0 visitante(s)"; totalVisitantes.style.display = "none"; }
+        if (cardVisitantesReuniao) cardVisitantesReuniao.classList.add("oculto");
+        if (listaVisitantesReuniao) listaVisitantesReuniao.innerHTML = "";
+
+        if (listaReunioes) {
+          listaReunioes.innerHTML = '<div class="vazio">Escolha Hoje, 7 dias, 30 dias ou informe um período e clique em Filtrar.</div>';
+        }
+        if (cardReunioes) cardReunioes.classList.add("oculto");
+
+        atualizarModo();
+        mostrarMensagem("Filtros e dados da reunião foram limpos.", "#64748b", false);
+      }
+
+      document.getElementById("btnSair").addEventListener("click", sair);
+      document.getElementById("btnHoje").addEventListener("click", () => definirPeriodo(1));
+      document.getElementById("btn7dias").addEventListener("click", () => definirPeriodo(7));
+      document.getElementById("btn30dias").addEventListener("click", () => definirPeriodo(30));
+      document.getElementById("btnLimparFiltro").addEventListener("click", limparFiltroConsulta);
+      document.getElementById("btnFiltrar").addEventListener("click", async () => {
+        if (!campoDataInicial.value || !campoDataFinal.value) return mostrarMensagem("Informe a data inicial e a data final para filtrar.");
+        if (campoDataInicial.value > campoDataFinal.value) return mostrarMensagem("A data inicial não pode ser maior que a data final.");
+        limparDetalhesReuniaoConsultada();
+        const filtroCarregado = await carregarReunioesRegistradas();
+        if (filtroCarregado) {
+          mostrarMensagem("Filtro aplicado com sucesso.", "#16a34a", false);
+        } else {
+          mostrarMensagem("Não foi possível aplicar o filtro. Tente novamente.");
+        }
+      });
+      document.getElementById("btnIncluir").addEventListener("click", () => prepararLancamento("inclusao"));
+      document.getElementById("btnEditar").addEventListener("click", () => prepararLancamento("edicao"));
+      document.getElementById("btnExcluirPresenca")?.addEventListener("click", excluirPresenca);
+
+      document.getElementById("btnCancelar").addEventListener("click", async () => {
+        if (modo === "edicao" && reuniaoSelecionada?.data) {
+          const reuniao = { ...reuniaoSelecionada };
+          modo = "consulta";
+          dataOriginalEdicao = reuniao.data;
+          visitantesPendentesCadastro = [];
+          consultaVisitantesContexto = "";
+          boxVisitante.classList.remove("ativo");
+          campoVisitanteNome.value = "";
+          campoVisitanteTelefone.value = "";
+          renderizarFilaVisitantes();
+          campoData.value = reuniao.data;
+          campoCelula.value = reuniao.celula;
+          await carregarPresencasData();
+          idsVisitantesAnterioresPermitidos = new Set(
+            todosMembros
+              .filter((m) =>
+                membroEhVisitante(m) &&
+                normalizarNomeCelula(m.celula) === normalizarNomeCelula(reuniao.celula) &&
+                Object.prototype.hasOwnProperty.call(presencas, Number(m.id))
+              )
+              .map((m) => String(m.id))
+          );
+          visitantesAnterioresLiberados = false;
+          filtrarMembrosPorCelula();
+          renderizarControleVisitantesAnteriores();
+          renderizarReunioesRegistradas();
+          atualizarModo();
+          mostrarMensagem("Edição cancelada. A reunião original permanece carregada para consulta, nova edição ou exclusão.", "#64748b", false);
+          return;
+        }
+
+        modo = "consulta";
+        reuniaoSelecionada = null;
+        dataOriginalEdicao = "";
+        presencas = {};
+        membrosFiltrados = [];
+        visitantesAnterioresLiberados = false;
+        idsVisitantesAnterioresPermitidos = new Set();
+        visitantesPendentesCadastro = [];
+        consultaVisitantesContexto = "";
+        campoData.value = "";
+        campoCelula.value = usuarioEhLider() ? celulaPermitidaParaUsuario() : "";
+        boxVisitante.classList.remove("ativo");
+        campoVisitanteNome.value = "";
+        campoVisitanteTelefone.value = "";
+        renderizarFilaVisitantes();
+        renderizarControleVisitantesAnteriores();
+        campoLista.innerHTML = '<div class="vazio">Clique em Incluir para lançar uma nova reunião ou use o filtro acima para consultar o histórico.</div>';
+        if (cardVisitantesReuniao) cardVisitantesReuniao.classList.add("oculto");
+        if (listaVisitantesReuniao) listaVisitantesReuniao.innerHTML = "";
+        atualizarResumo();
+        atualizarModo();
+        mostrarMensagem("Inclusão cancelada. Os dados não foram gravados.", "#64748b", false);
       });
 
-      if (resposta.ok) {
-        mensagem.textContent = 'Presença salva com sucesso.';
-        mensagem.style.color = '#16a34a';
-      } else {
-        mensagem.textContent = 'Erro ao salvar presença.';
-        mensagem.style.color = '#dc2626';
+      document.getElementById("btnSalvar").addEventListener("click", salvarPresencas);
+      document.getElementById("btnVisitante").addEventListener("click", () => {
+        if (modo === "consulta") return mostrarMensagem("Clique em Incluir antes de cadastrar visitante.");
+        if (!campoData.value) return mostrarMensagem("Informe a data da reunião antes de cadastrar visitantes.");
+        if (!celulaAlvoLancamento()) return mostrarMensagem("Selecione a célula antes de cadastrar visitantes.");
+        boxVisitante.classList.toggle("ativo");
+        atualizarEstadoBotoes();
+      });
+      document.getElementById("btnAdicionarVisitante").addEventListener("click", adicionarVisitanteNaFila);
+      document.getElementById("btnSalvarVisitante").addEventListener("click", cadastrarVisitante);
+      document.getElementById("btnCancelarVisitante").addEventListener("click", () => {
+        boxVisitante.classList.remove("ativo");
+        campoVisitanteNome.value = "";
+        campoVisitanteTelefone.value = "";
+        visitantesPendentesCadastro = [];
+        renderizarFilaVisitantes();
+        atualizarEstadoBotoes();
+      });
+      campoVisitanteNome?.addEventListener("input", atualizarEstadoBotoes);
+      campoVisitanteTelefone?.addEventListener("input", () => {
+        campoVisitanteTelefone.value = formatarTelefoneEntrada(campoVisitanteTelefone.value);
+        atualizarEstadoBotoes();
+      });
+      document.getElementById("btnMarcarTodos").addEventListener("click", () => marcarTodosComo(true));
+      document.getElementById("btnDesmarcarTodos").addEventListener("click", () => marcarTodosComo(false));
+      document.getElementById("btnLimpar").addEventListener("click", () => marcarTodosComo(false));
+
+      campoData.addEventListener("change", async () => {
+        if (campoData.value && campoData.value > hojeISO()) {
+          await abrirPopup("Não é permitido selecionar uma data futura para a reunião.", "erro", "Data futura");
+          campoData.value = "";
+          filtrarMembrosPorCelula();
+          return;
+        }
+        if (modo !== "consulta") {
+          consultaVisitantesContexto = "";
+          filtrarMembrosPorCelula();
+          await verificarVisitantesAnterioresSePossivel();
+          renderizarControleVisitantesAnteriores();
+        }
+      });
+      campoDataInicial.addEventListener("change", () => { reuniaoSelecionada = null; mostrarMensagem("Filtro alterado. Clique em Filtrar para aplicar.", "#64748b", false); });
+      campoDataFinal.addEventListener("change", () => { reuniaoSelecionada = null; if (modo === "consulta") campoData.value = campoDataFinal.value; mostrarMensagem("Filtro alterado. Clique em Filtrar para aplicar.", "#64748b", false); });
+      campoFiltroCelula?.addEventListener("change", () => { reuniaoSelecionada = null; if (modo === "consulta") campoCelula.value = campoFiltroCelula.value || ""; filtrarMembrosPorCelula(); mostrarMensagem("Filtro alterado. Clique em Filtrar para aplicar.", "#64748b", false); });
+      campoCelula.addEventListener("change", async () => {
+        reuniaoSelecionada = null;
+        consultaVisitantesContexto = "";
+        filtrarMembrosPorCelula();
+        await verificarVisitantesAnterioresSePossivel();
+      });
+      listaReunioes?.addEventListener("click", async (evento) => {
+        const item = evento.target.closest(".reuniao-item");
+        if (!item) return;
+        await selecionarReuniaoRegistrada(item.dataset.index);
+      });
+      campoLista.addEventListener("change", (evento) => {
+        const checkbox = evento.target.closest(".check-presenca");
+        if (!checkbox) return;
+        if (modo === "consulta") {
+          checkbox.checked = !checkbox.checked;
+          return mostrarMensagem("Clique em Incluir ou Editar antes de alterar presença.");
+        }
+        if (!validarVisitanteAberto()) {
+          checkbox.checked = !checkbox.checked;
+          return;
+        }
+        presencas[Number(checkbox.dataset.id)] = checkbox.checked ? "presente" : "ausente";
+        renderizarMembros();
+        atualizarResumo();
+      });
+      listaVisitantesReuniao?.addEventListener("change", (evento) => {
+        const checkbox = evento.target.closest(".check-presenca");
+        if (!checkbox) return;
+        if (modo === "consulta") { checkbox.checked = !checkbox.checked; return; }
+        presencas[Number(checkbox.dataset.id)] = checkbox.checked ? "presente" : "ausente";
+        renderizarMembros();
+        atualizarResumo();
+      });
+
+      listaVisitantesAnteriores?.addEventListener("click", async (evento) => {
+        const botaoArquivar = evento.target.closest(".btn-arquivar-visitante");
+        if (!botaoArquivar) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        await arquivarVisitante(botaoArquivar.dataset.id);
+      });
+
+      listaVisitantesAnteriores?.addEventListener("change", (evento) => {
+        const check = evento.target.closest(".check-visitante-anterior");
+        if (!check) return;
+
+        if (check.checked) {
+          idsVisitantesAnterioresPermitidos.add(String(check.value));
+          presencas[Number(check.value)] = "presente";
+        } else {
+          idsVisitantesAnterioresPermitidos.delete(String(check.value));
+          delete presencas[Number(check.value)];
+        }
+
+        filtrarMembrosPorCelula();
+        renderizarControleVisitantesAnteriores();
+      });
+
+      async function iniciarTela() {
+        campoDataInicial.value = "";
+        campoDataFinal.value = "";
+        campoData.value = "";
+
+        if (listaReunioes) {
+          listaReunioes.innerHTML = '<div class="vazio">Escolha Hoje, 7 dias, 30 dias ou informe um período e clique em Filtrar.</div>';
+        }
+
+        if (campoMsgTopo) {
+          campoMsgTopo.textContent = "Escolha Hoje, 7 dias, 30 dias ou informe um período e clique em Filtrar.";
+          campoMsgTopo.className = "msg-topo neutro";
+        }
+
+        if (usuarioEhLider()) {
+          await garantirCelulaDoUsuario();
+          campoUsuario.textContent = `Usuário: ${nomeUsuario} | Nível: ${nivelUsuario} | Célula: ${celulaPermitidaParaUsuario() || "não vinculada"}`;
+        } else {
+          campoUsuario.textContent = `Usuário: ${nomeUsuario} | Nível: ${nivelUsuario}`;
+        }
+
+        atualizarModo();
+        await carregarMembros();
       }
-    }
 
-    document.getElementById('dataReuniao').addEventListener('change', carregarPresencasDaData);
-
-    definirDataHoje();
-    carregarMembros();
+      iniciarTela();
+    });
   </script>
+<script src="menu-modulos.js"></script>
 </body>
-<script>
-  if (localStorage.getItem('logado') !== 'sim') {
-    window.location.href = 'login.html';
-  }
-
-  function sair() {
-    localStorage.removeItem('logado');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-  }
-</script>
 </html>
