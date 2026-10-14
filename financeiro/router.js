@@ -61,9 +61,14 @@ function criarFinanceiro(pool) {
  router.get('/api/sessao',run(async(req,res)=>res.json({usuario:req.user})));
  router.get('/api/cadastros',run(async(req,res)=>{
   const allowed=await alcance(req,'consultar');
-  const unidades=await pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]);
-  const contas=await pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed]);
-  res.json({usuario:req.user,unidades:unidades.rows,contas:contas.rows,categorias:(await pool.query('SELECT * FROM fin_categorias ORDER BY nome')).rows,fornecedores:(await pool.query('SELECT * FROM fin_fornecedores ORDER BY nome')).rows,permissoes:{lancar:await alcance(req,'lancar'),liquidar:await alcance(req,'liquidar'),estornar:await alcance(req,'estornar')}});
+  const [unidades,contas,categorias,fornecedores,lancar,liquidar,estornar]=await Promise.all([
+   pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]),
+   pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed]),
+   pool.query('SELECT * FROM fin_categorias ORDER BY nome'),
+   pool.query('SELECT * FROM fin_fornecedores ORDER BY nome'),
+   alcance(req,'lancar'),alcance(req,'liquidar'),alcance(req,'estornar')
+  ]);
+  res.json({usuario:req.user,unidades:unidades.rows,contas:contas.rows,categorias:categorias.rows,fornecedores:fornecedores.rows,permissoes:{lancar,liquidar,estornar}});
  }));
  router.post('/api/unidades',run(async(req,res)=>{admin(req);const b=req.body;const nome=texto(b.nome),tipo=b.tipo;if(!['igreja','campus','rede'].includes(tipo))throw fail(400,'Tipo de unidade inválido.');const pai=b.pai_id?id(b.pai_id):null;
   if(tipo!=='igreja'&&!pai)throw fail(400,'Informe a unidade superior.');
