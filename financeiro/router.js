@@ -23,13 +23,24 @@ function criarFinanceiro(pool) {
  }
  async function tx(fn) {const c=await pool.connect();try{await c.query('BEGIN');const out=await fn(c);await c.query('COMMIT');return out;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
  async function autenticar(req,res,next) {
+  const diagnostico = req.method==='GET' && req.path==='/cadastros';
+  const inicioAutenticacao = diagnostico ? process.hrtime.bigint() : null;
+  let etapa = diagnostico ? process.hrtime.bigint() : null;
   try {
    const token=String(req.headers.authorization||'').replace(/^Bearer /,'');const session=sessions.get(token);
    if(!session||session.expires<Date.now()) {sessions.delete(token);throw fail(401,'Entre novamente no financeiro.');}
    const r=await pool.query('SELECT id,nome,nivel FROM usuarios WHERE id=$1',[session.id]);
+   if(diagnostico) {
+    req.finDiag = {autenticacaoUsuarioMs:Number(process.hrtime.bigint()-etapa)/1e6};
+    etapa=process.hrtime.bigint();
+   }
    if(!r.rows[0])throw fail(401,'Usuário não encontrado.');
    req.user=r.rows[0];req.user.admin=D.normalizarPerfil(req.user.nivel)==='admin';
    req.grants=(await pool.query('SELECT * FROM fin_acessos WHERE usuario_id=$1 AND ativo=TRUE',[req.user.id])).rows;
+   if(diagnostico) {
+    req.finDiag.permissoesUsuarioMs=Number(process.hrtime.bigint()-etapa)/1e6;
+    req.finDiag.autenticacaoTotalMs=Number(process.hrtime.bigint()-inicioAutenticacao)/1e6;
+   }
    if(!req.user.admin&&!req.grants.length)throw fail(403,'Acesso financeiro não concedido.');
    next();
   }catch(e){next(e);}
@@ -60,14 +71,27 @@ function criarFinanceiro(pool) {
  router.post('/api/logout',run(async(req,res)=>{sessions.delete(String(req.headers.authorization||'').replace(/^Bearer /,''));res.json({ok:true});}));
  router.get('/api/sessao',run(async(req,res)=>res.json({usuario:req.user})));
  router.get('/api/cadastros',run(async(req,res)=>{
-  const allowed=await alcance(req,'consultar');
+  const inicio=process.hrtime.bigint();
+  const medidas={};
+  const medir=async(nome,promessa)=>{
+   const t=process.hrtime.bigint();
+   try{return await promessa;}
+   finally{medidas[nome]=Number((Number(process.hrtime.bigint()-t)/1e6).toFixed(1));}
+  };
+  const allowed=await medir('alcanceConsultarMs',alcance(req,'consultar'));
   const [unidades,contas,categorias,fornecedores,lancar,liquidar,estornar]=await Promise.all([
-   pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]),
-   (req.query.sem_saldos==='1'?pool.query('SELECT c.* FROM fin_contas c WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) ORDER BY c.nome',[allowed]):pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed])),
-   pool.query('SELECT * FROM fin_categorias ORDER BY nome'),
-   pool.query('SELECT * FROM fin_fornecedores ORDER BY nome'),
-   alcance(req,'lancar'),alcance(req,'liquidar'),alcance(req,'estornar')
+   medir('unidadesMs',pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed])),
+   medir('contasMs',(req.query.sem_saldos==='1'?pool.query('SELECT c.* FROM fin_contas c WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) ORDER BY c.nome',[allowed]):pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed]))),
+   medir('categoriasMs',pool.query('SELECT * FROM fin_categorias ORDER BY nome')),
+   medir('fornecedoresMs',pool.query('SELECT * FROM fin_fornecedores ORDER BY nome')),
+   medir('alcanceLancarMs',alcance(req,'lancar')),medir('alcanceLiquidarMs',alcance(req,'liquidar')),medir('alcanceEstornarMs',alcance(req,'estornar'))
   ]);
+  console.info('[FIN-DIAG] '+JSON.stringify({
+   rota:'GET /financeiro/api/cadastros',
+   semSaldos:req.query.sem_saldos==='1',
+   ...(req.finDiag||{}),...medidas,
+   cadastrosTotalMs:Number((Number(process.hrtime.bigint()-inicio)/1e6).toFixed(1))
+  }));
   res.json({usuario:req.user,unidades:unidades.rows,contas:contas.rows,categorias:categorias.rows,fornecedores:fornecedores.rows,permissoes:{lancar,liquidar,estornar}});
  }));
  router.post('/api/unidades',run(async(req,res)=>{admin(req);const b=req.body;const nome=texto(b.nome),tipo=b.tipo;if(!['igreja','campus','rede'].includes(tipo))throw fail(400,'Tipo de unidade inválido.');const pai=b.pai_id?id(b.pai_id):null;
