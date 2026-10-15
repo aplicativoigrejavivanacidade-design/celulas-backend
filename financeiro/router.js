@@ -63,7 +63,7 @@ function criarFinanceiro(pool) {
   const allowed=await alcance(req,'consultar');
   const [unidades,contas,categorias,fornecedores,lancar,liquidar,estornar]=await Promise.all([
    pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]),
-   pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed]),
+   (req.query.sem_saldos==='1'?pool.query('SELECT c.* FROM fin_contas c WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) ORDER BY c.nome',[allowed]):pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed])),
    pool.query('SELECT * FROM fin_categorias ORDER BY nome'),
    pool.query('SELECT * FROM fin_fornecedores ORDER BY nome'),
    alcance(req,'lancar'),alcance(req,'liquidar'),alcance(req,'estornar')
