@@ -545,7 +545,7 @@ app.post("/login", async (req, res) => {
     return res.json({
       sucesso: true,
       usuario: (({senha, ...usuario}) => usuario)(result.rows[0]),
-      ...(moduloFinanceiro ? {token: moduloFinanceiro.criarSessao(result.rows[0].id)} : {})
+      ...(moduloFinanceiro ? {token: await moduloFinanceiro.criarSessao(result.rows[0].id)} : {})
     });
   } catch (erro) {
     console.error("Erro no login:", erro.message);
