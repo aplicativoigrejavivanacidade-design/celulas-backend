@@ -30,11 +30,19 @@ function criarFinanceiro(pool) {
    const tokenHash=hashToken(token);
    // Usuário e permissões na mesma ida ao banco. Não armazenar autorizações em cache:
    // alterações/revogações continuam valendo na próxima requisição.
-   const r=await pool.query(`SELECT u.id,u.nome,u.nivel,
-     COALESCE((SELECT json_agg(a) FROM fin_acessos a
-       WHERE a.usuario_id=u.id AND a.ativo=TRUE),'[]'::json) AS fin_grants
-     FROM usuarios u JOIN fin_sessoes s ON s.usuario_id=u.id
-      WHERE s.token_hash=$1 AND s.expira_em>NOW()`,[tokenHash]);
+   // Renovação deslizante: apenas sessões ainda válidas e próximas do vencimento.
+   // A validação e a renovação ocorrem na mesma consulta ao banco.
+   const r=await pool.query(`WITH sessao_valida AS (
+       UPDATE fin_sessoes
+          SET expira_em = CASE WHEN expira_em < NOW() + INTERVAL '30 minutes'
+                               THEN NOW() + INTERVAL '1 hour' ELSE expira_em END
+        WHERE token_hash=$1 AND expira_em>NOW()
+        RETURNING usuario_id
+     )
+     SELECT u.id,u.nome,u.nivel,
+       COALESCE((SELECT json_agg(a) FROM fin_acessos a
+         WHERE a.usuario_id=u.id AND a.ativo=TRUE),'[]'::json) AS fin_grants
+     FROM sessao_valida s JOIN usuarios u ON u.id=s.usuario_id`,[tokenHash]);
    if(diagInicio!==null)req.finDiagAuthMs=Number(process.hrtime.bigint()-diagInicio)/1e6;
    if(!r.rows[0])throw fail(401,'Sua sessão expirou. Entre novamente no financeiro.');
    const {fin_grants,...usuario}=r.rows[0];
