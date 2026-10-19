@@ -24,6 +24,7 @@ function criarFinanceiro(pool) {
  async function tx(fn) {const c=await pool.connect();try{await c.query('BEGIN');const out=await fn(c);await c.query('COMMIT');return out;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
  async function autenticar(req,res,next) {
   try {
+   const diagInicio=req.method==='GET' && req.path==='/cadastros' ? process.hrtime.bigint() : null;
    const token=String(req.headers.authorization||'').replace(/^Bearer /,'');
    if(!/^[0-9a-f]{64}$/.test(token))throw fail(401,'Entre novamente no financeiro.');
    const tokenHash=hashToken(token);
@@ -34,6 +35,7 @@ function criarFinanceiro(pool) {
        WHERE a.usuario_id=u.id AND a.ativo=TRUE),'[]'::json) AS fin_grants
      FROM usuarios u JOIN fin_sessoes s ON s.usuario_id=u.id
       WHERE s.token_hash=$1 AND s.expira_em>NOW()`,[tokenHash]);
+   if(diagInicio!==null)req.finDiagAuthMs=Number(process.hrtime.bigint()-diagInicio)/1e6;
    if(!r.rows[0])throw fail(401,'Sua sessão expirou. Entre novamente no financeiro.');
    const {fin_grants,...usuario}=r.rows[0];
    req.user=usuario;req.user.admin=D.normalizarPerfil(req.user.nivel)==='admin';
@@ -67,14 +69,22 @@ function criarFinanceiro(pool) {
  router.post('/api/logout',run(async(req,res)=>{const token=String(req.headers.authorization||'').replace(/^Bearer /,'');await pool.query('DELETE FROM fin_sessoes WHERE token_hash=$1',[hashToken(token)]);res.json({ok:true});}));
  router.get('/api/sessao',run(async(req,res)=>res.json({usuario:req.user})));
  router.get('/api/cadastros',run(async(req,res)=>{
-  const allowed=await alcance(req,'consultar');
+  const inicio=process.hrtime.bigint();
+  const medicao={};
+  const medir=async(nome,operacao)=>{
+   const t=process.hrtime.bigint();
+   try{return await operacao();}
+   finally{medicao[nome]=Math.round(Number(process.hrtime.bigint()-t)/1e6);}
+  };
+  const allowed=await medir('alcance_consultar',()=>alcance(req,'consultar'));
   const [unidades,contas,categorias,fornecedores,lancar,liquidar,estornar]=await Promise.all([
-   pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed]),
-   (req.query.sem_saldos==='1'?pool.query('SELECT c.* FROM fin_contas c WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) ORDER BY c.nome',[allowed]):pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed])),
-   pool.query('SELECT * FROM fin_categorias ORDER BY nome'),
-   pool.query('SELECT * FROM fin_fornecedores ORDER BY nome'),
-   alcance(req,'lancar'),alcance(req,'liquidar'),alcance(req,'estornar')
+   medir('unidades',()=>pool.query('SELECT * FROM fin_unidades WHERE ativo=TRUE AND ($1::int[] IS NULL OR id=ANY($1::int[])) ORDER BY nome',[allowed])),
+   medir('contas',()=>req.query.sem_saldos==='1'?pool.query('SELECT c.* FROM fin_contas c WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) ORDER BY c.nome',[allowed]):pool.query('SELECT c.*, c.saldo_inicial+COALESCE(SUM(CASE WHEN k.tipo=\'receber\' THEN l.efetivo ELSE -l.efetivo END) FILTER(WHERE l.estornado_em IS NULL),0) AS saldo FROM fin_contas c LEFT JOIN fin_liquidacoes l ON l.conta_id=c.id LEFT JOIN fin_titulos t ON t.id=l.titulo_id LEFT JOIN fin_contratos k ON k.id=t.contrato_id WHERE c.ativo=TRUE AND ($1::int[] IS NULL OR c.unidade_id=ANY($1::int[])) GROUP BY c.id ORDER BY c.nome',[allowed])),
+   medir('categorias',()=>pool.query('SELECT * FROM fin_categorias ORDER BY nome')),
+   medir('fornecedores',()=>pool.query('SELECT * FROM fin_fornecedores ORDER BY nome')),
+   medir('alcance_lancar',()=>alcance(req,'lancar')),medir('alcance_liquidar',()=>alcance(req,'liquidar')),medir('alcance_estornar',()=>alcance(req,'estornar'))
   ]);
+  console.info('[FIN-DIAG v0.7.3] cadastros',JSON.stringify({sem_saldos:req.query.sem_saldos==='1',autenticacao_ms:Math.round(req.finDiagAuthMs||0),etapas_ms:medicao,endpoint_ms:Math.round(Number(process.hrtime.bigint()-inicio)/1e6)}));
   res.json({usuario:req.user,unidades:unidades.rows,contas:contas.rows,categorias:categorias.rows,fornecedores:fornecedores.rows,permissoes:{lancar,liquidar,estornar}});
  }));
  router.post('/api/unidades',run(async(req,res)=>{admin(req);const b=req.body;const nome=texto(b.nome),tipo=b.tipo;if(!['igreja','campus','rede'].includes(tipo))throw fail(400,'Tipo de unidade inválido.');const pai=b.pai_id?id(b.pai_id):null;
