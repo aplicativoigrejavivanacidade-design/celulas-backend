@@ -10,11 +10,11 @@ const texto = (v,max=200) => {if(typeof v!=='string'||!v.trim()||v.length>max)th
 const optional = (v,max=1000) => v==null||v===''?'':texto(v,max);
 const fail = (status,message) => Object.assign(new Error(message),{status});
 function criarFinanceiro(pool) {
- const router=express.Router(), sessions=new Map(), attempts=new Map();
- function criarSessao(usuarioId) {
-  for(const [k,v] of sessions) if(v.expires<Date.now()) sessions.delete(k);
+ const router=express.Router(), attempts=new Map();
+ const hashToken=token=>crypto.createHash('sha256').update(token).digest('hex');
+ async function criarSessao(usuarioId) {
   const token=crypto.randomBytes(32).toString('hex');
-  sessions.set(token,{id:usuarioId,expires:Date.now()+3600000});
+  await pool.query("INSERT INTO fin_sessoes(token_hash,usuario_id,expira_em) VALUES($1,$2,NOW()+INTERVAL '1 hour')",[hashToken(token),usuarioId]);
   return token;
  }
  const run=fn=>(req,res,next)=>Promise.resolve(fn(req,res)).catch(next);
@@ -24,15 +24,17 @@ function criarFinanceiro(pool) {
  async function tx(fn) {const c=await pool.connect();try{await c.query('BEGIN');const out=await fn(c);await c.query('COMMIT');return out;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
  async function autenticar(req,res,next) {
   try {
-   const token=String(req.headers.authorization||'').replace(/^Bearer /,'');const session=sessions.get(token);
-   if(!session||session.expires<Date.now()) {sessions.delete(token);throw fail(401,'Entre novamente no financeiro.');}
+   const token=String(req.headers.authorization||'').replace(/^Bearer /,'');
+   if(!/^[0-9a-f]{64}$/.test(token))throw fail(401,'Entre novamente no financeiro.');
+   const tokenHash=hashToken(token);
    // Usuário e permissões na mesma ida ao banco. Não armazenar autorizações em cache:
    // alterações/revogações continuam valendo na próxima requisição.
    const r=await pool.query(`SELECT u.id,u.nome,u.nivel,
      COALESCE((SELECT json_agg(a) FROM fin_acessos a
        WHERE a.usuario_id=u.id AND a.ativo=TRUE),'[]'::json) AS fin_grants
-     FROM usuarios u WHERE u.id=$1`,[session.id]);
-   if(!r.rows[0])throw fail(401,'Usuário não encontrado.');
+     FROM usuarios u JOIN fin_sessoes s ON s.usuario_id=u.id
+      WHERE s.token_hash=$1 AND s.expira_em>NOW()`,[tokenHash]);
+   if(!r.rows[0])throw fail(401,'Sua sessão expirou. Entre novamente no financeiro.');
    const {fin_grants,...usuario}=r.rows[0];
    req.user=usuario;req.user.admin=D.normalizarPerfil(req.user.nivel)==='admin';
    req.grants=fin_grants;
@@ -57,13 +59,12 @@ function criarFinanceiro(pool) {
   const r=await pool.query('SELECT id,nome,nivel FROM usuarios WHERE usuario=$1 AND senha=$2',[usuario,senha]);
   if(!r.rows[0]){const n=a&&a.until>Date.now()?a.n+1:1;attempts.set(key,{n,until:Date.now()+900000,lock:n>=5?Date.now()+900000:0});throw fail(401,'Usuário ou senha inválidos.');}
   const u=r.rows[0];if(D.normalizarPerfil(u.nivel)!=='admin'&&!(await pool.query('SELECT 1 FROM fin_acessos WHERE usuario_id=$1 AND ativo=TRUE LIMIT 1',[u.id])).rowCount)throw fail(403,'Acesso financeiro não concedido.');
-  attempts.delete(key);const token=criarSessao(u.id);
-  for(const [k,v] of sessions)if(v.expires<Date.now())sessions.delete(k);
+  attempts.delete(key);const token=await criarSessao(u.id);
   for(const [k,v] of attempts)if(v.until<Date.now()&&v.lock<Date.now())attempts.delete(k);
   res.set('Cache-Control','no-store');res.json({token,usuario:{...u,admin:D.normalizarPerfil(u.nivel)==='admin'}});
  }));
  router.use('/api',autenticar,(req,res,next)=>{res.set('Cache-Control','no-store');next();});
- router.post('/api/logout',run(async(req,res)=>{sessions.delete(String(req.headers.authorization||'').replace(/^Bearer /,''));res.json({ok:true});}));
+ router.post('/api/logout',run(async(req,res)=>{const token=String(req.headers.authorization||'').replace(/^Bearer /,'');await pool.query('DELETE FROM fin_sessoes WHERE token_hash=$1',[hashToken(token)]);res.json({ok:true});}));
  router.get('/api/sessao',run(async(req,res)=>res.json({usuario:req.user})));
  router.get('/api/cadastros',run(async(req,res)=>{
   const allowed=await alcance(req,'consultar');
@@ -104,6 +105,14 @@ function criarFinanceiro(pool) {
  router.post('/api/liquidacoes/:id/estornar',run(async(req,res)=>{const motivo=texto(req.body.motivo,500);await tx(async c=>{const l=(await c.query('SELECT l.*,k.unidade_id FROM fin_liquidacoes l JOIN fin_titulos t ON t.id=l.titulo_id JOIN fin_contratos k ON k.id=t.contrato_id WHERE l.id=$1',[id(req.params.id)])).rows[0];if(!l)throw fail(404,'Liquidação não encontrada.');await permitir(req,'estornar',l.unidade_id);const conta=(await c.query('SELECT unidade_id FROM fin_contas WHERE id=$1',[l.conta_id])).rows[0];await permitir(req,'estornar',conta.unidade_id);await c.query('SELECT id FROM fin_titulos WHERE id=$1 FOR UPDATE',[l.titulo_id]);const r=await c.query('UPDATE fin_liquidacoes SET estornado_em=NOW(),estornado_por=$1,motivo_estorno=$2 WHERE id=$3 AND estornado_em IS NULL RETURNING id',[req.user.id,motivo,l.id]);if(!r.rowCount)throw fail(409,'Esta liquidação já foi estornada.');await auditoria(c,req.user,'estornar','liquidacao',l.id,{motivo});});res.json({ok:true});}));
  router.use((req,res)=>res.status(404).json({erro:'Recurso financeiro não encontrado.'}));
  router.use((e,req,res,next)=>{if(e.code==='23505')return res.status(409).json({erro:'Registro já existente. Atualize a lista antes de repetir.'});if(e.code==='23503')return res.status(400).json({erro:'Cadastro vinculado não encontrado.'});const status=e.status||(e.message&&/inválid|Informe|Preencha|Valor|Parcelamento|Liquidação/.test(e.message)?400:500);if(status===500)console.error('Financeiro:',e.message);res.status(status).json({erro:status===500?'Erro interno no financeiro.':e.message});});
- return {router,criarSessao,iniciar:()=>pool.query(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'))};
+ return {router,criarSessao,iniciar:async()=>{
+  await pool.query(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'));
+  await pool.query(`CREATE TABLE IF NOT EXISTS fin_sessoes (
+    token_hash VARCHAR(64) PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    expira_em TIMESTAMPTZ NOT NULL
+  )`);
+  await pool.query('DELETE FROM fin_sessoes WHERE expira_em<=NOW()');
+ }};
 }
 module.exports={criarFinanceiro};
