@@ -178,7 +178,7 @@
     <input id="usuario" type="text" placeholder="Digite seu usuário" value="admin" autocomplete="username" />
 
     <label for="senha">Senha</label>
-    <input id="senha" type="password" placeholder="Digite sua senha" value="1234" autocomplete="current-password" />
+    <input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" />
 
     <div class="acoes">
       <button id="btnEntrar" type="button">Entrar</button>
@@ -186,17 +186,11 @@
 
     <div id="msg" class="msg"></div>
 
-    <div class="box-ajuda">
-      <strong>Acesso inicial:</strong><br />
-      Usuário: <strong>admin</strong><br />
-      Senha: <strong>1234</strong>
-    </div>
-
     <div class="rodape">+Células • Gestão de células</div>
   </div>
 
   <script>
-    const API_BASE = "https://celulas-backend.onrender.com";
+    const API_BASE = "https://celulas-usuarios-teste.onrender.com";
 
     const campoUsuario = document.getElementById("usuario");
     const campoSenha = document.getElementById("senha");
@@ -214,6 +208,7 @@
       localStorage.removeItem("nomeUsuario");
       localStorage.removeItem("nivelUsuario");
       localStorage.removeItem("usuarioId");
+      localStorage.removeItem("sessaoToken");
     }
 
     function salvarSessao(dados) {
@@ -265,6 +260,10 @@
           throw new Error(dados.erro || "Usuário ou senha inválidos.");
         }
 
+        if (!dados.token) {
+          throw new Error("O servidor não retornou uma sessão válida.");
+        }
+        localStorage.setItem("sessaoToken", dados.token);
         salvarSessao(dados);
         mostrarMensagem("Login realizado com sucesso.", "sucesso");
 
