@@ -34,8 +34,8 @@ function criarFinanceiro(pool) {
    // A validação e a renovação ocorrem na mesma consulta ao banco.
    const r=await pool.query(`WITH sessao_valida AS (
        UPDATE fin_sessoes
-          SET expira_em = CASE WHEN expira_em < NOW() + INTERVAL '5 minutes'
-                               THEN NOW() + INTERVAL '1 hour' ELSE expira_em END
+          SET expira_em = CASE WHEN expira_em < NOW() + INTERVAL '14 minutes'
+                               THEN NOW() + INTERVAL '15 minutes' ELSE expira_em END
         WHERE token_hash=$1 AND expira_em>NOW()
         RETURNING usuario_id
      )
