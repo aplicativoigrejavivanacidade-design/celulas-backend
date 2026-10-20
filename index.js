@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const app = express();
@@ -8,7 +9,8 @@ const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+// Arquivos estáticos públicos devem ser servidos pelo frontend, não pelo backend.
+// app.use(express.static(__dirname));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -338,6 +340,11 @@ async function garantirTabelas() {
     ADD COLUMN IF NOT EXISTS celula TEXT
   `);
 
+  await pool.query("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE");
+  await pool.query("UPDATE usuarios SET ativo = TRUE WHERE ativo IS NULL");
+  await pool.query(`CREATE TABLE IF NOT EXISTS sessoes_usuarios (token_hash TEXT PRIMARY KEY, usuario_id INTEGER NOT NULL, ultimo_acesso TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sessoes_usuario ON sessoes_usuarios(usuario_id)`);
+
   await pool.query(`
     UPDATE usuarios
     SET celula = ''
@@ -361,14 +368,12 @@ async function criarAdmin() {
   );
 
   if (result.rows.length === 0) {
-    await pool.query(
-      "INSERT INTO usuarios (nome, usuario, senha, nivel, celula) VALUES ($1,$2,$3,$4,$5)",
-      ["Administrador", "admin", "1234", "admin", ""]
-    );
-    console.log("Usuário admin criado com sucesso.");
+    if (!process.env.ADMIN_INITIAL_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD.length < 12) throw new Error("ADMIN_INITIAL_PASSWORD obrigatório para criar o primeiro admin (mínimo 12 caracteres).");
+    await pool.query("INSERT INTO usuarios (nome, usuario, senha, nivel, celula) VALUES ($1,$2,$3,$4,$5)", ["Administrador", "admin", process.env.ADMIN_INITIAL_PASSWORD, "admin", ""]);
+    console.log("Usuário admin inicial criado.");
   } else {
     await pool.query(
-      "UPDATE usuarios SET nivel = $1, celula = '' WHERE usuario = $2",
+      "UPDATE usuarios SET nivel = $1, celula = '', ativo = TRUE WHERE usuario = $2",
       ["admin", "admin"]
     );
   }
@@ -489,7 +494,7 @@ async function validarExclusaoCelula(celulaId) {
    ROTAS BÁSICAS
 ================================ */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
+  res.json({ sistema: "+Células API", status: "ONLINE" });
 });
 
 app.get("/status", (req, res) => {
@@ -503,6 +508,35 @@ app.get("/status", (req, res) => {
 /* ================================
    LOGIN
 ================================ */
+/* Usuários v1.1 — sessões por inatividade, sem limite absoluto. */
+const SESSION_IDLE_MINUTES = 15;
+const SESSION_IDLE_MS = SESSION_IDLE_MINUTES * 60 * 1000;
+function hashToken(token) { return crypto.createHash("sha256").update(token).digest("hex"); }
+async function exigirSessao(req, res, next) {
+  try {
+    const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    if (!/^[a-f0-9]{64}$/.test(token)) return res.status(401).json({ erro: "Sessão inválida. Entre novamente." });
+    const hash = hashToken(token);
+    const r = await pool.query(`
+      SELECT s.usuario_id, u.nivel, u.ativo,
+             EXTRACT(EPOCH FROM (NOW() - s.ultimo_acesso)) * 1000 AS inativo_ms
+      FROM sessoes_usuarios s JOIN usuarios u ON u.id=s.usuario_id
+      WHERE s.token_hash=$1`, [hash]);
+    const u = r.rows[0];
+    if (!u || u.ativo !== true || Number(u.inativo_ms) >= SESSION_IDLE_MS) {
+      await pool.query("DELETE FROM sessoes_usuarios WHERE token_hash=$1", [hash]);
+      return res.status(401).json({ erro: "Sessão encerrada por inatividade ou revogação." });
+    }
+    await pool.query("UPDATE sessoes_usuarios SET ultimo_acesso=NOW() WHERE token_hash=$1", [hash]);
+    req.usuarioAutenticado = { id: u.usuario_id, nivel: u.nivel };
+    next();
+  } catch (erro) { console.error("Autorização:", erro.message); res.status(500).json({ erro: "Erro ao verificar sessão." }); }
+}
+function exigirAdmin(req, res, next) {
+  if (req.usuarioAutenticado?.nivel !== "admin") return res.status(403).json({ erro: "Acesso exclusivo de administrador." });
+  req.adminId = req.usuarioAutenticado.id;
+  next();
+}
 app.post("/login", async (req, res) => {
   try {
     const { usuario, senha } = req.body;
@@ -515,9 +549,9 @@ app.post("/login", async (req, res) => {
         usuario,
         senha,
         nivel,
-        COALESCE(celula, '') AS celula
+        COALESCE(celula, '') AS celula, ativo
       FROM usuarios
-      WHERE usuario = $1 AND senha = $2
+      WHERE usuario = $1 AND senha = $2 AND ativo = TRUE
       `,
       [String(usuario || "").trim().toLowerCase(), String(senha || "").trim()]
     );
@@ -529,10 +563,10 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    return res.json({
-      sucesso: true,
-      usuario: result.rows[0]
-    });
+    const { senha: _senha, ...usuarioSeguro } = result.rows[0];
+    const token = crypto.randomBytes(32).toString("hex");
+    await pool.query("INSERT INTO sessoes_usuarios(token_hash,usuario_id) VALUES($1,$2)", [hashToken(token), usuarioSeguro.id]);
+    return res.json({ sucesso: true, usuario: usuarioSeguro, token });
   } catch (erro) {
     console.error("Erro no login:", erro.message);
     return res.status(500).json({
@@ -545,6 +579,14 @@ app.post("/login", async (req, res) => {
 /* ================================
    GEOCODIFICAÇÃO
 ================================ */
+// Protege todas as rotas declaradas abaixo, exceto o login e o status públicos.
+app.use(exigirSessao);
+app.post("/logout", async (req,res) => {
+  const token=String(req.headers.authorization||"").replace(/^Bearer\s+/i, "");
+  await pool.query("DELETE FROM sessoes_usuarios WHERE token_hash=$1", [hashToken(token)]);
+  res.json({ok:true});
+});
+
 app.post("/geolocalizacao", async (req, res) => {
   try {
     const {
@@ -633,217 +675,81 @@ app.post("/geolocalizacao", async (req, res) => {
 /* ================================
    DEBUG USUÁRIOS
 ================================ */
-app.get("/debug/usuarios", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT id, nome, usuario, nivel, COALESCE(celula, '') AS celula
-      FROM usuarios
-      ORDER BY nome ASC, id DESC
-    `);
-
-    res.json({
-      ok: true,
-      total: result.rows.length,
-      usuarios: result.rows
-    });
-  } catch (erro) {
-    console.error("Erro no debug de usuários:", erro.message);
-    res.status(500).json({ ok: false, erro: "Erro no debug de usuários" });
-  }
-});
 
 /* ================================
-   USUÁRIOS
+   USUÁRIOS v1.1 — consultas sob demanda
 ================================ */
-app.get("/usuarios", async (req, res) => {
+app.get("/usuarios", exigirAdmin, async (req,res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      ORDER BY nome ASC, id DESC
-    `);
-
-    res.json(result.rows);
-  } catch (erro) {
-    console.error("Erro ao buscar usuários:", erro.message);
-    res.status(500).json({ erro: "Erro ao buscar usuários" });
-  }
+    const nome = String(req.query.nome || "").trim();
+    const nivel = String(req.query.nivel || "").trim().toLowerCase();
+    const status = String(req.query.status || "todos").toLowerCase();
+    const params = []; const cond = [];
+    if (nome) { params.push(`%${nome}%`); cond.push(`(nome ILIKE $${params.length} OR usuario ILIKE $${params.length})`); }
+    if (nivel) { params.push(nivel); cond.push(`nivel = $${params.length}`); }
+    if (status === "ativos") cond.push("ativo = TRUE");
+    if (status === "inativos") cond.push("ativo = FALSE");
+    const sql = `SELECT id,nome,usuario,nivel,COALESCE(celula,'') AS celula,ativo FROM usuarios ${cond.length ? 'WHERE '+cond.join(' AND ') : ''} ORDER BY nome ASC,id DESC`;
+    res.json((await pool.query(sql,params)).rows);
+  } catch(e) { console.error("Consultar usuários:",e.message);res.status(500).json({erro:"Erro ao consultar usuários."}); }
 });
-
-app.get("/usuarios/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      `
-      SELECT
-        id,
-        nome,
-        usuario,
-        senha,
-        nivel,
-        COALESCE(celula, '') AS celula
-      FROM usuarios
-      WHERE id = $1
-      `,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (erro) {
-    console.error("Erro ao buscar usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao buscar usuário" });
-  }
+app.get("/usuarios/:id", exigirAdmin, async (req,res) => {
+  try { const r=await pool.query("SELECT id,nome,usuario,nivel,COALESCE(celula,'') AS celula,ativo FROM usuarios WHERE id=$1",[req.params.id]);
+    if(!r.rowCount)return res.status(404).json({erro:"Usuário não encontrado."});res.json(r.rows[0]);
+  } catch(e){res.status(500).json({erro:"Erro ao consultar usuário."});}
 });
-
-app.post("/usuarios", async (req, res) => {
+app.post("/usuarios", exigirAdmin, async(req,res)=>{
   try {
-    const { nome, usuario, senha } = req.body;
-    const nivelTratado = normalizarNivelUsuario(req.body.nivel);
-    const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
-    const usuarioTratado = String(usuario || "").trim().toLowerCase();
-
-    if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
-      return res.status(400).json({ erro: "Preencha nome, usuário e senha." });
-    }
-
-    if (nivelTratado === "lider" && !celulaTratada) {
-      return res.status(400).json({ erro: "Usuário líder precisa ter uma célula vinculada." });
-    }
-
-    const existe = await pool.query(
-      "SELECT * FROM usuarios WHERE usuario = $1",
-      [usuarioTratado]
-    );
-
-    if (existe.rows.length > 0) {
-      return res.status(400).json({ erro: "Usuário já existe" });
-    }
-
-    const salvo = await pool.query(
-      `
-      INSERT INTO usuarios (nome, usuario, senha, nivel, celula)
-      VALUES ($1,$2,$3,$4,$5)
-      RETURNING id, nome, usuario, senha, nivel, COALESCE(celula, '') AS celula
-      `,
-      [
-        normalizarTexto(nome),
-        usuarioTratado,
-        String(senha || "").trim(),
-        nivelTratado,
-        nivelTratado === "lider" ? celulaTratada : ""
-      ]
-    );
-
-    res.json({ ok: true, usuario: salvo.rows[0] });
-  } catch (erro) {
-    console.error("Erro ao salvar usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao salvar usuário" });
-  }
+    const nome=normalizarTexto(req.body.nome),usuario=String(req.body.usuario||"").trim().toLowerCase(),senha=String(req.body.senha||"").trim();
+    const nivel=normalizarNivelUsuario(req.body.nivel),celula=montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
+    if(!nome||!usuario||!senha)return res.status(400).json({erro:"Preencha nome, usuário e senha."});
+    if(nivel==="lider"&&!celula)return res.status(400).json({erro:"Selecione a célula do líder."});
+    const r=await pool.query("INSERT INTO usuarios(nome,usuario,senha,nivel,celula,ativo) VALUES($1,$2,$3,$4,$5,TRUE) RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,senha,nivel,nivel==="lider"?celula:""]);
+    res.json({ok:true,usuario:r.rows[0]});
+  }catch(e){res.status(e.code==="23505"?409:500).json({erro:e.code==="23505"?"Este login já existe.":"Erro ao cadastrar usuário."});}
 });
-
-app.put("/usuarios/:id", async (req, res) => {
+app.put("/usuarios/:id", exigirAdmin, async(req,res)=>{
   try {
-    const { id } = req.params;
-    const { nome, usuario, senha } = req.body;
-    const nivelTratado = normalizarNivelUsuario(req.body.nivel);
-    const celulaTratada = montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
-    const usuarioTratado = String(usuario || "").trim().toLowerCase();
-
-    if (!String(nome || "").trim() || !usuarioTratado || !String(senha || "").trim()) {
-      return res.status(400).json({ erro: "Preencha nome, usuário e senha." });
+    const id=Number(req.params.id),nome=normalizarTexto(req.body.nome),usuario=String(req.body.usuario||"").trim().toLowerCase();
+    const senha=String(req.body.senha||"").trim(),nivel=normalizarNivelUsuario(req.body.nivel),celula=montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
+    if(!nome||!usuario)return res.status(400).json({erro:"Preencha nome e usuário."});
+    if(nivel==="lider"&&!celula)return res.status(400).json({erro:"Selecione a célula do líder."});
+    const atual=(await pool.query("SELECT * FROM usuarios WHERE id=$1",[id])).rows[0];
+    if(!atual)return res.status(404).json({erro:"Usuário não encontrado."});
+    if(atual.usuario==="admin"&&(usuario!=="admin"||nivel!=="admin"))return res.status(400).json({erro:"Não altere o login ou nível do administrador principal."});
+    if(atual.nivel==="admin"&&nivel!=="admin") {
+      const r=await pool.query("SELECT COUNT(*)::int AS total FROM usuarios WHERE nivel='admin' AND ativo=TRUE AND id<>$1",[id]);
+      if(!r.rows[0].total)return res.status(400).json({erro:"Não é permitido remover o último administrador ativo."});
+      if(id===req.adminId)return res.status(400).json({erro:"Não altere seu próprio nível de administrador."});
     }
-
-    if (nivelTratado === "lider" && !celulaTratada) {
-      return res.status(400).json({ erro: "Usuário líder precisa ter uma célula vinculada." });
-    }
-
-    const existe = await pool.query(
-      "SELECT * FROM usuarios WHERE usuario = $1 AND id <> $2",
-      [usuarioTratado, id]
-    );
-
-    if (existe.rows.length > 0) {
-      return res.status(400).json({ erro: "Já existe outro usuário com esse login" });
-    }
-
-    const atualizado = await pool.query(
-      `
-      UPDATE usuarios SET
-        nome = $1,
-        usuario = $2,
-        senha = $3,
-        nivel = $4,
-        celula = $5
-      WHERE id = $6
-      RETURNING id, nome, usuario, senha, nivel, COALESCE(celula, '') AS celula
-      `,
-      [
-        normalizarTexto(nome),
-        usuarioTratado,
-        String(senha || "").trim(),
-        nivelTratado,
-        nivelTratado === "lider" ? celulaTratada : "",
-        id
-      ]
-    );
-
-    if (atualizado.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    res.json({ ok: true, usuario: atualizado.rows[0] });
-  } catch (erro) {
-    console.error("Erro ao atualizar usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao atualizar usuário" });
-  }
+    const r=await pool.query("UPDATE usuarios SET nome=$1,usuario=$2,senha=CASE WHEN $3='' THEN senha ELSE $3 END,nivel=$4,celula=$5 WHERE id=$6 RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,senha,nivel,nivel==="lider"?celula:"",id]);
+    await pool.query("DELETE FROM sessoes_usuarios WHERE usuario_id=$1", [id]);
+    res.json({ok:true,usuario:r.rows[0]});
+  }catch(e){res.status(e.code==="23505"?409:500).json({erro:e.code==="23505"?"Este login já existe.":"Erro ao atualizar usuário."});}
 });
-
-app.delete("/usuarios/:id", async (req, res) => {
+app.post("/usuarios/:id/situacao", exigirAdmin, async(req,res)=>{
   try {
-    const { id } = req.params;
-
-    const atual = await pool.query("SELECT * FROM usuarios WHERE id = $1", [id]);
-
-    if (atual.rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    if (String(atual.rows[0].usuario || "").toLowerCase() === "admin") {
-      return res.status(400).json({ erro: "O usuário admin não pode ser excluído" });
-    }
-
-    await pool.query("DELETE FROM usuarios WHERE id = $1", [id]);
-
-    res.json({ ok: true });
-  } catch (erro) {
-    console.error("Erro ao excluir usuário:", erro.message);
-    res.status(500).json({ erro: "Erro ao excluir usuário" });
-  }
+    const id=Number(req.params.id),ativo=req.body.ativo;
+    if(typeof ativo!=="boolean")return res.status(400).json({erro:"Situação inválida."});
+    if(id===req.adminId&&!ativo)return res.status(400).json({erro:"Não é possível inativar seu próprio acesso."});
+    const u=(await pool.query("SELECT id,usuario,nivel,ativo FROM usuarios WHERE id=$1",[id])).rows[0];
+    if(!u)return res.status(404).json({erro:"Usuário não encontrado."});
+    if(u.usuario==="admin"&&!ativo)return res.status(400).json({erro:"Administrador principal não pode ser inativado."});
+    if(u.nivel==="admin"&&!ativo){const c=await pool.query("SELECT COUNT(*)::int AS total FROM usuarios WHERE nivel='admin' AND ativo=TRUE AND id<>$1",[id]);if(!c.rows[0].total)return res.status(400).json({erro:"Último administrador ativo não pode ser inativado."});}
+    await pool.query("UPDATE usuarios SET ativo=$1 WHERE id=$2",[ativo,id]);
+    if (!ativo) await pool.query("DELETE FROM sessoes_usuarios WHERE usuario_id=$1",[id]);
+    res.json({ok:true,mensagem:ativo?"Usuário ativado.":"Usuário inativado."});
+  }catch(e){res.status(500).json({erro:"Erro ao alterar situação."});}
 });
-
-app.get("/debug/usuarios", async (req, res) => {
+app.delete("/usuarios/:id", exigirAdmin, async(req,res)=>{
   try {
-    const result = await pool.query(`
-      SELECT id, nome, usuario, nivel, COALESCE(celula, '') AS celula
-      FROM usuarios
-      ORDER BY nome ASC, id DESC
-    `);
-
-    res.json({ ok: true, usuarios: result.rows });
-  } catch (erro) {
-    res.status(500).json({ ok: false, erro: erro.message });
-  }
+    const id=Number(req.params.id);if(id===req.adminId)return res.status(400).json({erro:"Não é possível excluir seu próprio acesso."});
+    const u=(await pool.query("SELECT * FROM usuarios WHERE id=$1",[id])).rows[0];
+    if(!u)return res.status(404).json({erro:"Usuário não encontrado."});
+    if(u.usuario==="admin")return res.status(400).json({erro:"Administrador principal não pode ser excluído."});
+    // Sem tabela de auditoria de autoria de registros, não é possível provar ausência de histórico.
+    return res.status(409).json({erro:"Exclusão bloqueada por segurança: ainda não existe rastreabilidade suficiente para comprovar ausência de registros vinculados. Utilize Inativar."});
+  }catch(e){res.status(500).json({erro:"Erro ao verificar exclusão."});}
 });
 
 /* ================================
@@ -1714,7 +1620,7 @@ app.get("/presencas/periodo/consulta", async (req, res) => {
 app.delete("/presencas/reuniao/segura", async (req, res) => {
   try {
     const data = String(req.body?.data || "").slice(0, 10);
-    const nivel = normalizarNivelUsuario(req.body?.nivelUsuario || "lider");
+    const nivel = normalizarNivelUsuario(req.usuarioAutenticado?.nivel || "lider");
     const celula = montarNomeCelulaExibicao(req.body?.celula || "");
 
     if (nivel !== "admin") return res.status(403).json({ erro: "Somente administrador pode excluir presença." });
@@ -1803,7 +1709,7 @@ app.post("/presencas/remover-data-membros", async (req, res) => {
 app.post("/presencas", async (req, res) => {
   try {
     const { data, registros, nivelUsuario, celula } = req.body;
-    const nivel = normalizarNivelUsuario(nivelUsuario || "lider");
+    const nivel = normalizarNivelUsuario(req.usuarioAutenticado?.nivel || "lider");
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ erro: "Data da reunião inválida." });
     if (data > hojeISO()) return res.status(400).json({ erro: "Não é permitido lançar ou editar presença em data futura." });
     if (nivel !== "admin" && diasDesde(data) > 20) {
@@ -1839,10 +1745,10 @@ app.post("/presencas", async (req, res) => {
 /* ================================
    BACKUP
 ================================ */
-app.get("/backup", async (req, res) => {
+app.get("/backup", exigirAdmin, async (req, res) => {
   try {
     const membros = await pool.query("SELECT * FROM membros ORDER BY nome ASC, id DESC");
-    const usuarios = await pool.query("SELECT * FROM usuarios ORDER BY nome ASC, id DESC");
+    const usuarios = await pool.query("SELECT id,nome,usuario,nivel,celula,ativo FROM usuarios ORDER BY nome ASC, id DESC");
     const celulas = await pool.query("SELECT * FROM celulas ORDER BY nome ASC, id DESC");
     const presencas = await pool.query("SELECT * FROM presencas ORDER BY data DESC, id DESC");
 
