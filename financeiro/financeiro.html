@@ -197,7 +197,7 @@ dialog{border:1px solid var(--line);border-radius:var(--radius);padding:0;max-wi
 
     .popup-acoes button { min-width: 100px; }
 
-</style><link rel="stylesheet" href="/menu-modulos.css?v=0.4"></head><body><div class="layout"><aside class="sidebar"><h2 class="logo">+Células</h2><div class="logo-sub">Gestão financeira</div><nav class="menu" id="financialMenu" aria-label="Financeiro" hidden></nav><script src="/menu-modulos.js?v=0.4"></script><button id="logout" hidden>Sair</button><div class="version-note">Financeiro v0.7.4 · Ambiente de testes</div></aside><main class="content"><div class="header"><h1>Financeiro</h1><p>Controle contas a pagar, recebimentos e saldos.</p><p id="identity" class="usuario-logado"></p></div><section class="card" id="loading" role="status" aria-live="polite"><p>Carregando dados…</p></section><section class="card" id="login" hidden><h2>Acesso financeiro</h2><p class="small">Use seu usuário do +Células. O acesso financeiro deve ser concedido pelo Admin.</p><form id="loginForm"><label>Usuário<input name="usuario" required autocomplete="username"></label><label>Senha<input name="senha" type="password" required autocomplete="current-password"></label><button>Entrar</button></form></section>
+</style><link rel="stylesheet" href="/menu-modulos.css?v=0.4"></head><body><div class="layout"><aside class="sidebar"><h2 class="logo">+Células</h2><div class="logo-sub">Gestão financeira</div><nav class="menu" id="financialMenu" aria-label="Financeiro" hidden></nav><script src="/menu-modulos.js?v=0.4"></script><button id="logout" hidden>Sair</button><div class="version-note">Financeiro v0.7.5 · Ambiente de testes</div></aside><main class="content"><div class="header"><h1>Financeiro</h1><p>Controle contas a pagar, recebimentos e saldos.</p><p id="identity" class="usuario-logado"></p></div><section class="card" id="loading" role="status" aria-live="polite"><p>Carregando dados…</p></section><section class="card" id="login" hidden><h2>Acesso financeiro</h2><p class="small">Use seu usuário do +Células. O acesso financeiro deve ser concedido pelo Admin.</p><form id="loginForm"><label>Usuário<input name="usuario" required autocomplete="username"></label><label>Senha<input name="senha" type="password" required autocomplete="current-password"></label><button>Entrar</button></form></section>
 <section id="app" hidden>
 <section class="card tab" id="resumo"><h2>Saldos por banco e caixa</h2><div id="balances" class="tiles"><p class="small">Aplique um filtro para consultar os saldos.</p></div><p class="small">Saldos consideram o saldo inicial e as liquidações confirmadas. Arrecadação da Presença e extratos serão integrados nas próximas etapas.</p><h2>Contas a pagar e receber</h2><form id="filter" class="grid"><label>Vencimento inicial<input type="date" name="de"></label><label>Vencimento final<input type="date" name="ate"></label><div><button>Filtrar</button><button type="button" id="clear" class="secondary">Limpar</button></div><div class="wide"><button type="button" class="secondary" data-period="0">Hoje</button> <button type="button" class="secondary" data-period="7">7 dias</button> <button type="button" class="secondary" data-period="30">30 dias</button></div></form><p id="filterHint" class="small" role="status">Informe um período ou utilize um dos atalhos para consultar.</p><div id="totals" class="tiles"></div><p id="limit" class="notice" hidden>Há mais de 1.000 parcelas. Reduza o período para consultar e totalizar todas.</p><div class="scroll"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Unidade</th><th>Tipo</th><th>Parcela</th><th>Valor</th><th>Saldo</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="titles"></tbody></table></div></section>
 <section class="card tab" id="lancamento" hidden><h2>Conta à vista ou parcelada</h2><form id="titleForm" class="grid"><label>Tipo<select name="tipo"><option value="pagar">A pagar</option><option value="receber">A receber</option></select></label><label>Unidade<select name="unidade_id" class="units" required></select></label><label>Categoria<select name="categoria_id" id="titleCategories" required></select></label><label class="wide">Descrição<input name="descricao" required maxlength="200"></label><label>Fornecedor ou responsável<select name="fornecedor_id" id="suppliers"></select></label><label>Valor total em reais<input name="valor" required inputmode="decimal" placeholder="0,00"></label><label>Quantidade de parcelas<input name="parcelas" type="number" min="1" max="120" value="1" required></label><label>Competência<input name="competencia" type="date" required></label><label>Primeiro vencimento<input name="vencimento" type="date" required></label><label class="wide">Observação<textarea name="observacao" maxlength="1000"></textarea></label><div class="wide"><p class="small">O valor total será dividido em parcelas mensais. Em meses mais curtos, o vencimento será no último dia do mês. Não gera pagamento automático.</p><button>Registrar conta</button></div></form></section>
@@ -220,12 +220,25 @@ let sessaoInterrompida=false;
 function solicitarNovoAcesso(){
  if(sessaoInterrompida)return;
  sessaoInterrompida=true;
- token='';sessionStorage.removeItem('celulasSessao');
- $('#app').hidden=true;$('#loading').hidden=true;$('#login').hidden=false;
+ token='';
+ sessionStorage.removeItem('celulasSessao');
+ localStorage.removeItem('logado');
+ localStorage.removeItem('usuario');
+ localStorage.removeItem('nomeUsuario');
+ localStorage.removeItem('nivelUsuario');
+ localStorage.removeItem('usuarioId');
+ localStorage.removeItem('celulaUsuario');
+ catalogue={};records=[];paymentId=null;paymentKey='';titleKey=crypto.randomUUID();
+ document.querySelectorAll('form').forEach(form=>form.reset());
+ $('#app').hidden=true;$('#loading').hidden=true;$('#login').hidden=true;
  $('#logout').hidden=true;$('#financialMenu').hidden=true;
- $('#identity').textContent='Sessão encerrada. Entre novamente para continuar.';
- $('#login').querySelector('.small').textContent='Sua sessão financeira expirou ou foi interrompida pelo servidor. Entre novamente para continuar. Nenhuma operação será reenviada automaticamente.';
+ $('#identity').textContent='Sessão encerrada.';
+ const aviso=$('#message');
+ if(aviso.open)aviso.close();
+ aviso.addEventListener('close',()=>location.replace('/login.html'),{once:true});
+ notify('Sua sessão foi encerrada. Você será direcionado à tela inicial para entrar novamente. Operações não salvas foram descartadas.',true);
 }
+
 async function api(route,method='GET',body){
  let r;
  try{r=await fetch('api/'+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});}
@@ -233,12 +246,12 @@ async function api(route,method='GET',body){
  let result;
  try{result=await r.json();}catch(e){throw Error('O servidor retornou uma resposta inválida. Tente novamente.');}
  if(!r.ok){
-  if(r.status===401&&route!=='login'&&token){solicitarNovoAcesso();throw Error('Sua sessão financeira foi encerrada. Faça login novamente para continuar.');}
+  if(r.status===401&&route!=='login'){solicitarNovoAcesso();throw Error('Sessão encerrada. Retorne à tela inicial.');}
   throw Error(result.erro||'Falha na operação.');
  }
  return result;
 }
-function bind(form,fn){$(form).noValidate=true;$(form).addEventListener('submit',async e=>{e.preventDefault();const invalid=e.target.querySelector(':invalid');if(invalid){const label=invalid.closest('label')?.childNodes[0]?.textContent.trim()||'Campo';notify(label+': '+invalid.validationMessage,true);$('#message').addEventListener('close',()=>invalid.focus(),{once:true});return;}const button=e.submitter;button.disabled=true;try{await fn(e.target);}catch(err){notify(err.message,true);}finally{button.disabled=false;}});}
+function bind(form,fn){$(form).noValidate=true;$(form).addEventListener('submit',async e=>{e.preventDefault();const invalid=e.target.querySelector(':invalid');if(invalid){const label=invalid.closest('label')?.childNodes[0]?.textContent.trim()||'Campo';notify(label+': '+invalid.validationMessage,true);$('#message').addEventListener('close',()=>invalid.focus(),{once:true});return;}const button=e.submitter;button.disabled=true;try{await fn(e.target);}catch(err){if(!sessaoInterrompida)notify(err.message,true);}finally{button.disabled=false;}});}
 function options(select,items,empty){const old=select.value;select.innerHTML=(empty?'<option value="">'+esc(empty)+'</option>':'')+items.map(i=>'<option value="'+i.id+'">'+esc(i.nome)+'</option>').join('');if(items.some(i=>String(i.id)===old))select.value=old;}
 async function refresh(){catalogue=await api('cadastros?sem_saldos=1');document.dispatchEvent(new CustomEvent('celulas:financeiro',{detail:{admin:catalogue.usuario.admin}}));$('#identity').textContent=catalogue.usuario.nome;document.querySelectorAll('.admin').forEach(el=>{if(!el.classList.contains('tab'))el.hidden=!catalogue.usuario.admin;else if(!catalogue.usuario.admin)el.hidden=true;});document.querySelectorAll('select.units').forEach(el=>options(el,catalogue.unidades,el.classList.contains('optional')?'Sem unidade / global':'Selecione'));options($('#suppliers'),catalogue.fornecedores,'Não informado');options($('#paymentAccounts'),catalogue.contas.filter(c=>can('liquidar',c.unidade_id)),'Selecione');categories();/* Os saldos são consultados somente após o usuário aplicar um filtro. */$('#catalogue').innerHTML='<h3>Categorias</h3><p>'+catalogue.categorias.map(c=>esc(c.nome)+' ('+(c.tipo==='pagar'?'Despesa':'Entrada')+')').join(', ')+'</p><h3>Fornecedores</h3><p>'+catalogue.fornecedores.map(c=>esc(c.nome)).join(', ')+'</p>';await Promise.all([catalogue.usuario.admin&&requestedView==='acessos'?accesses():Promise.resolve()]);applyView();}
 function categories(){options($('#titleCategories'),(catalogue.categorias||[]).filter(c=>c.tipo===$('#titleForm [name=tipo]').value),'Selecione');}
@@ -265,7 +278,7 @@ document.querySelectorAll('[data-period]').forEach(button=>button.addEventListen
  const days=Number(button.dataset.period);const now=new Date();const end=new Date(now.getFullYear(),now.getMonth(),now.getDate());const start=new Date(end);start.setDate(start.getDate()-(days?days-1:0));
  const local=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
  $('#filter [name=de]').value=local(start);$('#filter [name=ate]').value=local(end);
- button.disabled=true;try{await filteredResults();}catch(e){notify(e.message,true);}finally{button.disabled=false;}
+ button.disabled=true;try{await filteredResults();}catch(e){if(!sessaoInterrompida)notify(e.message,true);}finally{button.disabled=false;}
 }));
 bind('#titleForm',async f=>{await api('titulos','POST',{...data(f),chave:titleKey});titleKey=crypto.randomUUID();f.reset();await refresh();notify('Conta registrada. As parcelas foram geradas.');});$('#titleForm [name=tipo]').onchange=categories;
 for(const [form,route] of [['#unitForm','unidades'],['#accountForm','contas'],['#categoryForm','categorias'],['#supplierForm','fornecedores'],['#accessForm','acessos']])bind(form,async f=>{const b=data(f);for(const k of ['negativo','lancar','liquidar','estornar'])if(k in b)b[k]=b[k]==='true';await api(route,'POST',b);f.reset();await refresh();notify('Cadastro salvo.');});
@@ -316,7 +329,7 @@ document.querySelector('.header h1').textContent=financialType?(financialType===
   document.getElementById('app').hidden=false;
  }else document.getElementById('app').hidden=true;
  try{await refresh();if(!sessaoInterrompida){document.getElementById('loading').hidden=true;document.getElementById('app').hidden=false;}}
-  catch(e){if(!sessaoInterrompida){document.getElementById('app').hidden=true;document.getElementById('loading').textContent='Não foi possível carregar os dados. Atualize a página para tentar novamente.';}notify(e.message,true);}
+  catch(e){if(!sessaoInterrompida){document.getElementById('app').hidden=true;document.getElementById('loading').textContent='Não foi possível carregar os dados. Atualize a página para tentar novamente.';}if(!sessaoInterrompida)notify(e.message,true);}
 })();
 
 </script></body></html>
