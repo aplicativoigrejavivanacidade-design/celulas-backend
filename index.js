@@ -112,271 +112,40 @@ function normalizarNivelUsuario(valor) {
 /* ================================
    GARANTIR TABELAS
 ================================ */
+// Usuários v1.1: não executar migrações gerais no banco compartilhado.
+// A estrutura deve ser preparada por migração revisada, em etapa separada.
 async function garantirTabelas() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id SERIAL PRIMARY KEY,
-      nome TEXT,
-      usuario TEXT UNIQUE,
-      senha TEXT,
-      nivel TEXT,
-      celula TEXT
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS membros (
-      id SERIAL PRIMARY KEY,
-      nome TEXT,
-      telefone TEXT,
-      email TEXT,
-      documento TEXT,
-      celula TEXT,
-      nascimento TEXT,
-      status TEXT,
-      cep TEXT,
-      rua TEXT,
-      numero TEXT,
-      complemento TEXT,
-      bairro TEXT,
-      cidade TEXT,
-      estado TEXT,
-      observacoes TEXT,
-      created_at DATE DEFAULT CURRENT_DATE
-    )
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS email TEXT DEFAULT ''
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS documento TEXT DEFAULT ''
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS data_cadastro TEXT DEFAULT TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS origem_cadastro TEXT DEFAULT 'CADASTRO'
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS cadastro_completo BOOLEAN DEFAULT TRUE
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS data_arquivamento TEXT DEFAULT NULL
-  `);
-
-  // corrigir defaults antigos de cadastro criados por versões intermediárias
-  await pool.query(`
-    UPDATE membros
-    SET origem_cadastro = NULL
-    WHERE origem_cadastro = 'CADASTRO'
-      AND (documento IS NULL OR documento = '')
-      AND (email IS NULL OR email = '')
-  `);
-
-  await pool.query(`
-    ALTER TABLE membros
-    ADD COLUMN IF NOT EXISTS created_at DATE DEFAULT CURRENT_DATE
-  `);
-
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS celulas (
-      id SERIAL PRIMARY KEY,
-      nome TEXT,
-      nome_normalizado TEXT,
-      dia_semana TEXT,
-      hora TEXT,
-      anfitriao TEXT,
-      lider_celula TEXT,
-      lideres_treinamento TEXT DEFAULT '',
-      cep TEXT,
-      rua TEXT,
-      numero TEXT,
-      complemento TEXT,
-      bairro TEXT,
-      cidade TEXT,
-      estado TEXT,
-      geolocalizacao TEXT,
-      ativo BOOLEAN DEFAULT TRUE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS presencas (
-      id SERIAL PRIMARY KEY,
-      membro_id INTEGER,
-      data TEXT,
-      status TEXT,
-      celula TEXT
-    )
-  `);
-
-  await pool.query(`
-    ALTER TABLE presencas
-    ADD COLUMN IF NOT EXISTS celula TEXT DEFAULT NULL
-  `);
-
-  // v1.14 — índices para acelerar consultas históricas por período e célula.
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_presencas_data
-    ON presencas (data)
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_presencas_data_celula
-    ON presencas (data, celula)
-  `);
-
-  // v1.12 — migração conservadora do vínculo histórico da célula.
-  // 1) Registros antigos herdam a célula atual somente quando ela ainda existe.
-  await pool.query(`
-    UPDATE presencas p
-    SET celula = m.celula
-    FROM membros m
-    WHERE p.membro_id = m.id
-      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
-      AND COALESCE(BTRIM(m.celula), '') <> ''
-  `);
-
-  // 2) Se numa data existe exatamente UMA célula identificável, usa essa célula
-  // para os registros antigos ainda sem vínculo. É o caso seguro de reuniões
-  // antigas em que o visitante foi arquivado depois e perdeu a célula no cadastro.
-  await pool.query(`
-    WITH celulas_por_data AS (
-      SELECT
-        p.data,
-        MIN(COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), ''))) AS celula_unica,
-        COUNT(DISTINCT COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), ''))) AS qtd_celulas
-      FROM presencas p
-      LEFT JOIN membros m ON m.id = p.membro_id
-      WHERE COALESCE(NULLIF(BTRIM(p.celula), ''), NULLIF(BTRIM(m.celula), '')) IS NOT NULL
-      GROUP BY p.data
-    )
-    UPDATE presencas p
-    SET celula = c.celula_unica
-    FROM celulas_por_data c
-    WHERE p.data = c.data
-      AND c.qtd_celulas = 1
-      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
-  `);
-
-  // 3) Para uma pessoa cujo histórico já aponta para uma única célula conhecida,
-  // completa outros registros antigos ainda nulos sem adivinhar entre várias células.
-  await pool.query(`
-    WITH celula_unica_por_membro AS (
-      SELECT membro_id, MIN(BTRIM(celula)) AS celula_unica, COUNT(DISTINCT BTRIM(celula)) AS qtd_celulas
-      FROM presencas
-      WHERE COALESCE(BTRIM(celula), '') <> ''
-      GROUP BY membro_id
-    )
-    UPDATE presencas p
-    SET celula = c.celula_unica
-    FROM celula_unica_por_membro c
-    WHERE p.membro_id = c.membro_id
-      AND c.qtd_celulas = 1
-      AND (p.celula IS NULL OR BTRIM(p.celula) = '')
-  `);
-
-  // v1.13 — restaura a célula histórica do cadastro de visitantes arquivados
-  // somente quando todo o histórico conhecido desse visitante aponta para UMA única célula.
-  // O status VISITANTE ARQUIVADO + data_arquivamento continuam controlando a elegibilidade temporal.
-  await pool.query(`
-    WITH celula_unica_visitante AS (
-      SELECT
-        p.membro_id,
-        MIN(BTRIM(p.celula)) AS celula_unica,
-        COUNT(DISTINCT BTRIM(p.celula)) AS qtd_celulas
-      FROM presencas p
-      INNER JOIN membros m ON m.id = p.membro_id
-      WHERE COALESCE(BTRIM(p.celula), '') <> ''
-        AND (
-          UPPER(COALESCE(m.status, '')) = 'VISITANTE ARQUIVADO'
-          OR UPPER(COALESCE(m.origem_cadastro, '')) = 'PRESENCA_VISITANTE'
-        )
-      GROUP BY p.membro_id
-    )
-    UPDATE membros m
-    SET celula = c.celula_unica
-    FROM celula_unica_visitante c
-    WHERE m.id = c.membro_id
-      AND c.qtd_celulas = 1
-      AND COALESCE(BTRIM(m.celula), '') = ''
-  `);
-
-  await pool.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_celulas_nome_normalizado
-    ON celulas (nome_normalizado)
-  `);
-
-  await pool.query(`
-    ALTER TABLE celulas
-    ADD COLUMN IF NOT EXISTS lider_celula TEXT
-  `);
-
-  await pool.query(`
-    ALTER TABLE celulas
-    ADD COLUMN IF NOT EXISTS lideres_treinamento TEXT DEFAULT ''
-  `);
-
-  await pool.query(`
-    ALTER TABLE celulas
-    ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE
-  `);
-
-  await pool.query(`
-    ALTER TABLE usuarios
-    ADD COLUMN IF NOT EXISTS celula TEXT
-  `);
-
-  await pool.query("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE");
-  await pool.query("UPDATE usuarios SET ativo = TRUE WHERE ativo IS NULL");
-  await pool.query(`CREATE TABLE IF NOT EXISTS sessoes_usuarios (token_hash TEXT PRIMARY KEY, usuario_id INTEGER NOT NULL, ultimo_acesso TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sessoes_usuario ON sessoes_usuarios(usuario_id)`);
-
-  await pool.query(`
-    UPDATE usuarios
-    SET celula = ''
-    WHERE celula IS NULL
-  `);
-
-  await pool.query(`
-    UPDATE celulas
-    SET ativo = TRUE
-    WHERE ativo IS NULL
-  `);
+  const requisitos = {
+    usuarios: ["id", "nome", "usuario", "senha", "nivel", "celula", "ativo"],
+    sessoes_usuarios: ["token_hash", "usuario_id", "ultimo_acesso"],
+    celulas: ["id", "nome"]
+  };
+  for (const [tabela, colunas] of Object.entries(requisitos)) {
+    const resultado = await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = current_schema() AND table_name = $1
+    `, [tabela]);
+    const presentes = new Set(resultado.rows.map(r => r.column_name));
+    const ausentes = colunas.filter(c => !presentes.has(c));
+    if (ausentes.length) throw new Error(`Banco não preparado: ${tabela} (${ausentes.join(", ")}). Não foi feita nenhuma alteração automática.`);
+  }
 }
 
 /* ================================
    ADMIN
 ================================ */
 async function criarAdmin() {
-  const result = await pool.query(
-    "SELECT * FROM usuarios WHERE usuario = $1",
-    ["admin"]
+  // Nunca modificar um administrador existente automaticamente.
+  const result = await pool.query("SELECT id FROM usuarios WHERE usuario = $1", ["admin"]);
+  if (result.rows.length) return;
+  const senha = process.env.ADMIN_INITIAL_PASSWORD || "";
+  if (senha.length < 16) throw new Error("ADMIN_INITIAL_PASSWORD deve ter pelo menos 16 caracteres.");
+  const hash = gerarHashSenha(senha);
+  await pool.query(
+    "INSERT INTO usuarios (nome, usuario, senha, nivel, celula, ativo) VALUES ($1,$2,$3,$4,$5,TRUE)",
+    ["Administrador", "admin", hash, "admin", ""]
   );
-
-  if (result.rows.length === 0) {
-    if (!process.env.ADMIN_INITIAL_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD.length < 12) throw new Error("ADMIN_INITIAL_PASSWORD obrigatório para criar o primeiro admin (mínimo 12 caracteres).");
-    await pool.query("INSERT INTO usuarios (nome, usuario, senha, nivel, celula) VALUES ($1,$2,$3,$4,$5)", ["Administrador", "admin", process.env.ADMIN_INITIAL_PASSWORD, "admin", ""]);
-    console.log("Usuário admin inicial criado.");
-  } else {
-    await pool.query(
-      "UPDATE usuarios SET nivel = $1, celula = '', ativo = TRUE WHERE usuario = $2",
-      ["admin", "admin"]
-    );
-  }
+  console.log("Administrador inicial criado com senha protegida.");
 }
 
 /* ================================
@@ -508,6 +277,24 @@ app.get("/status", (req, res) => {
 /* ================================
    LOGIN
 ================================ */
+// Hash de senha scrypt com salt aleatório; senhas legadas são atualizadas no login.
+function gerarHashSenha(senha) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(senha, salt, 64).toString("hex");
+  return `scrypt:${salt}:${hash}`;
+}
+function verificarSenha(senha, armazenada) {
+  const texto = String(armazenada || "");
+  if (!texto.startsWith("scrypt:")) {
+    const a = Buffer.from(String(senha)); const b = Buffer.from(texto);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  }
+  const partes = texto.split(":");
+  if (partes.length !== 3 || !/^[a-f0-9]{32}$/.test(partes[1]) || !/^[a-f0-9]{128}$/.test(partes[2])) return false;
+  const esperado = Buffer.from(partes[2], "hex");
+  const obtido = crypto.scryptSync(senha, partes[1], 64);
+  return crypto.timingSafeEqual(esperado, obtido);
+}
 /* Usuários v1.1 — sessões por inatividade, sem limite absoluto. */
 const SESSION_IDLE_MINUTES = 15;
 const SESSION_IDLE_MS = SESSION_IDLE_MINUTES * 60 * 1000;
@@ -532,6 +319,10 @@ async function exigirSessao(req, res, next) {
     next();
   } catch (erro) { console.error("Autorização:", erro.message); res.status(500).json({ erro: "Erro ao verificar sessão." }); }
 }
+function exigirAdminOuSupervisor(req, res, next) {
+  if (!["admin", "supervisor"].includes(req.usuarioAutenticado?.nivel)) return res.status(403).json({erro:"Acesso não autorizado."});
+  next();
+}
 function exigirAdmin(req, res, next) {
   if (req.usuarioAutenticado?.nivel !== "admin") return res.status(403).json({ erro: "Acesso exclusivo de administrador." });
   req.adminId = req.usuarioAutenticado.id;
@@ -551,18 +342,21 @@ app.post("/login", async (req, res) => {
         nivel,
         COALESCE(celula, '') AS celula, ativo
       FROM usuarios
-      WHERE usuario = $1 AND senha = $2 AND ativo = TRUE
+      WHERE usuario = $1 AND ativo = TRUE
       `,
-      [String(usuario || "").trim().toLowerCase(), String(senha || "").trim()]
+      [String(usuario || "").trim().toLowerCase()]
     );
 
-    if (result.rows.length === 0) {
+    if (result.rows.length === 0 || !verificarSenha(String(senha || "").trim(), result.rows[0].senha)) {
       return res.status(401).json({
         sucesso: false,
         erro: "Usuário ou senha inválidos."
       });
     }
 
+    if (!String(result.rows[0].senha || "").startsWith("scrypt:")) {
+      await pool.query("UPDATE usuarios SET senha=$1 WHERE id=$2 AND senha=$3", [gerarHashSenha(String(senha || "").trim()), result.rows[0].id, result.rows[0].senha]);
+    }
     const { senha: _senha, ...usuarioSeguro } = result.rows[0];
     const token = crypto.randomBytes(32).toString("hex");
     await pool.query("INSERT INTO sessoes_usuarios(token_hash,usuario_id) VALUES($1,$2)", [hashToken(token), usuarioSeguro.id]);
@@ -704,7 +498,7 @@ app.post("/usuarios", exigirAdmin, async(req,res)=>{
     const nivel=normalizarNivelUsuario(req.body.nivel),celula=montarNomeCelulaExibicao(obterCelulaUsuarioPayload(req.body));
     if(!nome||!usuario||!senha)return res.status(400).json({erro:"Preencha nome, usuário e senha."});
     if(nivel==="lider"&&!celula)return res.status(400).json({erro:"Selecione a célula do líder."});
-    const r=await pool.query("INSERT INTO usuarios(nome,usuario,senha,nivel,celula,ativo) VALUES($1,$2,$3,$4,$5,TRUE) RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,senha,nivel,nivel==="lider"?celula:""]);
+    const r=await pool.query("INSERT INTO usuarios(nome,usuario,senha,nivel,celula,ativo) VALUES($1,$2,$3,$4,$5,TRUE) RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,gerarHashSenha(senha),nivel,nivel==="lider"?celula:""]);
     res.json({ok:true,usuario:r.rows[0]});
   }catch(e){res.status(e.code==="23505"?409:500).json({erro:e.code==="23505"?"Este login já existe.":"Erro ao cadastrar usuário."});}
 });
@@ -722,7 +516,7 @@ app.put("/usuarios/:id", exigirAdmin, async(req,res)=>{
       if(!r.rows[0].total)return res.status(400).json({erro:"Não é permitido remover o último administrador ativo."});
       if(id===req.adminId)return res.status(400).json({erro:"Não altere seu próprio nível de administrador."});
     }
-    const r=await pool.query("UPDATE usuarios SET nome=$1,usuario=$2,senha=CASE WHEN $3='' THEN senha ELSE $3 END,nivel=$4,celula=$5 WHERE id=$6 RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,senha,nivel,nivel==="lider"?celula:"",id]);
+    const r=await pool.query("UPDATE usuarios SET nome=$1,usuario=$2,senha=CASE WHEN $3='' THEN senha ELSE $3 END,nivel=$4,celula=$5 WHERE id=$6 RETURNING id,nome,usuario,nivel,celula,ativo",[nome,usuario,senha ? gerarHashSenha(senha) : "",nivel,nivel==="lider"?celula:"",id]);
     await pool.query("DELETE FROM sessoes_usuarios WHERE usuario_id=$1", [id]);
     res.json({ok:true,usuario:r.rows[0]});
   }catch(e){res.status(e.code==="23505"?409:500).json({erro:e.code==="23505"?"Este login já existe.":"Erro ao atualizar usuário."});}
@@ -783,7 +577,7 @@ app.get("/membros/:id", async (req, res) => {
 
 
 
-app.post("/membros/visitante/:id/arquivar", async (req, res) => {
+app.post("/membros/visitante/:id/arquivar", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const dataArquivamento = String(req.body?.dataArquivamento || hojeISO()).slice(0, 10);
@@ -821,7 +615,7 @@ app.post("/membros/visitante/:id/arquivar", async (req, res) => {
 });
 
 
-app.post("/membros/visitante", async (req, res) => {
+app.post("/membros/visitante", exigirAdmin, async (req, res) => {
   try {
     const { nome, telefone, celula, dataCadastro, observacoes } = req.body;
     const nomeTratado = normalizarTexto(nome);
@@ -865,7 +659,7 @@ app.post("/membros/visitante", async (req, res) => {
 });
 
 
-app.post("/membros", async (req, res) => {
+app.post("/membros", exigirAdmin, async (req, res) => {
   try {
     const {
       nome, telefone, email, documento, nascimento, status, celula,
@@ -953,7 +747,7 @@ app.post("/membros", async (req, res) => {
   }
 });
 
-app.put("/membros/:id", async (req, res) => {
+app.put("/membros/:id", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -1046,7 +840,7 @@ app.put("/membros/:id", async (req, res) => {
   }
 });
 
-app.delete("/membros/:id", async (req, res) => {
+app.delete("/membros/:id", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1094,7 +888,7 @@ app.get("/celulas/:id", async (req, res) => {
   }
 });
 
-app.post("/celulas", async (req, res) => {
+app.post("/celulas", exigirAdmin, async (req, res) => {
   try {
     const {
       nomeCelula,
@@ -1174,7 +968,7 @@ app.post("/celulas", async (req, res) => {
   }
 });
 
-app.put("/celulas/:id", async (req, res) => {
+app.put("/celulas/:id", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -1290,7 +1084,7 @@ app.put("/celulas/:id", async (req, res) => {
   }
 });
 
-app.post("/celulas/:id/inativar", async (req, res) => {
+app.post("/celulas/:id/inativar", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1311,7 +1105,7 @@ app.post("/celulas/:id/inativar", async (req, res) => {
   }
 });
 
-app.post("/celulas/:id/ativar", async (req, res) => {
+app.post("/celulas/:id/ativar", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1334,7 +1128,7 @@ app.post("/celulas/:id/ativar", async (req, res) => {
 
 
 
-app.post("/celulas/:id/remover-membros", async (req, res) => {
+app.post("/celulas/:id/remover-membros", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { membrosRemovidos } = req.body;
@@ -1371,7 +1165,7 @@ app.post("/celulas/:id/remover-membros", async (req, res) => {
   }
 });
 
-app.post("/celulas/:id/multiplicar", async (req, res) => {
+app.post("/celulas/:id/multiplicar", exigirAdmin, async (req, res) => {
   const client = await pool.connect();
 
   try {
@@ -1488,7 +1282,7 @@ app.post("/celulas/:id/multiplicar", async (req, res) => {
   }
 });
 
-app.delete("/celulas/:id", async (req, res) => {
+app.delete("/celulas/:id", exigirAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1511,7 +1305,7 @@ app.delete("/celulas/:id", async (req, res) => {
    PRESENÇAS
 ================================ */
 
-app.post("/visitantes", async (req, res) => {
+app.post("/visitantes", exigirAdminOuSupervisor, async (req, res) => {
   try {
     const { nome, telefone, celula, dataCadastro } = req.body;
 
@@ -1685,7 +1479,7 @@ app.get("/presencas/:data", async (req, res) => {
 });
 
 
-app.post("/presencas/remover-data-membros", async (req, res) => {
+app.post("/presencas/remover-data-membros", exigirAdmin, async (req, res) => {
   try {
     const { data, membroIds } = req.body;
     const ids = Array.isArray(membroIds) ? membroIds.map(Number).filter(Boolean) : [];
@@ -1718,6 +1512,12 @@ app.post("/presencas", async (req, res) => {
 
     const celulaTratada = montarNomeCelulaExibicao(celula || "");
     if (!celulaTratada) return res.status(400).json({ erro: "Célula da reunião não informada." });
+    if (nivel === "lider") {
+      const vinculo = await pool.query("SELECT celula FROM usuarios WHERE id=$1", [req.usuarioAutenticado.id]);
+      if (montarNomeCelulaExibicao(vinculo.rows[0]?.celula || "") !== celulaTratada)
+        return res.status(403).json({ erro: "Você só pode registrar presença da sua célula." });
+    }
+    if (nivel === "supervisor") return res.status(403).json({ erro: "Permissão de registro do supervisor ainda não homologada." });
 
     for (const item of registros || []) {
       const { membroId, status } = item;
