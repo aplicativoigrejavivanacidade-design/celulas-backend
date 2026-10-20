@@ -14,7 +14,7 @@ function criarFinanceiro(pool) {
  const hashToken=token=>crypto.createHash('sha256').update(token).digest('hex');
  async function criarSessao(usuarioId) {
   const token=crypto.randomBytes(32).toString('hex');
-  await pool.query("INSERT INTO fin_sessoes(token_hash,usuario_id,expira_em) VALUES($1,$2,NOW()+INTERVAL '1 hour')",[hashToken(token),usuarioId]);
+  await pool.query("INSERT INTO fin_sessoes(token_hash,usuario_id,expira_em) VALUES($1,$2,NOW()+INTERVAL '15 minutes')",[hashToken(token),usuarioId]);
   return token;
  }
  const run=fn=>(req,res,next)=>Promise.resolve(fn(req,res)).catch(next);
@@ -34,7 +34,7 @@ function criarFinanceiro(pool) {
    // A validação e a renovação ocorrem na mesma consulta ao banco.
    const r=await pool.query(`WITH sessao_valida AS (
        UPDATE fin_sessoes
-          SET expira_em = CASE WHEN expira_em < NOW() + INTERVAL '30 minutes'
+          SET expira_em = CASE WHEN expira_em < NOW() + INTERVAL '5 minutes'
                                THEN NOW() + INTERVAL '1 hour' ELSE expira_em END
         WHERE token_hash=$1 AND expira_em>NOW()
         RETURNING usuario_id
