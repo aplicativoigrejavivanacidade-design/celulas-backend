@@ -1569,6 +1569,74 @@ app.get("/backup", exigirAdmin, async (req, res) => {
 });
 
 /* ================================
+   ORGANIZAÇÕES v0.1 — ambiente de testes
+   A sessão já é exigida globalmente acima.
+================================ */
+const ORG_CAMPOS = [
+  'nome','denominacao_unidade','razao_social','nome_fantasia','cnpj','telefone',
+  'whatsapp','email','cep','rua','numero','complemento','bairro','cidade','estado',
+  'geolocalizacao','latitude','longitude','logotipo_url','site_url',
+  'instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','links_adicionais'
+];
+function prepararOrganizacao(body) {
+  const o = {};
+  for (const campo of ORG_CAMPOS) {
+    if (campo === 'links_adicionais') {
+      const links = body[campo] ?? [];
+      if (!Array.isArray(links) || links.length > 20 || links.some(x => typeof x !== 'string' || x.length > 500))
+        throw new Error('Links adicionais inválidos.');
+      o[campo] = JSON.stringify(links);
+    } else if (campo === 'latitude' || campo === 'longitude') {
+      const valor = body[campo];
+      o[campo] = valor === '' || valor == null ? null : Number(valor);
+      if (o[campo] !== null && (!Number.isFinite(o[campo]) || Math.abs(o[campo]) > (campo === 'latitude' ? 90 : 180)))
+        throw new Error('Coordenadas geográficas inválidas.');
+    } else {
+      const texto = String(body[campo] ?? '').trim();
+      if (texto.length > 500) throw new Error(`Campo ${campo} excede 500 caracteres.`);
+      o[campo] = texto || null;
+    }
+  }
+  o.nome = normalizarTexto(o.nome);
+  o.denominacao_unidade = normalizarTexto(o.denominacao_unidade || 'CÂMPUS');
+  if (!o.nome) throw new Error('Informe o nome da organização.');
+  if (o.cnpj && !/^\d{14}$/.test(o.cnpj.replace(/\D/g, ''))) throw new Error('CNPJ deve ter 14 dígitos.');
+  if (o.cep && !/^\d{8}$/.test(o.cep.replace(/\D/g, ''))) throw new Error('CEP deve ter 8 dígitos.');
+  if (o.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(o.email)) throw new Error('E-mail inválido.');
+  for (const campo of ['site_url','instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','logotipo_url']) {
+    if (o[campo]) { try { const url = new URL(o[campo]); if (!['https:', 'http:'].includes(url.protocol)) throw Error(); }
+      catch { throw new Error(`Endereço de ${campo} inválido. Use https://`); } }
+  }
+  return o;
+}
+app.get('/admin/organizacoes', exigirAdmin, async (req,res) => {
+  try {
+    const termo = String(req.query.nome || '').trim();
+    const r = await pool.query('SELECT * FROM public.organizacoes WHERE ($1::text = \'\' OR nome ILIKE \'%\' || $1 || \'%\') ORDER BY id DESC LIMIT 100', [termo]);
+    res.json({registros:r.rows, total:r.rowCount});
+  } catch(e) { console.error('Consulta organizações:',e.message); res.status(500).json({erro:'Não foi possível consultar organizações.'}); }
+});
+app.post('/admin/organizacoes', exigirAdmin, async(req,res) => {
+  let o; try { o=prepararOrganizacao(req.body||{}); } catch(e) { return res.status(400).json({erro:e.message}); }
+  try {
+    const campos=ORG_CAMPOS;
+    const sql=`INSERT INTO public.organizacoes (${campos.map(c=>'"'+c+'"').join(',')}) VALUES (${campos.map((_,i)=>'$'+(i+1)).join(',')}) RETURNING *`;
+    const r=await pool.query(sql,campos.map(c=>o[c])); res.status(201).json({registro:r.rows[0]});
+  } catch(e) { console.error('Inclusão organização:',e.message); res.status(500).json({erro:'Não foi possível cadastrar a organização.'}); }
+});
+app.put('/admin/organizacoes/:id', exigirAdmin, async(req,res) => {
+  const id=Number(req.params.id); if(!Number.isSafeInteger(id)||id<=0)return res.status(400).json({erro:'ID inválido.'});
+  let o; try { o=prepararOrganizacao(req.body||{}); } catch(e) { return res.status(400).json({erro:e.message}); }
+  try {
+    const campos=ORG_CAMPOS;
+    const sql=`UPDATE public.organizacoes SET ${campos.map((c,i)=>'"'+c+'"=$'+(i+1)).join(',')} WHERE id=$${campos.length+1} RETURNING *`;
+    const r=await pool.query(sql,[...campos.map(c=>o[c]),id]);
+    if(!r.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
+    res.json({registro:r.rows[0]});
+  } catch(e) { console.error('Edição organização:',e.message); res.status(500).json({erro:'Não foi possível atualizar a organização.'}); }
+});
+
+/* ================================
    START
 ================================ */
 async function iniciarServidor() {
