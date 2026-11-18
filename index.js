@@ -375,6 +375,13 @@ app.post("/login", async (req, res) => {
 ================================ */
 // Protege todas as rotas declaradas abaixo, exceto o login e o status públicos.
 app.use(exigirSessao);
+// Renovação autenticada, sujeita à mesma verificação de inatividade de 15 minutos.
+// Não cria sessão nova nem aceita token expirado.
+app.post("/sessao/continuar", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ sucesso: true, inatividade_minutos: SESSION_IDLE_MINUTES });
+});
+
 app.post("/logout", async (req,res) => {
   const token=String(req.headers.authorization||"").replace(/^Bearer\s+/i, "");
   await pool.query("DELETE FROM sessoes_usuarios WHERE token_hash=$1", [hashToken(token)]);
@@ -1634,6 +1641,78 @@ app.put('/admin/organizacoes/:id', exigirAdmin, async(req,res) => {
     if(!r.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
     res.json({registro:r.rows[0]});
   } catch(e) { console.error('Edição organização:',e.message); res.status(500).json({erro:'Não foi possível atualizar a organização.'}); }
+});
+
+/* ================================
+   UNIDADES v0.1 | somente ambiente de testes
+   Sem alterações automáticas de esquema ou dados legados.
+================================ */
+const UNIDADE_CAMPOS = [
+  'nome','cnpj','telefone','whatsapp','email','cep','rua','numero','complemento',
+  'bairro','cidade','estado','geolocalizacao','latitude','longitude','logotipo_url',
+  'site_url','instagram_url','facebook_url','youtube_url','tiktok_url',
+  'whatsapp_link','links_adicionais'
+];
+function idPositivo(valor) {
+  const n=Number(valor);
+  return Number.isSafeInteger(n)&&n>0?n:null;
+}
+function prepararUnidade(body={}) {
+  const o={};
+  for(const campo of UNIDADE_CAMPOS) {
+    if(campo==='links_adicionais') {
+      const v=body[campo]??[];
+      if(!Array.isArray(v)||v.length>20||v.some(x=>typeof x!=='string'||x.length>500)) throw Error('Links adicionais inválidos.');
+      o[campo]=JSON.stringify(v);
+    } else if(campo==='latitude'||campo==='longitude') {
+      const v=body[campo]; o[campo]=v==null||v===''?null:Number(v);
+      if(o[campo]!==null&&(!Number.isFinite(o[campo])||Math.abs(o[campo])>(campo==='latitude'?90:180))) throw Error('Coordenadas inválidas.');
+    } else {
+      const v=String(body[campo]??'').trim();
+      if(v.length>500)throw Error(`Campo ${campo} excede 500 caracteres.`);
+      o[campo]=v||null;
+    }
+  }
+  o.nome=normalizarTexto(o.nome);
+  if(!o.nome)throw Error('Informe o nome da unidade.');
+  if(o.cnpj&&!/^\d{14}$/.test(o.cnpj.replace(/\D/g,'')))throw Error('CNPJ deve ter 14 dígitos.');
+  if(o.cep&&!/^\d{8}$/.test(o.cep.replace(/\D/g,'')))throw Error('CEP deve ter 8 dígitos.');
+  if(o.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(o.email))throw Error('E-mail inválido.');
+  for(const c of ['site_url','instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','logotipo_url']) {
+    if(o[c]){try{const u=new URL(o[c]);if(!['http:','https:'].includes(u.protocol))throw Error();}catch{throw Error(`Endereço de ${c} inválido. Use https://`);}}
+  }
+  return o;
+}
+app.get('/admin/organizacoes/:organizacaoId/unidades',exigirAdmin,async(req,res)=>{
+  const org=idPositivo(req.params.organizacaoId);
+  if(!org)return res.status(400).json({erro:'Organização inválida.'});
+  try {
+    const existe=await pool.query('SELECT id FROM public.organizacoes WHERE id=$1',[org]);
+    if(!existe.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
+    const r=await pool.query('SELECT * FROM public.unidades WHERE organizacao_id=$1 ORDER BY id DESC LIMIT 100',[org]);
+    res.json({registros:r.rows,total:r.rowCount});
+  }catch(e){console.error('Consulta unidades:',e.message);res.status(500).json({erro:'Não foi possível consultar unidades.'});}
+});
+app.post('/admin/organizacoes/:organizacaoId/unidades',exigirAdmin,async(req,res)=>{
+  const org=idPositivo(req.params.organizacaoId);
+  if(!org)return res.status(400).json({erro:'Organização inválida.'});
+  let o;try{o=prepararUnidade(req.body||{});}catch(e){return res.status(400).json({erro:e.message});}
+  try {
+    const campos=['organizacao_id',...UNIDADE_CAMPOS];
+    const r=await pool.query(`INSERT INTO public.unidades (${campos.map(c=>'"'+c+'"').join(',')}) SELECT ${campos.map((_,i)=>'$'+(i+1)).join(',')} WHERE EXISTS (SELECT 1 FROM public.organizacoes WHERE id=$1) RETURNING *`,[org,...UNIDADE_CAMPOS.map(c=>o[c])]);
+    if(!r.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
+    res.status(201).json({registro:r.rows[0]});
+  }catch(e){console.error('Cadastro unidade:',e.message);res.status(500).json({erro:'Não foi possível cadastrar unidade.'});}
+});
+app.put('/admin/organizacoes/:organizacaoId/unidades/:id',exigirAdmin,async(req,res)=>{
+  const org=idPositivo(req.params.organizacaoId),id=idPositivo(req.params.id);
+  if(!org||!id)return res.status(400).json({erro:'Identificação inválida.'});
+  let o;try{o=prepararUnidade(req.body||{});}catch(e){return res.status(400).json({erro:e.message});}
+  try {
+    const r=await pool.query(`UPDATE public.unidades SET ${UNIDADE_CAMPOS.map((c,i)=>'"'+c+'"=$'+(i+1)).join(',')} WHERE id=$${UNIDADE_CAMPOS.length+1} AND organizacao_id=$${UNIDADE_CAMPOS.length+2} RETURNING *`,[...UNIDADE_CAMPOS.map(c=>o[c]),id,org]);
+    if(!r.rowCount)return res.status(404).json({erro:'Unidade não encontrada nesta organização.'});
+    res.json({registro:r.rows[0]});
+  }catch(e){console.error('Edição unidade:',e.message);res.status(500).json({erro:'Não foi possível atualizar unidade.'});}
 });
 
 /* ================================
