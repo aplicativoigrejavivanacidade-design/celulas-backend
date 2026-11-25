@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({limit:"1mb"}));
 // Arquivos estáticos públicos devem ser servidos pelo frontend, não pelo backend.
 // app.use(express.static(__dirname));
 
@@ -1579,8 +1579,20 @@ app.get("/backup", exigirAdmin, async (req, res) => {
    ORGANIZAÇÕES v0.1 — ambiente de testes
    A sessão já é exigida globalmente acima.
 ================================ */
+function logoValido(v){return typeof v==='string' && v.length<=350000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(v);}
+function cnpjValido(v){if(!v)return true;const n=v.replace(/\D/g,'');if(n.length!==14||/^(\d)\1+$/.test(n))return false;for(const k of [12,13]){let soma=0;for(let i=0;i<k;i++)soma+=Number(n[i])*(2+(k-1-i)%8);if(Number(n[k])!==(soma%11<2?0:11-soma%11))return false;}return true;}
+async function gravarInstitucional(req,res,tabela,campos,o,org,id){
+ const c=await pool.connect();try{await c.query('BEGIN');await c.query("SELECT pg_advisory_xact_lock(830031)");
+ if(!cnpjValido(o.cnpj))throw Error('CNPJ inválido.');if(o.cnpj){o.cnpj=o.cnpj.replace(/\D/g,'');for(const t of ['organizacoes','unidades']){const r=await c.query(`SELECT id FROM public.${t} WHERE regexp_replace(coalesce(cnpj,''),'[^0-9]','','g')=$1 AND ($2::integer IS NULL OR id<>$2)`,[o.cnpj,t===tabela?id:null]);if(r.rowCount)throw Error('CNPJ já cadastrado. Para unidade vinculada, deixe o CNPJ vazio.');}}
+ const cols=tabela==='unidades'?['organizacao_id',...campos]:campos;const vals=tabela==='unidades'?[org,...campos.map(k=>o[k])]:campos.map(k=>o[k]);let r;
+ if(id){r=await c.query(`UPDATE public.${tabela} SET ${campos.map((k,i)=>k+'=$'+(i+1)).join(',')} WHERE id=$${campos.length+1}`+(tabela==='unidades'?` AND organizacao_id=$${campos.length+2}`:'')+' RETURNING *',[...campos.map(k=>o[k]),id,...(tabela==='unidades'?[org]:[])]);}else{r=await c.query(`INSERT INTO public.${tabela} (${cols.join(',')}) VALUES (${cols.map((_,i)=>'$'+(i+1)).join(',')}) RETURNING *`,vals);}
+ if(!r.rowCount)throw Error('Registro não encontrado.');const row=r.rows[0];const oid=tabela==='organizacoes'?row.id:org,uid=tabela==='unidades'?row.id:null;const funcao=uid?'PASTOR DE GOVERNO':'PASTOR PRESIDENTE';
+ if(Object.prototype.hasOwnProperty.call(req.body,'responsavel_id')){const mid=idPositivo(req.body.responsavel_id);if(mid){const m=await c.query('SELECT id FROM public.membros WHERE id=$1 AND organizacao_id=$2',[mid,oid]);if(!m.rowCount)throw Error('Membro não vinculado à organização.');}const a=await c.query('SELECT id,membro_id FROM public.responsaveis_institucionais WHERE organizacao_id=$1 AND unidade_id IS NOT DISTINCT FROM $2::integer AND funcao=$3 AND ativo',[oid,uid,funcao]);if(a.rows.length!==1||a.rows[0].membro_id!==mid){await c.query('UPDATE public.responsaveis_institucionais SET ativo=false,fim_em=CURRENT_DATE WHERE organizacao_id=$1 AND unidade_id IS NOT DISTINCT FROM $2::integer AND funcao=$3 AND ativo',[oid,uid,funcao]);if(mid)await c.query('INSERT INTO public.responsaveis_institucionais(organizacao_id,unidade_id,membro_id,funcao) VALUES($1,$2,$3,$4)',[oid,uid,mid,funcao]);}}
+ await c.query('COMMIT');res.status(id?200:201).json({registro:row});}catch(e){await c.query('ROLLBACK');console.error(e.message);res.status(e.code?500:400).json({erro:e.code?'Não foi possível gravar o cadastro.':e.message});}finally{c.release();}}
+app.get('/admin/institucional/:org/responsaveis',exigirAdmin,async(req,res)=>{try{const org=idPositivo(req.params.org),uid=idPositivo(req.query.unidade);if(!org)return res.status(400).json({erro:'Organização inválida.'});const m=await pool.query('SELECT id,nome FROM public.membros WHERE organizacao_id=$1 ORDER BY nome',[org]);const h=await pool.query('SELECT r.*,m.nome FROM public.responsaveis_institucionais r JOIN public.membros m ON m.id=r.membro_id WHERE r.organizacao_id=$1 AND r.unidade_id IS NOT DISTINCT FROM $2::integer ORDER BY r.id DESC',[org,uid]);res.json({membros:m.rows,historico:h.rows});}catch(e){res.status(500).json({erro:'Falha ao consultar responsáveis.'});}});
+
 const ORG_CAMPOS = [
-  'nome','denominacao_unidade','razao_social','nome_fantasia','cnpj','telefone',
+  'ativo','nome','denominacao_unidade','razao_social','nome_fantasia','cnpj','telefone',
   'whatsapp','email','cep','rua','numero','complemento','bairro','cidade','estado',
   'geolocalizacao','latitude','longitude','logotipo_url','site_url',
   'instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','links_adicionais'
@@ -1588,7 +1600,7 @@ const ORG_CAMPOS = [
 function prepararOrganizacao(body) {
   const o = {};
   for (const campo of ORG_CAMPOS) {
-    if (campo === 'links_adicionais') {
+    if (campo === 'ativo') { o[campo]=body[campo] !== false && body[campo] !== 'false'; } else if (campo === 'links_adicionais') {
       const links = body[campo] ?? [];
       if (!Array.isArray(links) || links.length > 20 || links.some(x => typeof x !== 'string' || x.length > 500))
         throw new Error('Links adicionais inválidos.');
@@ -1600,7 +1612,7 @@ function prepararOrganizacao(body) {
         throw new Error('Coordenadas geográficas inválidas.');
     } else {
       const texto = String(body[campo] ?? '').trim();
-      if (texto.length > 500) throw new Error(`Campo ${campo} excede 500 caracteres.`);
+      if (texto.length > (campo==='logotipo_url'?350000:500)) throw new Error(`Campo ${campo} excede 500 caracteres.`);
       o[campo] = texto || null;
     }
   }
@@ -1611,6 +1623,7 @@ function prepararOrganizacao(body) {
   if (o.cep && !/^\d{8}$/.test(o.cep.replace(/\D/g, ''))) throw new Error('CEP deve ter 8 dígitos.');
   if (o.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(o.email)) throw new Error('E-mail inválido.');
   for (const campo of ['site_url','instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','logotipo_url']) {
+    if (campo==='logotipo_url' && logoValido(o[campo])) continue;
     if (o[campo]) { try { const url = new URL(o[campo]); if (!['https:', 'http:'].includes(url.protocol)) throw Error(); }
       catch { throw new Error(`Endereço de ${campo} inválido. Use https://`); } }
   }
@@ -1623,24 +1636,9 @@ app.get('/admin/organizacoes', exigirAdmin, async (req,res) => {
     res.json({registros:r.rows, total:r.rowCount});
   } catch(e) { console.error('Consulta organizações:',e.message); res.status(500).json({erro:'Não foi possível consultar organizações.'}); }
 });
-app.post('/admin/organizacoes', exigirAdmin, async(req,res) => {
-  let o; try { o=prepararOrganizacao(req.body||{}); } catch(e) { return res.status(400).json({erro:e.message}); }
-  try {
-    const campos=ORG_CAMPOS;
-    const sql=`INSERT INTO public.organizacoes (${campos.map(c=>'"'+c+'"').join(',')}) VALUES (${campos.map((_,i)=>'$'+(i+1)).join(',')}) RETURNING *`;
-    const r=await pool.query(sql,campos.map(c=>o[c])); res.status(201).json({registro:r.rows[0]});
-  } catch(e) { console.error('Inclusão organização:',e.message); res.status(500).json({erro:'Não foi possível cadastrar a organização.'}); }
+app.post('/admin/organizacoes',exigirAdmin,async(req,res)=>{try{const org=null,id=null;if(false&&!org||false&&!id)return res.status(400).json({erro:'Identificação inválida.'});const o=prepararOrganizacao(req.body||{});await gravarInstitucional(req,res,'organizacoes',ORG_CAMPOS,o,org,id);}catch(e){res.status(400).json({erro:e.message});}
 });
-app.put('/admin/organizacoes/:id', exigirAdmin, async(req,res) => {
-  const id=Number(req.params.id); if(!Number.isSafeInteger(id)||id<=0)return res.status(400).json({erro:'ID inválido.'});
-  let o; try { o=prepararOrganizacao(req.body||{}); } catch(e) { return res.status(400).json({erro:e.message}); }
-  try {
-    const campos=ORG_CAMPOS;
-    const sql=`UPDATE public.organizacoes SET ${campos.map((c,i)=>'"'+c+'"=$'+(i+1)).join(',')} WHERE id=$${campos.length+1} RETURNING *`;
-    const r=await pool.query(sql,[...campos.map(c=>o[c]),id]);
-    if(!r.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
-    res.json({registro:r.rows[0]});
-  } catch(e) { console.error('Edição organização:',e.message); res.status(500).json({erro:'Não foi possível atualizar a organização.'}); }
+app.put('/admin/organizacoes/:id',exigirAdmin,async(req,res)=>{try{const org=null,id=idPositivo(req.params.id);if(false&&!org||true&&!id)return res.status(400).json({erro:'Identificação inválida.'});const o=prepararOrganizacao(req.body||{});await gravarInstitucional(req,res,'organizacoes',ORG_CAMPOS,o,org,id);}catch(e){res.status(400).json({erro:e.message});}
 });
 
 /* ================================
@@ -1648,7 +1646,7 @@ app.put('/admin/organizacoes/:id', exigirAdmin, async(req,res) => {
    Sem alterações automáticas de esquema ou dados legados.
 ================================ */
 const UNIDADE_CAMPOS = [
-  'nome','cnpj','telefone','whatsapp','email','cep','rua','numero','complemento',
+  'ativo','nome','cnpj','telefone','whatsapp','email','cep','rua','numero','complemento',
   'bairro','cidade','estado','geolocalizacao','latitude','longitude','logotipo_url',
   'site_url','instagram_url','facebook_url','youtube_url','tiktok_url',
   'whatsapp_link','links_adicionais'
@@ -1660,7 +1658,7 @@ function idPositivo(valor) {
 function prepararUnidade(body={}) {
   const o={};
   for(const campo of UNIDADE_CAMPOS) {
-    if(campo==='links_adicionais') {
+    if(campo==='ativo'){o[campo]=body[campo] !== false && body[campo] !== 'false';} else if(campo==='links_adicionais') {
       const v=body[campo]??[];
       if(!Array.isArray(v)||v.length>20||v.some(x=>typeof x!=='string'||x.length>500)) throw Error('Links adicionais inválidos.');
       o[campo]=JSON.stringify(v);
@@ -1669,7 +1667,7 @@ function prepararUnidade(body={}) {
       if(o[campo]!==null&&(!Number.isFinite(o[campo])||Math.abs(o[campo])>(campo==='latitude'?90:180))) throw Error('Coordenadas inválidas.');
     } else {
       const v=String(body[campo]??'').trim();
-      if(v.length>500)throw Error(`Campo ${campo} excede 500 caracteres.`);
+      if(v.length>(campo==='logotipo_url'?350000:500))throw Error(`Campo ${campo} excede 500 caracteres.`);
       o[campo]=v||null;
     }
   }
@@ -1679,6 +1677,7 @@ function prepararUnidade(body={}) {
   if(o.cep&&!/^\d{8}$/.test(o.cep.replace(/\D/g,'')))throw Error('CEP deve ter 8 dígitos.');
   if(o.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(o.email))throw Error('E-mail inválido.');
   for(const c of ['site_url','instagram_url','facebook_url','youtube_url','tiktok_url','whatsapp_link','logotipo_url']) {
+    if(c==='logotipo_url' && logoValido(o[c])) continue;
     if(o[c]){try{const u=new URL(o[c]);if(!['http:','https:'].includes(u.protocol))throw Error();}catch{throw Error(`Endereço de ${c} inválido. Use https://`);}}
   }
   return o;
@@ -1693,26 +1692,9 @@ app.get('/admin/organizacoes/:organizacaoId/unidades',exigirAdmin,async(req,res)
     res.json({registros:r.rows,total:r.rowCount});
   }catch(e){console.error('Consulta unidades:',e.message);res.status(500).json({erro:'Não foi possível consultar unidades.'});}
 });
-app.post('/admin/organizacoes/:organizacaoId/unidades',exigirAdmin,async(req,res)=>{
-  const org=idPositivo(req.params.organizacaoId);
-  if(!org)return res.status(400).json({erro:'Organização inválida.'});
-  let o;try{o=prepararUnidade(req.body||{});}catch(e){return res.status(400).json({erro:e.message});}
-  try {
-    const campos=['organizacao_id',...UNIDADE_CAMPOS];
-    const r=await pool.query(`INSERT INTO public.unidades (${campos.map(c=>'"'+c+'"').join(',')}) SELECT ${campos.map((_,i)=>'$'+(i+1)).join(',')} WHERE EXISTS (SELECT 1 FROM public.organizacoes WHERE id=$1) RETURNING *`,[org,...UNIDADE_CAMPOS.map(c=>o[c])]);
-    if(!r.rowCount)return res.status(404).json({erro:'Organização não encontrada.'});
-    res.status(201).json({registro:r.rows[0]});
-  }catch(e){console.error('Cadastro unidade:',e.message);res.status(500).json({erro:'Não foi possível cadastrar unidade.'});}
+app.post('/admin/organizacoes/:organizacaoId/unidades',exigirAdmin,async(req,res)=>{try{const org=idPositivo(req.params.organizacaoId),id=null;if(true&&!org||false&&!id)return res.status(400).json({erro:'Identificação inválida.'});const o=prepararUnidade(req.body||{});await gravarInstitucional(req,res,'unidades',UNIDADE_CAMPOS,o,org,id);}catch(e){res.status(400).json({erro:e.message});}
 });
-app.put('/admin/organizacoes/:organizacaoId/unidades/:id',exigirAdmin,async(req,res)=>{
-  const org=idPositivo(req.params.organizacaoId),id=idPositivo(req.params.id);
-  if(!org||!id)return res.status(400).json({erro:'Identificação inválida.'});
-  let o;try{o=prepararUnidade(req.body||{});}catch(e){return res.status(400).json({erro:e.message});}
-  try {
-    const r=await pool.query(`UPDATE public.unidades SET ${UNIDADE_CAMPOS.map((c,i)=>'"'+c+'"=$'+(i+1)).join(',')} WHERE id=$${UNIDADE_CAMPOS.length+1} AND organizacao_id=$${UNIDADE_CAMPOS.length+2} RETURNING *`,[...UNIDADE_CAMPOS.map(c=>o[c]),id,org]);
-    if(!r.rowCount)return res.status(404).json({erro:'Unidade não encontrada nesta organização.'});
-    res.json({registro:r.rows[0]});
-  }catch(e){console.error('Edição unidade:',e.message);res.status(500).json({erro:'Não foi possível atualizar unidade.'});}
+app.put('/admin/organizacoes/:organizacaoId/unidades/:id',exigirAdmin,async(req,res)=>{try{const org=idPositivo(req.params.organizacaoId),id=idPositivo(req.params.id);if(true&&!org||true&&!id)return res.status(400).json({erro:'Identificação inválida.'});const o=prepararUnidade(req.body||{});await gravarInstitucional(req,res,'unidades',UNIDADE_CAMPOS,o,org,id);}catch(e){res.status(400).json({erro:e.message});}
 });
 
 /* ================================
