@@ -269,7 +269,7 @@ app.get("/", (req, res) => {
 app.get("/status", (req, res) => {
   res.json({
     ok: true,
-    sistema: "+Células Backend V36 Presença v1.14 Consulta Otimizada e Exclusão Segura",
+    sistema: "+Células Backend V36 | Organizações e Unidades v0.4 TESTE",
     status: "ONLINE"
   });
 });
@@ -1617,6 +1617,7 @@ function prepararOrganizacao(body) {
     }
   }
   o.nome = normalizarTexto(o.nome);
+  for(const campo of ['razao_social','nome_fantasia','rua','numero','complemento','bairro','cidade','estado']) if(o[campo]!=null) o[campo]=String(o[campo]).toUpperCase();
   o.denominacao_unidade = normalizarTexto(o.denominacao_unidade || 'CÂMPUS');
   if (!o.nome) throw new Error('Informe o nome da organização.');
   if (o.cnpj && !/^\d{14}$/.test(o.cnpj.replace(/\D/g, ''))) throw new Error('CNPJ deve ter 14 dígitos.');
@@ -1672,6 +1673,7 @@ function prepararUnidade(body={}) {
     }
   }
   o.nome=normalizarTexto(o.nome);
+  for(const campo of ['razao_social','nome_fantasia','rua','numero','complemento','bairro','cidade','estado']) if(o[campo]!=null) o[campo]=String(o[campo]).toUpperCase();
   if(!o.nome)throw Error('Informe o nome da unidade.');
   if(o.cnpj&&!/^\d{14}$/.test(o.cnpj.replace(/\D/g,'')))throw Error('CNPJ deve ter 14 dígitos.');
   if(o.cep&&!/^\d{8}$/.test(o.cep.replace(/\D/g,'')))throw Error('CEP deve ter 8 dígitos.');
@@ -1706,7 +1708,7 @@ async function iniciarServidor() {
     await criarAdmin();
 
     app.listen(PORT, () => {
-      console.log(`+Células Backend V36 Presença v1.14 Consulta Otimizada e Exclusão Segura rodando na porta ${PORT}`);
+      console.log(`+Células Backend V36 | Organizações e Unidades v0.4 TESTE rodando na porta ${PORT}`);
     });
   } catch (erro) {
     console.error("Erro ao iniciar servidor:", erro.message);
